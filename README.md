@@ -1,2 +1,1 @@
-# nz-lusdb
-New Zealand Land Use Suitability Database
+# NZLUSDB: New Zealand Land Use Suitability Database
