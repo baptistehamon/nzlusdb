@@ -11,14 +11,17 @@ keywords = ["NZLUSDB", "Land Use Suitability", "New Zeland", "Land Suitability A
 license = {file = "LICENSE"}
 dynamic = ["description", "version"]
 dependencies = [
+  "lsapy >=0.1.1",
+  "matplotlib >=3.9.0"
 ]
 
 [project.optional-dependencies]
 dev = [
   # dev tools
+  "bump-my-version >=1.2.0",
 ]
 docs = [
-   # docs & examples
+  # docs & examples
 ]
 all = ["nzlsudb[dev]", "nzlusdb[docs]"]
 

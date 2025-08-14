@@ -1,5 +1,10 @@
 name: nzlusdb
 channels:
   - conda-forge
-# dependencies:
-#   -
+dependencies:
+  - python >=3.10
+  - lsapy >=0.1.1
+  - matplotlib >=3.9.0
+  # extra
+  # dev
+  - bump-my-version >=1.2.0
