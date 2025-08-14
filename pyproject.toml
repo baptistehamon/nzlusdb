@@ -1,0 +1,56 @@
+[project]
+name = "nzlusdb"
+authors = [
+  { name="Baptiste Hamon", email="baptiste.hamon@pg.canterbury.ac.nz" },
+]
+maintainers = [
+  { name="Baptiste Hamon", email="baptiste.hamon@pg.canterbury.ac.nz" },
+]
+readme = "README.rst"
+keywords = ["NZLUSDB", "Land Use Suitability", "New Zeland", "Land Suitability Analysis", "Database"]
+license = {file = "LICENSE"}
+dynamic = ["description", "version"]
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+  # dev tools
+]
+docs = [
+   # docs & examples
+]
+all = ["nzlsudb[dev]", "nzlusdb[docs]"]
+
+[project.urls]
+# Homepage = ""
+Source = "https://github.com/baptistehamon/nzlusdb"
+Issues = "https://github.com/baptistehamon/nzlusdb/issues"
+# Zenodo = ""
+
+[tool.bumpversion]
+current_version = "0.0-dev0"
+commit = true
+commit_args = "--no-verify --signoff"
+tag = false
+allow_dirty = false
+parse = "(?P<major>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)((?P<build>\\d+)))?"
+serialize = [
+  "{major}.{patch}-{release}{build}",
+  "{major}.{patch}"
+]
+
+[[tool.bumpversion.files]]
+filename = "src/nzlusdb/__init__.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
+
+[tool.bumpversion.parts.build]
+independent = false
+
+[tool.bumpversion.parts.release]
+optional_value = "release"
+values = [
+  "dev",
+  "release"
+]
