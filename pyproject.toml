@@ -19,6 +19,7 @@ dependencies = [
 dev = [
   # dev tools
   "bump-my-version >=1.2.0",
+  "codespell >=2.4.1",
   "pre-commit >=4.3.0",
   "ruff >=0.12.0",
 ]
