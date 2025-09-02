@@ -58,3 +58,54 @@ values = [
   "dev",
   "release"
 ]
+
+[tool.ruff]
+line-length = 120
+output-format = "grouped"
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+
+[tool.ruff.lint]
+preview=true
+select = [ # default values
+  "B", # bugbear
+  "C90", # McCabe complexity
+  "D", # docstring
+  "E", # pycodestyle errors
+  "F", # pyflakes
+  "I", # imports
+  "N", # naming
+  "PL", # pylint
+  "S", # bandit
+  "UP", # pyupgrade
+  "W", # pycodestyle warnings
+]
+ignore = [
+  "D400", # end-in-period
+  "D401", # non-imperative-mood
+  "PLR6201", # literal-membership
+]
+
+# [tool.ruff.lint.per-file-ignores]
+# "docs/*.py" = []
+# "src/nzlusdb/**/__init__.py" = []
+# "tests/**/test*.py" = []
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+known-first-party = ["nzlusdb"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 15
+max-branches = 20
