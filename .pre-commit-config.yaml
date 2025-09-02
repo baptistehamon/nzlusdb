@@ -17,6 +17,14 @@ repos:
         args: ['--autofix', '--no-sort-keys']
         exclude: '.ipynb'
       - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+  # Use ruff as a substitute for black, flake8, isort, pyupgrade,
+  # pylint.
+    rev: v0.12.11
+    hooks:
+      - id: ruff-check
+        args: ['--fix', '--show-fixes']
+      - id: ruff-format
 
 ci:
   autofix_commit_msg: |
