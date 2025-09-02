@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python >=3.10
-  - lsapy >=0.1.1
+  - lsapy >=0.2.0
   - matplotlib >=3.9.0
   # extra
   # dev
