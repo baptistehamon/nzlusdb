@@ -11,5 +11,5 @@ dependencies:
   # dev
   - bump-my-version >=1.2.0
   - codespell >=2.4.1
-  - pre-commit >=4.4.0
+  - pre-commit >=4.2.0
   - ruff >=0.12.0
