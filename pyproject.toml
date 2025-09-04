@@ -92,7 +92,8 @@ ignore = [
   "PLR6201", # literal-membership
 ]
 
-# [tool.ruff.lint.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
+"src/nzlusdb/core/climdataset.py" = ["N816"]
 # "docs/*.py" = []
 # "src/nzlusdb/**/__init__.py" = []
 # "tests/**/test*.py" = []

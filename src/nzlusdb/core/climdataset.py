@@ -9,7 +9,7 @@ from xclim.ensembles import create_ensemble
 
 __all__ = [
     "ClimDataset",
-    "climate_data",
+    "climateDS",
     "select_hist_proj",
 ]
 
@@ -195,6 +195,7 @@ class ClimDataset:
 
     @staticmethod
     def _filter_scenario(scenario, hist_scenario):
+        """Filter historical and projection scenarios."""
         if hist_scenario not in scenario:
             hist_scenario = None
         proj_scenario = [s for s in scenario if s != hist_scenario]
@@ -234,18 +235,21 @@ def select_hist_proj(
         raise ValueError("period must be either 'historical' or 'projection'")
 
     data = data.sel(time=slice(start_date, end_date))
-    hist_dates = pd.date_range(start=start_date, end=proj_startdate, freq=freq)
-    proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)
+    hist_dates = pd.date_range(start=start_date, end=proj_startdate, freq=freq)[[0, -1]]
+    hist_start = hist_dates[0].strftime("%Y-%m-%d")
+    hist_end = (hist_dates[1] + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)[[0, -1]]
+    proj_start, proj_end = proj_dates.strftime("%Y-%m-%d")
 
     if period == "historical":
-        return data.sel(time=slice(hist_dates[0], hist_dates[-1] - pd.Timedelta(days=1)))
+        return data.sel(time=slice(hist_start, hist_end))
     else:
-        return data.sel(time=slice(hist_dates[-1], proj_dates[-1]))
+        return data.sel(time=slice(proj_start, proj_end))
 
 
-climate_data = {
+climateDS = {
     "nzlusdb_5km": ClimDataset(
-        name="NEX-GGDP-CMIP6",
+        name="NEX-GDDP-CMIP6",
         path=Path(r"R:\DATA\NEX_GDDP_CMIP6-NZ"),
         model=["ACCESS-CM2", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
