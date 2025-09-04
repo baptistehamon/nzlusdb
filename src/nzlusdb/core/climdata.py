@@ -200,15 +200,15 @@ class ClimData:
 def select_hist_proj(
     data: xr.DataArray | xr.Dataset,
     period: str,
-    start_date: str = "1960-01-01",
-    end_date: str = "2099-12-31",
-    hist_enddate: str = "2014-12-31",
+    start_date: str = "1950-01-01",
+    end_date: str = "2100-12-31",
+    proj_startdate: str = "2015-01-01",
     freq: str = "YS-JUL",
 ):
     """
     Select historical or projection period from climate data.
 
-    If `freq` outputs will overlap the historical and projection periods, the projection will be extended
+    If `freq` outputs will overlap the historical and projection periods, the projection will be pre-extended
     to include the overlapping period.
 
     Parameters
@@ -217,12 +217,12 @@ def select_hist_proj(
         Climate data with a time dimension.
     period : str
         Period to select, either 'historical' or 'projection'.
-    start_date : str, default "1960-01-01"
-        Start date for the selection.
-    end_date : str, default "2099-12-31"
-        End date for the selection.
-    hist_enddate : str, default "2014-12-31"
-        End date of the historical period.
+    start_date : str, optional
+        Start date for the selection. Default is "1950-01-01".
+    end_date : str, optional
+        End date for the selection. Default is "2100-12-31".
+    proj_startdate : str, optional
+        Start date of the projection period. Default is "2015-01-01" (.i.e., CMIP6 historical ends 2014-12-31).
     freq : str, default "YS-JUL"
         Frequency for defining the historical and projection periods.
     """
@@ -230,11 +230,11 @@ def select_hist_proj(
         raise ValueError("period must be either 'historical' or 'projection'")
 
     data = data.sel(time=slice(start_date, end_date))
-    hist_dates = pd.date_range(start=start_date, end=hist_enddate, freq=freq)
-    proj_dates = pd.date_range(start=hist_enddate, end=end_date, freq=freq)
+    hist_dates = pd.date_range(start=start_date, end=proj_startdate, freq=freq)
+    proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)
 
     if period == "historical":
-        return data.sel(time=slice(hist_dates[0], hist_dates[-1]))
+        return data.sel(time=slice(hist_dates[0], hist_dates[-1] - pd.Timedelta(days=1)))
     else:
         return data.sel(time=slice(hist_dates[-1], proj_dates[-1]))
 
