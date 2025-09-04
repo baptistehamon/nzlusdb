@@ -3,12 +3,14 @@
 import warnings
 from pathlib import Path
 
+import pandas as pd
 import xarray as xr
 from xclim.ensembles import create_ensemble
 
 __all__ = [
     "ClimData",
     "climate_data",
+    "select_hist_proj",
 ]
 
 
@@ -193,6 +195,48 @@ class ClimData:
             hist_scenario = None
         proj_scenario = [s for s in scenario if s != hist_scenario]
         return hist_scenario, proj_scenario
+
+
+def select_hist_proj(
+    data: xr.DataArray | xr.Dataset,
+    period: str,
+    start_date: str = "1960-01-01",
+    end_date: str = "2099-12-31",
+    hist_enddate: str = "2014-12-31",
+    freq: str = "YS-JUL",
+):
+    """
+    Select historical or projection period from climate data.
+
+    If `freq` outputs will overlap the historical and projection periods, the projection will be extended
+    to include the overlapping period.
+
+    Parameters
+    ----------
+    data : xr.DataArray or xr.Dataset
+        Climate data with a time dimension.
+    period : str
+        Period to select, either 'historical' or 'projection'.
+    start_date : str, default "1960-01-01"
+        Start date for the selection.
+    end_date : str, default "2099-12-31"
+        End date for the selection.
+    hist_enddate : str, default "2014-12-31"
+        End date of the historical period.
+    freq : str, default "YS-JUL"
+        Frequency for defining the historical and projection periods.
+    """
+    if period not in ["historical", "projection"]:
+        raise ValueError("period must be either 'historical' or 'projection'")
+
+    data = data.sel(time=slice(start_date, end_date))
+    hist_dates = pd.date_range(start=start_date, end=hist_enddate, freq=freq)
+    proj_dates = pd.date_range(start=hist_enddate, end=end_date, freq=freq)
+
+    if period == "historical":
+        return data.sel(time=slice(hist_dates[0], hist_dates[-1]))
+    else:
+        return data.sel(time=slice(hist_dates[-1], proj_dates[-1]))
 
 
 climate_data = {
