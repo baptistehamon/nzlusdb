@@ -65,6 +65,8 @@ class ClimDataset:
         scenario: str | list[str] = None,
         variable: str | list[str] = None,
         inplace: bool = False,
+        xr_kwargs: dict = None,
+        ens_kwargs: dict = None,
     ) -> xr.Dataset | None:
         """
         Open climate data from NetCDF files.
@@ -79,6 +81,10 @@ class ClimDataset:
             Climate variable(s) to include. If None, use all available variables.
         inplace : bool, default False
             If True, store the opened data in the instance's `data` attribute. If False, return the data.
+        xr_kwargs : dict, optional
+            Additional keyword arguments to pass to `xr.open_mfdataset`.
+        ens_kwargs : dict, optional
+            Additional keyword arguments to pass to `xclim.ensembles.create_ensemble`.
 
         Returns
         -------
@@ -131,7 +137,7 @@ class ClimDataset:
             data[m] = {}
             for s in scenario:
                 files = [f for f in fp if m in f.name and s in f.name and any(f"{v}_" in f.name for v in variable)]
-                data[m][s] = xr.open_mfdataset(files, combine="by_coords")
+                data[m][s] = xr.open_mfdataset(files, combine="by_coords", **(xr_kwargs or {}))
             if len(scenario) == 1:
                 data[m] = data[m][scenario[0]]
             else:
@@ -139,7 +145,7 @@ class ClimDataset:
         if len(model) == 1:
             data = data[model[0]]
         else:
-            data = create_ensemble(data)
+            data = create_ensemble(data, **(ens_kwargs or {}))
 
         if inplace:
             self.data = data
@@ -147,7 +153,12 @@ class ClimDataset:
         return data
 
     def open_hist_proj(
-        self, proj_scenario: str, model: str | list[str] = None, variable: str | list[str] = None, inplace: bool = False
+        self,
+        proj_scenario: str,
+        model: str | list[str] = None,
+        variable: str | list[str] = None,
+        inplace: bool = False,
+        **kwargs,
     ) -> xr.Dataset | None:
         """
         Open climate data for the historical period and a specified projection scenario.
@@ -162,6 +173,8 @@ class ClimDataset:
             Climate variable(s) to include. If None, use all available variables.
         inplace : bool, default False
             If True, store the opened data in the instance's `data` attribute. If False, return the data.
+        **kwargs
+            Additional keyword arguments to pass to the `open` method.
 
         Returns
         -------
@@ -182,8 +195,8 @@ class ClimDataset:
 
         data = xr.concat(
             [
-                self.open(model=model, scenario=self.hist_scenario, variable=variable, inplace=False),
-                self.open(model=model, scenario=proj_scenario, variable=variable, inplace=False),
+                self.open(model=model, scenario=self.hist_scenario, variable=variable, inplace=False, **kwargs),
+                self.open(model=model, scenario=proj_scenario, variable=variable, inplace=False, **kwargs),
             ],
             dim="time",
         )
