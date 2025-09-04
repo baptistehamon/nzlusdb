@@ -7,7 +7,14 @@ import pandas as pd
 import xarray as xr
 from xclim.ensembles import create_ensemble
 
-__all__ = ["ClimDataset", "climateDS", "select_hist_proj"]
+__all__ = [
+    "ClimDataset",
+    "climateDS",
+    "select_hist_proj",
+    "TIMEPERIOD",
+]
+
+TIMEPERIOD = ["1960-01-01", "2099-12-31"]  # start of NIWA data to end of NIWA data
 
 
 class ClimDataset:
