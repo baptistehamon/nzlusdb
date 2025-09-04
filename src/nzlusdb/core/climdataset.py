@@ -7,11 +7,7 @@ import pandas as pd
 import xarray as xr
 from xclim.ensembles import create_ensemble
 
-__all__ = [
-    "ClimDataset",
-    "climateDS",
-    "select_hist_proj",
-]
+__all__ = ["ClimDataset", "climateDS", "select_hist_proj"]
 
 
 class ClimDataset:
@@ -250,7 +246,7 @@ def select_hist_proj(
     data = data.sel(time=slice(start_date, end_date))
     hist_dates = pd.date_range(start=start_date, end=proj_startdate, freq=freq)[[0, -1]]
     hist_start = hist_dates[0].strftime("%Y-%m-%d")
-    hist_end = (hist_dates[1] + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    hist_end = (hist_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)[[0, -1]]
     proj_start, proj_end = proj_dates.strftime("%Y-%m-%d")
 
