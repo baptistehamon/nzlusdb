@@ -49,7 +49,8 @@ class ClimData:
         model: str | list[str] = None,
         scenario: str | list[str] = None,
         variable: str | list[str] = None,
-    ) -> xr.Dataset:
+        inplace: bool = False,
+    ) -> xr.Dataset | None:
         """
         Open climate data from NetCDF files.
 
@@ -61,12 +62,15 @@ class ClimData:
             Climate scenario(s) to include. If None, use all available scenarios.
         variable : str or list of str, optional
             Climate variable(s) to include. If None, use all available variables.
+        inplace : bool, default False
+            If True, store the opened data in the instance's `data` attribute. If False, return the data.
 
         Returns
         -------
-        xr.Dataset
+        xr.Dataset or None
             An xarray Dataset containing the requested climate data. If several models and/or scenarios are requested,
             the data are concatenated along new dimensions 'realization' and/or 'scenario'.
+            If `inplace` is True, returns None.
         """
 
         def check_validity(model=None, scenario=None, variable=None):
@@ -118,9 +122,14 @@ class ClimData:
             else:
                 data[m] = xr.concat(list(data[m].values()), dim="scenario").assign_coords(scenario=scenario)
         if len(model) == 1:
-            self.data = data[model[0]]
+            data = data[model[0]]
         else:
-            self.data = create_ensemble(data)
+            data = create_ensemble(data)
+
+        if inplace:
+            self.data = data
+            return None
+        return data
 
 
 climate_data = {
