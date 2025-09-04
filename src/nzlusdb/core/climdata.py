@@ -8,21 +8,23 @@ import xarray as xr
 from xclim.ensembles import create_ensemble
 
 __all__ = [
-    "ClimData",
+    "ClimDataset",
     "climate_data",
     "select_hist_proj",
 ]
 
 
-class ClimData:
+class ClimDataset:
     """
-    Object to store climate data ensemble information.
+    Object to store climate dataset information.
 
     The climate data are expected to be in NetCDF format and stored in the path directory.
     Each file should be named in a way that includes the model, scenario, and variable information.
 
     Parameters
     ----------
+    name : str
+        Name of the climate dataset.
     path : Path
         Path to the directory containing climate data files.
     model : str or list of str
@@ -40,6 +42,7 @@ class ClimData:
 
     def __init__(
         self,
+        name: str,
         path: Path,
         model: str | list[str],
         scenario: str | list[str],
@@ -47,6 +50,7 @@ class ClimData:
         resolution: str,
         hist_scenario: str = "historical",
     ):
+        self.name = name
         self.path = path
         self.model = model
         self.scenario = scenario
@@ -240,14 +244,16 @@ def select_hist_proj(
 
 
 climate_data = {
-    "nzlusdb_5km": ClimData(
+    "nzlusdb_5km": ClimDataset(
+        name="NEX-GGDP-CMIP6",
         path=Path(r"R:\DATA\NEX_GDDP_CMIP6-NZ"),
         model=["ACCESS-CM2", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
         variables=["hurs", "huss", "pr", "rlds", "rsds", "sfcWind", "tas", "tasmax", "tasmin"],
         resolution="25km",
     ),
-    "nzlusdb_1km": ClimData(
+    "nzlusdb_1km": ClimDataset(
+        name="NIWA-CMIP6",
         path=Path(r"R:\DATA\NIWA-CMIP6"),
         model=["ACCESS-CM2", "AWI-CM-1-1-MR", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
