@@ -6,7 +6,10 @@ from pathlib import Path
 import xarray as xr
 from xclim.ensembles import create_ensemble
 
-__all__ = ["ClimData"]
+__all__ = [
+    "ClimData",
+    "climate_data",
+]
 
 
 class ClimData:
@@ -118,3 +121,21 @@ class ClimData:
             self.data = data[model[0]]
         else:
             self.data = create_ensemble(data)
+
+
+climate_data = {
+    "nzlusdb_5km": ClimData(
+        data_path=Path(r"R:\DATA\NEX_GDDP_CMIP6-NZ"),
+        model=["ACCESS-CM2", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
+        scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
+        variables=["hurs", "huss", "pr", "rlds", "rsds", "sfcWind", "tas", "tasmax", "tasmin"],
+        resolution="25km",
+    ),
+    "nzlusdb_1km": ClimData(
+        data_path=Path(r"R:\DATA\NIWA-CMIP6"),
+        model=["ACCESS-CM2", "AWI-CM-1-1-MR", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
+        scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
+        variables=["hurs", "PEDsrad", "PETsrad", "pr", "rsds", "sfcWind", "sfcWindmax", "tas", "tasmax", "tasmin"],
+        resolution="5km",
+    ),
+}
