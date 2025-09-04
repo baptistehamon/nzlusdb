@@ -248,7 +248,8 @@ def select_hist_proj(
     hist_start = hist_dates[0].strftime("%Y-%m-%d")
     hist_end = (hist_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)[[0, -1]]
-    proj_start, proj_end = proj_dates.strftime("%Y-%m-%d")
+    proj_start = hist_dates[1].strftime("%Y-%m-%d")
+    proj_end = (proj_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
     if period == "historical":
         return data.sel(time=slice(hist_start, hist_end))
