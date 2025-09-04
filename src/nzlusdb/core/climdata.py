@@ -140,6 +140,53 @@ class ClimData:
             return None
         return data
 
+    def open_hist_proj(
+        self, proj_scenario: str, model: str | list[str] = None, variable: str | list[str] = None, inplace: bool = False
+    ) -> xr.Dataset | None:
+        """
+        Open climate data for the historical period and a specified projection scenario.
+
+        Parameters
+        ----------
+        proj_scenario : str
+            Projection scenario to open. Must be one of the projection scenarios available in the instance.
+        model : str or list of str, optional
+            Climate model(s) to include. If None, use all available models.
+        variable : str or list of str, optional
+            Climate variable(s) to include. If None, use all available variables.
+        inplace : bool, default False
+            If True, store the opened data in the instance's `data` attribute. If False, return the data.
+
+        Returns
+        -------
+        xr.Dataset or None
+            An xarray Dataset containing the concatenated historical and projection scenario data.
+            If `inplace` is True, returns None.
+        """
+        if proj_scenario not in self.proj_scenario:
+            raise ValueError(
+                f"'{proj_scenario}' is not a valid projection scenario. "
+                "Valid options are: {', '.join(self.proj_scenario)}"
+            )
+        if not self.hist_scenario:
+            warnings.warn(
+                "No historical scenario available; returning only the projection scenario data.", stacklevel=2
+            )
+            return self.open(model=model, scenario=proj_scenario, variable=variable, inplace=inplace)
+
+        data = xr.concat(
+            [
+                self.open(model=model, scenario=self.hist_scenario, variable=variable, inplace=False),
+                self.open(model=model, scenario=proj_scenario, variable=variable, inplace=False),
+            ],
+            dim="time",
+        )
+
+        if inplace:
+            self.data = data
+            return None
+        return data
+
     @staticmethod
     def _filter_scenario(scenario, hist_scenario):
         if hist_scenario not in scenario:
