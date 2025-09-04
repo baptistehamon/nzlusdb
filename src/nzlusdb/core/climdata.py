@@ -31,11 +31,19 @@ class ClimData:
         Climate variable(s) to include (e.g., 'tasmax', 'tasmin', 'pr').
     resolution : str
         Spatial resolution of the climate data.
-
+    hist_scenario : str, optional
+        Name of the historical scenario (default is 'historical'). If the default name is not among the scenarios,
+        it will be set to None.
     """
 
     def __init__(
-        self, data_path: Path, model: str | list[str], scenario: str | list[str], variables: list[str], resolution: str
+        self,
+        data_path: Path,
+        model: str | list[str],
+        scenario: str | list[str],
+        variables: list[str],
+        resolution: str,
+        hist_scenario: str = "historical",
     ):
         self.data_path = data_path
         self.model = model
@@ -43,6 +51,7 @@ class ClimData:
         self.variables = variables
         self.res = resolution
         self.data = None
+        self.hist_scenario, self.proj_scenario = self._filter_scenario(scenario, hist_scenario)
 
     def open(
         self,
@@ -130,6 +139,13 @@ class ClimData:
             self.data = data
             return None
         return data
+
+    @staticmethod
+    def _filter_scenario(scenario, hist_scenario):
+        if hist_scenario not in scenario:
+            hist_scenario = None
+        proj_scenario = [s for s in scenario if s != hist_scenario]
+        return hist_scenario, proj_scenario
 
 
 climate_data = {
