@@ -18,12 +18,12 @@ class ClimData:
     """
     Object to store climate data ensemble information.
 
-    The climate data are expected to be in NetCDF format and stored in the data_path directory.
+    The climate data are expected to be in NetCDF format and stored in the path directory.
     Each file should be named in a way that includes the model, scenario, and variable information.
 
     Parameters
     ----------
-    data_path : Path
+    path : Path
         Path to the directory containing climate data files.
     model : str or list of str
         Climate model(s) to include.
@@ -40,14 +40,14 @@ class ClimData:
 
     def __init__(
         self,
-        data_path: Path,
+        path: Path,
         model: str | list[str],
         scenario: str | list[str],
         variables: list[str],
         resolution: str,
         hist_scenario: str = "historical",
     ):
-        self.data_path = data_path
+        self.path = path
         self.model = model
         self.scenario = scenario
         self.variables = variables
@@ -122,7 +122,7 @@ class ClimData:
         model, scenario, variable = check_validity(model, scenario, variable)
 
         data = {}
-        fp = [f for f in self.data_path.rglob("*.nc")]
+        fp = [f for f in self.path.rglob("*.nc")]
         for m in model:
             data[m] = {}
             for s in scenario:
@@ -241,14 +241,14 @@ def select_hist_proj(
 
 climate_data = {
     "nzlusdb_5km": ClimData(
-        data_path=Path(r"R:\DATA\NEX_GDDP_CMIP6-NZ"),
+        path=Path(r"R:\DATA\NEX_GDDP_CMIP6-NZ"),
         model=["ACCESS-CM2", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
         variables=["hurs", "huss", "pr", "rlds", "rsds", "sfcWind", "tas", "tasmax", "tasmin"],
         resolution="25km",
     ),
     "nzlusdb_1km": ClimData(
-        data_path=Path(r"R:\DATA\NIWA-CMIP6"),
+        path=Path(r"R:\DATA\NIWA-CMIP6"),
         model=["ACCESS-CM2", "AWI-CM-1-1-MR", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
         variables=["hurs", "PEDsrad", "PETsrad", "pr", "rsds", "sfcWind", "sfcWindmax", "tas", "tasmax", "tasmin"],
