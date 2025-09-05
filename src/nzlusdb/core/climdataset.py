@@ -227,10 +227,14 @@ def select_hist_proj(
     freq: str = "YS-JUL",
 ):
     """
-    Select historical or projection period from climate data.
+    Adjust and select the historical or projection period for a given frequency.
 
-    If `freq` outputs will overlap the historical and projection periods, the projection will be pre-extended
-    to include the overlapping period.
+    This is especially useful if the data are expected to be resample to a frequency (`freq`) that does not align with
+    the start and end dates of the historical and projection periods. In that case, uncomplet frequency periods will
+    be removed and the overlapping junction between historical and projection periods will attributed to the projection
+    period.For example, if the historical period is defined as 1950-01-01 to 2014-12-31 and the projection period as
+    2015-01-01 to 2099-12-31, with a frequency of "YS-JUL", the historical period will be 1950-07-01 to 2014-06-30 and
+    the projection period will be 2014-07-01 to 2099-06-30.
 
     Parameters
     ----------
