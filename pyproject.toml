@@ -93,7 +93,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/nzlusdb/core/climdataset.py" = ["N816"]
+"src/nzlusdb/core/climdataset.py" = ["N803", "N816"]
 # "docs/*.py" = []
 # "src/nzlusdb/**/__init__.py" = []
 # "tests/**/test*.py" = []

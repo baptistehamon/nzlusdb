@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import xarray as xr
+from xclim.core.units import convert_units_to
 from xclim.ensembles import create_ensemble
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
     "climateDS",
     "select_hist_proj",
     "TIMEPERIOD",
+    "climdata",
 ]
 
 TIMEPERIOD = ["1960-01-01", "2099-12-31"]  # start of NIWA data to end of NIWA data
@@ -293,3 +295,31 @@ climateDS = {
         chunks={"realization": -1, "time": 365 * 2},
     ),
 }
+
+
+def climdata(func):
+    """Decorator to select a specific time period from the climate data before passing it to the function."""
+
+    def wrapper(
+        climDS,
+        variable,
+        period,
+        start_date=TIMEPERIOD[0],
+        end_date=TIMEPERIOD[1],
+        freq="YS-JUL",
+        units=None,
+        offset=None,
+        **kwargs,
+    ):
+        data = select_hist_proj(
+            climDS.data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq
+        )
+        data = data.chunk(climDS.chunks)
+        res: xr.DataArray = func(data, **kwargs).convert_calendar("standard")
+        if offset:
+            res = res.assign_coords(time=(pd.to_datetime(res.time) + pd.DateOffset(**offset)))
+        if units:
+            res = convert_units_to(res, units)
+        return res
+
+    return wrapper
