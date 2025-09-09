@@ -41,6 +41,9 @@ class ClimDataset:
     hist_scenario : str, optional
         Name of the historical scenario (default is 'historical'). If the default name is not among the scenarios,
         it will be set to None.
+    chunks : dict, optional
+        Dictionary specifying a appropriate chunking scheme to use for indicator calculations.
+        If None, no chunking is applied.
     """
 
     def __init__(
@@ -52,6 +55,7 @@ class ClimDataset:
         variables: list[str],
         resolution: str,
         hist_scenario: str = "historical",
+        chunks: dict = None,
     ):
         self.name = name
         self.path = path
@@ -60,6 +64,7 @@ class ClimDataset:
         self.variables = variables
         self.res = resolution
         self.data = None
+        self.chunks = chunks or {}
         self.hist_scenario, self.proj_scenario = self._filter_scenario(scenario, hist_scenario)
 
     def open(
@@ -230,9 +235,9 @@ def select_hist_proj(
     Adjust and select the historical or projection period for a given frequency.
 
     This is especially useful if the data are expected to be resample to a frequency (`freq`) that does not align with
-    the start and end dates of the historical and projection periods. In that case, uncomplet frequency periods will
+    the start and end dates of the historical and projection periods. In that case, incomplete frequency periods will
     be removed and the overlapping junction between historical and projection periods will attributed to the projection
-    period.For example, if the historical period is defined as 1950-01-01 to 2014-12-31 and the projection period as
+    period. For example, if the historical period is defined as 1950-01-01 to 2014-12-31 and the projection period as
     2015-01-01 to 2099-12-31, with a frequency of "YS-JUL", the historical period will be 1950-07-01 to 2014-06-30 and
     the projection period will be 2014-07-01 to 2099-06-30.
 
@@ -245,7 +250,7 @@ def select_hist_proj(
     start_date : str, optional
         Start date for the selection. Default is "1950-01-01".
     end_date : str, optional
-        End date for the selection. Default is "2100-12-31".
+        End date for the selection. Default is "2100-12-31". Should be later than `proj_startdate`.
     proj_startdate : str, optional
         Start date of the projection period. Default is "2015-01-01" (.i.e., CMIP6 historical ends 2014-12-31).
     freq : str, default "YS-JUL"
@@ -276,6 +281,7 @@ climateDS = {
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
         variables=["hurs", "huss", "pr", "rlds", "rsds", "sfcWind", "tas", "tasmax", "tasmin"],
         resolution="25km",
+        chunks={"realization": -1},
     ),
     "nzlusdb_1km": ClimDataset(
         name="NIWA-CMIP6",
@@ -284,5 +290,6 @@ climateDS = {
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
         variables=["hurs", "PEDsrad", "PETsrad", "pr", "rsds", "sfcWind", "sfcWindmax", "tas", "tasmax", "tasmin"],
         resolution="5km",
+        chunks={"realization": -1, "time": 365 * 2},
     ),
 }
