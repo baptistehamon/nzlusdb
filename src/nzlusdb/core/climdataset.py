@@ -323,3 +323,49 @@ def climdata(func):
         return res
 
     return wrapper
+
+
+def open_climdata_timeserie(
+    climDS: ClimDataset, scenario: str, variable: str | list[str], inplace: bool = True, ens_kwargs: dict = None
+) -> str:
+    """
+    Open a climate data timeserie (historical + projection) from a ClimDataset instance.
+
+    The function wraps around the `open` and `open_hist_proj` methods of the ClimDataset class and
+    opens the historical and projection data for a given scenario, concatenates them along the time dimension,
+    and optionally stores the result in the instance's `data` attribute.
+
+    Parameters
+    ----------
+    climDS : ClimDataset
+        An instance of the ClimDataset class containing climate data information.
+    scenario : str
+        Scenario to open. Can be either the "historical" scenario name of the instance or one of
+        the projection scenarios.
+    variable : str or list of str
+        Climate variable(s) to include.
+    inplace : bool, optional
+        If True, store the opened data in the instance's `data` attribute. If False, return the data.
+        Default is True.
+    ens_kwargs : dict, optional
+        Additional keyword arguments to pass to the `open` and `open_hist_proj` methods.
+
+    Returns
+    -------
+    tuple or str
+        If `inplace` is False, returns a tuple containing the opened data (xr.Dataset or xr.DataArray) and
+        the time period (str). If `inplace` is True, returns the time period (str) only. The time period
+        correspond to either 'historical' or 'projection' depending on the given scenario.
+    """
+    if ens_kwargs is None:
+        ens_kwargs = {}
+    if scenario == climDS.hist_scenario:
+        data = climDS.open(scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
+        timeperiod = "historical"
+    else:
+        data = climDS.open_hist_proj(proj_scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
+        timeperiod = "projection"
+
+    if not inplace:
+        return (data, timeperiod)
+    return timeperiod
