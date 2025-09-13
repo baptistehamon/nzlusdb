@@ -1,0 +1,34 @@
+project:
+  type: website
+  output-dir: _build
+
+# tell quarto to read the generated styles
+format:
+  html:
+    toc: true
+    theme: cosmo
+
+website:
+  title: nzlusdb
+  page-navigation: true
+  navbar:
+    # search: false
+    left:
+      - text: Home
+        href: index.md
+      - text: Method
+        href: method.md
+      - text: Land Uses
+        menu:
+          - text: Land Use
+            href: landuses/landuse.md
+    tools:
+      - icon: github
+        text: Source Code
+        href: https://github.com/baptistehamon/nzlusdb
+  page-footer:
+    left:
+      - text: NZ Land Use Suitability Database<br>© 2025, Baptiste Hamon
+    right: |
+      [![](/_static/logos/FT2050-full_colour.png){fig-alt="Food Transition 2050" height=75px}](https://www.canterbury.ac.nz)
+      [![](/_static/logos/UCBlack.png){fig-alt="University of Canterbury" height=75px}](https://www.canterbury.ac.nz)
