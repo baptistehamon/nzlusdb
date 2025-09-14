@@ -1,3 +1,7 @@
+[build-system]
+requires = ["flit_core >=3.11,<4"]
+build-backend = "flit_core.buildapi"
+
 [project]
 name = "nzlusdb"
 authors = [
@@ -6,7 +10,7 @@ authors = [
 maintainers = [
   { name="Baptiste Hamon", email="baptiste.hamon@pg.canterbury.ac.nz" },
 ]
-readme = "README.rst"
+readme = "README.md"
 keywords = ["NZLUSDB", "Land Use Suitability", "New Zeland", "Land Suitability Analysis", "Database"]
 license = {file = "LICENSE"}
 dynamic = ["description", "version"]
@@ -22,6 +26,7 @@ dev = [
   # dev tools
   "bump-my-version >=1.2.0",
   "codespell >=2.4.1",
+  "flit >=3.11",
   "pre-commit >=4.2.0",
   "ruff >=0.12.0",
 ]
