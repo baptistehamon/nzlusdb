@@ -18,16 +18,9 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      - name: Render Quarto
+      - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2
         with:
-          path: docs
-
-      - name: Publish to GitHub Pages
-        if : github.event_name != 'pull_request'
-        uses: quarto-dev/quarto-actions/publish@v2
-        with:
-          render: false
           path: docs
           target: gh-pages
         env:
