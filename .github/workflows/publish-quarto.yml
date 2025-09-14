@@ -1,10 +1,8 @@
 name: Render & Publish Quarto
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-  pull_request:
 
 jobs:
   build-deploy:
