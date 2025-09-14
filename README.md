@@ -1,1 +1,0 @@
-# NZLUSDB: New Zealand Land Use Suitability Database
