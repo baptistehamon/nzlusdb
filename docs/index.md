@@ -1,13 +1,4 @@
----
-title: New Zealand Land Use Suitability Database
----
-
-This is the home page of the NZLUSDB.
-
-# About the NZLUSDB
-
-Explanation of the NZLUSDB.
-
-# Usage
-
-Potential Usage.
+<iframe
+    src="comingsoon.html"
+    style="width: 100%; height: 40vh; border: none;"
+></iframe>
