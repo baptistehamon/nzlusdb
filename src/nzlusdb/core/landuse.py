@@ -8,6 +8,8 @@ from lsapy import LandSuitabilityAnalysis
 from nzlusdb import __version__
 from nzlusdb.suitability import criteria
 from nzlusdb.suitability.indicators import INDICATORPATH
+from nzlusdb.suitability.lsa import LSAPATH
+from nzlusdb.utils import write_netcdf
 
 
 class LusDb: ...
@@ -56,16 +58,16 @@ class LandUse:
             raise ValueError("Criteria must be a dictionary.")
         self._criteria = value
 
-    def run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
+    def run_lsa(self, scenario: str | list[str], resolution: str | list[str], **kwargs) -> xr.Dataset:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
 
         Parameters
         ----------
-        scenario : str, optional
-            Climate scenario to use (default is 'historical').
-        resolution : str, optional
-            Spatial resolution to use (default is '5km').
+        scenario : str or list of str
+            Scenario(s) to use (e.g., 'historical', 'ssp126', 'ssp585').
+        resolution : str or list of str
+            Resolution(s) to use (e.g., '5km', '1km').
         **kwargs : dict
             Additional keyword arguments to pass to `LandSuitabilityAnalysis.run()`.
 
@@ -74,6 +76,19 @@ class LandUse:
         xr.Dataset
             Computed land suitability dataset.
         """
+        if isinstance(scenario, str):
+            scenario = [scenario]
+        if isinstance(resolution, str):
+            resolution = [resolution]
+
+        for res in resolution:
+            for scen in scenario:
+                out = self._run_lsa(scenario=scen, resolution=res, **kwargs)
+                out_fp = LSAPATH / f"{self.name}_suitability_{scen}_{res}_{self.version}.nc"
+                write_netcdf(out, out_fp, progressbar=True, verbose=True)
+
+    def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
+        """Internal method to run LSA for a single scenario and resolution."""
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
