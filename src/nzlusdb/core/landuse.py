@@ -84,7 +84,9 @@ class LandUse:
         for res in resolution:
             for scen in scenario:
                 out = self._run_lsa(scenario=scen, resolution=res, **kwargs)
-                out_fp = LSAPATH / f"{self.name}_suitability_{scen}_{res}_{self.version}.nc"
+                out_fp = LSAPATH / self.name
+                out_fp.mkdir(parents=True, exist_ok=True)
+                out_fp /= f"{self.name}_suitability_{scen}_{res}_{self.version}.nc"
                 write_netcdf(out, out_fp, progressbar=True, verbose=True)
 
     def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
