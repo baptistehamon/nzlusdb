@@ -119,7 +119,7 @@ class LandUse:
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
     @staticmethod
-    def period_mmm_delta_robustness(data: xr.DataArray, var_name: str = None, delta_method="absolute") -> xr.Dataset:
+    def period_mmm_delta_robustness(data: xr.DataArray, delta_method="absolute") -> xr.Dataset:
         """
         Compute multi-model mean, future changes and associated robustness.
 
@@ -131,8 +131,6 @@ class LandUse:
         ----------
         data : xr.DataArray
             Input data array with dimensions including 'time', 'scenario', and 'realization'.
-        var_name : str, optional
-            Name of the variable for labeling purposes. If None, uses data.name or "Variable".
         delta_method : str, optional
             Method to compute changes: "absolute" for absolute changes, "relative" for percentage changes.
             Default is "absolute".
@@ -143,46 +141,53 @@ class LandUse:
             Dataset containing the multi-model mean of the variable for each period and scenario, the computed changes,
             and the robustness categories. A multi-index 'time' dimension combining 'period' and 'scenario' is used.
         """
-        if var_name is None:
-            var_name = data.name if data.name else "Variable"
+        data_hist = data.sel(time=slice("1980", "2009"))
+        data_near = data.sel(time=slice("2010", "2039"))
+        data_mid = data.sel(time=slice("2040", "2069"))
+        data_long = data.sel(time=slice("2070", "2099"))
 
-        data_hist = data.sel(time=slice("1980", "2009")).isel(scenario=0).drop_vars("scenario")
-        data_proj = xr.concat(
+        fractions = xr.concat(
             [
-                data.sel(time=slice("2010", "2039")).assign_coords(period="2010-2039"),  # near term
-                data.sel(time=slice("2040", "2069")).assign_coords(period="2040-2069"),  # mid term
-                data.sel(time=slice("2070", "2099")).assign_coords(period="2070-2099"),  # long term
+                xens.robustness_fractions(data_near, data_hist, test="ipcc-ar6-c").assign_coords(period="2010-2039"),
+                xens.robustness_fractions(data_mid, data_hist, test="ipcc-ar6-c").assign_coords(period="2040-2069"),
+                xens.robustness_fractions(data_long, data_hist, test="ipcc-ar6-c").assign_coords(period="2070-2099"),
             ],
             dim="period",
         )
 
-        fractions = xens.robustness_fractions(data_proj, data_hist, test="ipcc-ar6-c")
-        robustness = xens.robustness_categories(fractions).rename("robustness")
+        robustness_cat = xens.robustness_categories(fractions).rename("robustness_categories")
 
-        data_hist = data_hist.mean("time")
-        data_proj = data_proj.mean("time")
+        robustness_coeff = xr.concat(
+            [
+                xens.robustness_coefficient(data_near, data_hist.mean("realization")).assign_coords(period="2010-2039"),
+                xens.robustness_coefficient(data_mid, data_hist.mean("realization")).assign_coords(period="2040-2069"),
+                xens.robustness_coefficient(data_long, data_hist.mean("realization")).assign_coords(period="2070-2099"),
+            ],
+            dim="period",
+        ).rename("robustness_coefficient")
+
+        data_hist = data_hist.isel(scenario=0).drop_vars("scenario").mean("time")
+        data_proj = xr.concat(
+            [
+                data_near.assign_coords(period="2010-2039"),
+                data_mid.assign_coords(period="2040-2069"),
+                data_long.assign_coords(period="2070-2099"),
+            ],
+            dim="period",
+        ).mean("time")
 
         if delta_method == "absolute":
-            delta = (
-                (data_proj - data_hist)
-                .mean("realization")
-                .rename("change")
-                .assign_attrs(long_name=f"{var_name} Change")
-            )
+            delta = (data_proj - data_hist).mean("realization").rename("change")
             if "units" in data.attrs:
                 delta.attrs["units"] = data.attrs["units"]
         elif delta_method == "relative":
-            delta = (
-                ((data_proj - data_hist) / data_hist * 100)
-                .mean("realization")
-                .rename("change")
-                .assign_attrs(long_name=f"{var_name} Change", unit="%")
-            )
+            delta = ((data_proj - data_hist) / data_hist * 100).mean("realization").rename("change")
 
         delta = xr.merge(
             [
                 delta.stack(time=["period", "scenario"]),
-                robustness.stack(time=["period", "scenario"]),
+                robustness_cat.stack(time=["period", "scenario"]),
+                robustness_coeff.stack(time=["period", "scenario"]),
             ]
         )
 
