@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
+from xclim import ensembles as xens
 
 from nzlusdb import __version__
 from nzlusdb.core.climdataset import climateDS
@@ -116,6 +117,84 @@ class LandUse:
             ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
             proj.append(ds)
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
+
+    @staticmethod
+    def period_mmm_delta_robustness(data: xr.DataArray, var_name: str = None, delta_method="absolute") -> xr.Dataset:
+        """
+        Compute multi-model mean, future changes and associated robustness.
+
+        The computation are done using the 1980-2009 period as reference, and three future periods:
+        2010-2039 (near term), 2040-2069 (mid-term) and 2070-2099 (long term). The robustness is computed
+        following the IPCC AR6 methodology.
+
+        Parameters
+        ----------
+        data : xr.DataArray
+            Input data array with dimensions including 'time', 'scenario', and 'realization'.
+        var_name : str, optional
+            Name of the variable for labeling purposes. If None, uses data.name or "Variable".
+        delta_method : str, optional
+            Method to compute changes: "absolute" for absolute changes, "relative" for percentage changes.
+            Default is "absolute".
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing the multi-model mean of the variable for each period and scenario, the computed changes,
+            and the robustness categories. A multi-index 'time' dimension combining 'period' and 'scenario' is used.
+        """
+        if var_name is None:
+            var_name = data.name if data.name else "Variable"
+
+        data_hist = data.sel(time=slice("1980", "2009")).isel(scenario=0).drop_vars("scenario")
+        data_proj = xr.concat(
+            [
+                data.sel(time=slice("2010", "2039")).assign_coords(period="2010-2039"),  # near term
+                data.sel(time=slice("2040", "2069")).assign_coords(period="2040-2069"),  # mid term
+                data.sel(time=slice("2070", "2099")).assign_coords(period="2070-2099"),  # long term
+            ],
+            dim="period",
+        )
+
+        fractions = xens.robustness_fractions(data_proj, data_hist, test="ipcc-ar6-c")
+        robustness = xens.robustness_categories(fractions).rename("robustness")
+
+        data_hist = data_hist.mean("time")
+        data_proj = data_proj.mean("time")
+
+        if delta_method == "absolute":
+            delta = (
+                (data_proj - data_hist)
+                .mean("realization")
+                .rename("change")
+                .assign_attrs(long_name=f"{var_name} Change")
+            )
+            if "units" in data.attrs:
+                delta.attrs["units"] = data.attrs["units"]
+        elif delta_method == "relative":
+            delta = (
+                ((data_proj - data_hist) / data_hist * 100)
+                .mean("realization")
+                .rename("change")
+                .assign_attrs(long_name=f"{var_name} Change", unit="%")
+            )
+
+        delta = xr.merge(
+            [
+                delta.stack(time=["period", "scenario"]),
+                robustness.stack(time=["period", "scenario"]),
+            ]
+        )
+
+        data_hist = data_hist.assign_coords(period="1980-2009", scenario="historical").expand_dims(
+            ["period", "scenario"]
+        )
+
+        out = xr.concat(
+            [data_hist.stack(time=("period", "scenario")), data_proj.stack(time=("period", "scenario"))], dim="time"
+        ).mean("realization")
+
+        return xr.merge([out, delta])
 
     def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario and resolution."""
