@@ -194,7 +194,7 @@ class LandUse:
             [data_hist.stack(time=("period", "scenario")), data_proj.stack(time=("period", "scenario"))], dim="time"
         ).mean("realization")
 
-        return xr.merge([out, delta])
+        return xr.merge([out, delta]).reset_index("time")
 
     def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario and resolution."""
