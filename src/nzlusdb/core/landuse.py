@@ -6,6 +6,7 @@ import xarray as xr
 from lsapy import LandSuitabilityAnalysis
 
 from nzlusdb import __version__
+from nzlusdb.core.climdataset import climateDS
 from nzlusdb.suitability import criteria
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.suitability.lsa import LSAPATH
@@ -88,6 +89,33 @@ class LandUse:
                 out_fp.mkdir(parents=True, exist_ok=True)
                 out_fp /= f"{self.name}_suitability_{scen}_{res}_{self.version}.nc"
                 write_netcdf(out, out_fp, progressbar=True, verbose=True)
+
+    def open_suitability(self, resolution: str = "5km") -> xr.Dataset:
+        """Open suitability dataset for given resolution.
+
+        Parameters
+        ----------
+        resolution : str
+            Resolution of the suitability dataset (e.g., '5km', '1km').
+
+        Returns
+        -------
+        xr.Dataset
+            Suitability dataset.
+        """
+        fp = LSAPATH / self.name
+        files = list(fp.glob("*.nc"))
+
+        hist_scenario = climateDS[f"nzlusdb_{resolution}"].hist_scenario
+        proj_scenarios = climateDS[f"nzlusdb_{resolution}"].proj_scenario
+
+        hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
+        proj = []
+        for scen in proj_scenarios:
+            file = [f for f in files if scen in f.name][0]
+            ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
+            proj.append(ds)
+        return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
     def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario and resolution."""
