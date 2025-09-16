@@ -43,7 +43,7 @@ Issues = "https://github.com/baptistehamon/nzlusdb/issues"
 # Zenodo = ""
 
 [tool.bumpversion]
-current_version = "0.0-dev4"
+current_version = "0.0-dev5"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
