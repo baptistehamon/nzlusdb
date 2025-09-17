@@ -48,6 +48,7 @@ class LandUse:
         self.description = description
         self.version = version
         self._get_criteria_info()
+        self.path = LSAPATH / self.name
 
     @property
     def criteria(self):
@@ -86,10 +87,9 @@ class LandUse:
         for res in resolution:
             for scen in scenario:
                 out = self._run_lsa(scenario=scen, resolution=res, **kwargs)
-                out_fp = LSAPATH / self.name
-                out_fp.mkdir(parents=True, exist_ok=True)
-                out_fp /= f"{self.name}_suitability_{scen}_{res}_v{self.version}.nc"
-                write_netcdf(out, out_fp, progressbar=True, verbose=True)
+                self.path.mkdir(parents=True, exist_ok=True)
+                fp = self.path / f"{self.name}_suitability_{scen}_{res}_v{self.version}.nc"
+                write_netcdf(out, fp, progressbar=True, verbose=True)
 
     def open_suitability(self, resolution: str = "5km") -> xr.Dataset:
         """Open suitability dataset for given resolution.
@@ -104,8 +104,7 @@ class LandUse:
         xr.Dataset
             Suitability dataset.
         """
-        fp = LSAPATH / self.name
-        files = list(fp.glob("*.nc"))
+        files = list(self.path.glob("*.nc"))
 
         hist_scenario = climateDS[f"nzlusdb_{resolution}"].hist_scenario
         proj_scenarios = climateDS[f"nzlusdb_{resolution}"].proj_scenario
@@ -136,7 +135,7 @@ class LandUse:
         None
             Writes NetCDF and GeoTIFF files to the appropriate directory.
         """
-        fp = LSAPATH / self.name / f"{self.name}_suitability-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        fp = self.path / f"{self.name}_suitability-MMM-change-robustness_{resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
         data = data.set_index(time=["scenario", "period"])
@@ -257,6 +256,8 @@ class LandUse:
             "robustness_categories": "suitability-robustness-categories",
             "robustness_coefficient": "suitability-robustness-coefficient",
         }
+        path = self.path / "tiff"
+        path.mkdir(parents=True, exist_ok=True)
 
         for time in data.time.values:
             for var in ["suitability", "change", "robustness_categories", "robustness_coefficient"]:
@@ -268,9 +269,7 @@ class LandUse:
                     continue
                 da = data[var].sel(time=time)
                 da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat").rio.write_crs("EPSG:4326")
-                fp = LSAPATH / self.name / "tiff"
-                fp.mkdir(parents=True, exist_ok=True)
-                fp /= f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{resolution}_v{self.version}.tif"
+                fp = path / f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{resolution}_v{self.version}.tif"
                 da.rio.to_raster(fp)
 
     def _get_criteria_info(self) -> None:
