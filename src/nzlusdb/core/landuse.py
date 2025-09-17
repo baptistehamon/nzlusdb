@@ -117,25 +117,28 @@ class LandUse:
             proj.append(ds)
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
-    def write_output(self, data: xr.Dataset, resolution: str = "5km") -> None:
+    def write_output(self, data: xr.Dataset, variable: str, resolution: str = "5km") -> None:
         """
-        Write suitability data to NetCDF and GeoTIFF files.
+        Write data to NetCDF and GeoTIFF files.
 
-        The suitability should correspond to the output of `period_mmm_change_robustness`.
+        The method writes output from `period_mmm_change_robustness` to NetCDF and GeoTIFF files
+        for a given variable.
 
         Parameters
         ----------
         data : xr.Dataset
-            Dataset containing suitability data with dimensions including 'time'.
+            Dataset output from `period_mmm_change_robustness`.
+        variable : str
+            Name of the variable data corresponds to.
         resolution : str
-            Resolution of the suitability dataset (e.g., '5km', '1km').
+            Resolution of the output files (e.g., '5km', '1km').
 
         Returns
         -------
         None
-            Writes NetCDF and GeoTIFF files to the appropriate directory.
+            Writes NetCDF and GeoTIFF files to the appropriate directories.
         """
-        fp = self.path / f"{self.name}_suitability-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        fp = self.path / f"{self.name}_{variable}-MMM-change-robustness_{resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
         data = data.set_index(time=["scenario", "period"])
@@ -234,16 +237,21 @@ class LandUse:
         )
         return lsa.run(**kwargs)
 
-    def _write_output_as_raster(self, data: xr.Dataset, resolution: str = "5km") -> None:
+    def _write_output_as_raster(self, data: xr.Dataset, variable: str, resolution: str = "5km") -> None:
         """
-        Write suitability data to GeoTIFF files.
+        Write output data as GeoTIFF files.
 
-        The suitability should correspond to the output of `period_mmm_change_robustness`.
+        The data should correspond to the output of `period_mmm_change_robustness` with the multi-index
+        'time' dimension combining 'period' and 'scenario'.
 
         Parameters
         ----------
         data : xr.Dataset
-            Dataset containing suitability data with dimensions including 'time'.
+            Dataset output from `period_mmm_change_robustness`.
+        variable : str
+            Name of the variable data corresponds to.
+        resolution : str
+            Resolution of the output files (e.g., '5km', '1km').
 
         Returns
         -------
@@ -251,16 +259,16 @@ class LandUse:
             Writes GeoTIFF files to the appropriate directory.
         """
         vars_dict = {
-            "suitability": "suitability",
-            "change": "suitability-change",
-            "robustness_categories": "suitability-robustness-categories",
-            "robustness_coefficient": "suitability-robustness-coefficient",
+            variable: variable,
+            "change": f"{variable}-change",
+            "robustness_categories": f"{variable}-robustness-categories",
+            "robustness_coefficient": f"{variable}-robustness-coefficient",
         }
         path = self.path / "tiff"
         path.mkdir(parents=True, exist_ok=True)
 
         for time in data.time.values:
-            for var in ["suitability", "change", "robustness_categories", "robustness_coefficient"]:
+            for var in [variable, "change", "robustness_categories", "robustness_coefficient"]:
                 if time == ("historical", "1980-2009") and var in [
                     "change",
                     "robustness_categories",
