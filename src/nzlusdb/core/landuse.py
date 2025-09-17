@@ -88,7 +88,7 @@ class LandUse:
                 out = self._run_lsa(scenario=scen, resolution=res, **kwargs)
                 out_fp = LSAPATH / self.name
                 out_fp.mkdir(parents=True, exist_ok=True)
-                out_fp /= f"{self.name}_suitability_{scen}_{res}_{self.version}.nc"
+                out_fp /= f"{self.name}_suitability_{scen}_{res}_v{self.version}.nc"
                 write_netcdf(out, out_fp, progressbar=True, verbose=True)
 
     def open_suitability(self, resolution: str = "5km") -> xr.Dataset:
@@ -118,8 +118,32 @@ class LandUse:
             proj.append(ds)
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
+    def write_output(self, data: xr.Dataset, resolution: str = "5km") -> None:
+        """
+        Write suitability data to NetCDF and GeoTIFF files.
+
+        The suitability should correspond to the output of `period_mmm_change_robustness`.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            Dataset containing suitability data with dimensions including 'time'.
+        resolution : str
+            Resolution of the suitability dataset (e.g., '5km', '1km').
+
+        Returns
+        -------
+        None
+            Writes NetCDF and GeoTIFF files to the appropriate directory.
+        """
+        fp = LSAPATH / self.name / f"{self.name}_suitability-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        data.to_netcdf(fp)
+
+        data = data.set_index(time=["scenario", "period"])
+        self._write_output_as_raster(data, resolution=resolution)
+
     @staticmethod
-    def period_mmm_delta_robustness(data: xr.DataArray, delta_method="absolute") -> xr.Dataset:
+    def period_mmm_change_robustness(data: xr.DataArray, delta_method="absolute") -> xr.Dataset:
         """
         Compute multi-model mean, future changes and associated robustness.
 
@@ -210,6 +234,44 @@ class LandUse:
             criteria=self._load_criteria_indicators(scenario=scenario, resolution=resolution),
         )
         return lsa.run(**kwargs)
+
+    def _write_output_as_raster(self, data: xr.Dataset, resolution: str = "5km") -> None:
+        """
+        Write suitability data to GeoTIFF files.
+
+        The suitability should correspond to the output of `period_mmm_change_robustness`.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            Dataset containing suitability data with dimensions including 'time'.
+
+        Returns
+        -------
+        None
+            Writes GeoTIFF files to the appropriate directory.
+        """
+        vars_dict = {
+            "suitability": "suitability",
+            "change": "suitability-change",
+            "robustness_categories": "suitability-robustness-categories",
+            "robustness_coefficient": "suitability-robustness-coefficient",
+        }
+
+        for time in data.time.values:
+            for var in ["suitability", "change", "robustness_categories", "robustness_coefficient"]:
+                if time == ("historical", "1980-2009") and var in [
+                    "change",
+                    "robustness_categories",
+                    "robustness_coefficient",
+                ]:
+                    continue
+                da = data[var].sel(time=time)
+                da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat").rio.write_crs("EPSG:4326")
+                fp = LSAPATH / self.name / "tiff"
+                fp.mkdir(parents=True, exist_ok=True)
+                fp /= f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{resolution}_v{self.version}.tif"
+                da.rio.to_raster(fp)
 
     def _get_criteria_info(self) -> None:
         """Get criteria and criteria indicators from criteria module."""
