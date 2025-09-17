@@ -19,6 +19,7 @@ dependencies = [
   "lsapy >=0.2.0",
   "matplotlib >=3.9.0",
   "netCDF4 >=1.7.0",
+  "rioxarray >=0.17.0",
   "xclim >=0.55.1"
 ]
 
