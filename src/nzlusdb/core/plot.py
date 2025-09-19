@@ -30,6 +30,31 @@ def plt_robustness_categories(da, ax):
         )
 
 
+def robustness_categories_lgd(ax, **kwargs):
+    r"""
+    Add a legend for robustness categories.
+
+    The robustness categories are represented by different hatching patterns:
+    - No hatching: Robust signal
+    - '\\\\\': No change or no signal
+    - 'xxx': Conflicting signal
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axis on which to add the legend.
+    **kwargs : dict
+        Additional keyword arguments to pass to `matplotlib.pyplot.legend()`.
+    """
+    handles = [
+        mpl.patches.Rectangle((0, 0), 2, 2, fill=False, hatch=h, label=lbl)
+        for h, lbl in zip(
+            ["", "\\\\\\", "xxx"], ["Robust signal", "No change or no signal", "Conflicting signal"], strict=False
+        )
+    ]
+    ax.legend(handles=handles, **kwargs)
+
+
 def _plt_map(data, ax, title, **kwargs):
     data.plot(ax=ax, add_colorbar=False, **kwargs)
     ax.set_title(title)
