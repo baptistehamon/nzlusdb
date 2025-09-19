@@ -115,3 +115,54 @@ def plt_scenario_maps(
         plt_robustness_categories(ds.sel(time=(scenario, "2010-2039")).robustness_categories, axs[1])
         plt_robustness_categories(ds.sel(time=(scenario, "2040-2069")).robustness_categories, axs[2])
         plt_robustness_categories(ds.sel(time=(scenario, "2070-2099")).robustness_categories, axs[3])
+
+
+def plt_timeline(ax, color="black"):
+    """
+    Create a timeline plot indicating historical and projected periods.
+
+    The function draws a horizontal timeline with labeled segments for the historical period (1980-2009)
+    and three projected periods (2010-2039, 2040-2069, 2070-2099).
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axis on which to draw the timeline.
+    color : str, optional
+        Color of the timeline and text. Default is "black".
+    """
+    ax.plot([0, 1], [0.5, 0.5], color=color, linewidth=2)
+    ax.text(
+        0.125,
+        0.5,
+        "Historical",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        bbox=dict(facecolor="white", edgecolor="none", pad=5),
+        color=color,
+        fontweight="bold",
+        fontstyle="italic",
+    )
+    ax.text(
+        0.625,
+        0.5,
+        "Projected Suitability",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        bbox=dict(facecolor="white", edgecolor="none", pad=5),
+        color=color,
+        fontweight="bold",
+        fontstyle="italic",
+    )
+    ax.text(0.125, 0.3, "1980-2009", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
+    ax.text(0.375, 0.3, "2010-2039", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
+    ax.text(0.625, 0.3, "2040-2069", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
+    ax.text(0.875, 0.3, "2070-2099", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
+    ax.plot([0, 0], [0.45, 0.55], color=color, linewidth=2)
+    ax.plot([0.25, 0.25], [0.45, 0.55], color=color, linewidth=2)
+    ax.plot([1, 1], [0.45, 0.55], color=color, linewidth=2)
+    ax.set_xlim(-0.01, 1.01)
+    ax.set_ylim(0.25, 0.75)
+    ax.axis("off")
