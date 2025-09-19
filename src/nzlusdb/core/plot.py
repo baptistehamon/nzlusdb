@@ -2,6 +2,7 @@
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -316,3 +317,28 @@ def summary_figure(
     )
 
     _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels=legend_labels, robustness=robustness)
+
+
+def cmap_boundnorm(bounds: list, cmap: str, **kwargs):
+    """
+    Create a BoundaryNorm for given bounds and colormap.
+
+    Parameters
+    ----------
+    bounds : list
+        List of boundary values for the normalization.
+    cmap : str
+        Name of the colormap to use.
+    **kwargs : dict
+        Additional keyword arguments to pass to `matplotlib.colors.BoundaryNorm`.
+
+    Returns
+    -------
+    norm : matplotlib.colors.BoundaryNorm
+        The created BoundaryNorm instance.
+    """
+    return mpl.colors.BoundaryNorm(bounds, mpl.colormaps[cmap].N, **kwargs)
+
+
+suitability_boundnorm = cmap_boundnorm(bounds=np.arange(0, 1.1, 0.1), cmap="cividis")
+change_boundnorm = cmap_boundnorm(bounds=np.arange(-0.3, 0.4, 0.1), cmap="PiYG", extend="both")
