@@ -2,6 +2,7 @@
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def plt_robustness_categories(da, ax):
@@ -191,3 +192,127 @@ def plt_timeline(ax, color="black"):
     ax.set_xlim(-0.01, 1.01)
     ax.set_ylim(0.25, 0.75)
     ax.axis("off")
+
+
+def summary_figure(
+    ds,
+    suptitle: str,
+    hist_var: str = "suitability",
+    proj_var: str = "suitability",
+    scenarios: tuple = ("ssp245", "ssp585"),
+    hist_kw: dict | None = None,
+    proj_kw: dict | None = None,
+    legend_labels: dict | None = None,
+    robustness: bool = False,
+):
+    """
+    Create a summary figure with historical and projected maps for two scenarios.
+
+    The function generates a comprehensive figure that includes historical and projected maps for two specified
+    scenarios. Each scenario is represented by a row of four maps: one for the historical period (1980-2009) and three
+    for future periods (2010-2039, 2040-2069, 2070-2099). A timeline is displayed at the top, and legends are provided
+    for the color scales and robustness categories if applicable.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing the data to be plotted, with a multi-index time dimension ('scenario', 'period').
+        Scenario name should correspond to 'historical' for the 1980-2009 period.
+    suptitle : str
+        The main title for the entire figure.
+    hist_var : str, optional
+        The variable name to be plotted for the historical period (1980-2009). Default is "suitability".
+    proj_var : str, optional
+        The variable name to be plotted for the projected periods. Default is "suitability".
+    scenarios : tuple of str, optional
+        A tuple containing the names of the two scenarios to be plotted. Default is ("ssp245", "ssp585").
+    hist_kw : dict, optional
+        Additional keyword arguments to pass to `_plt_map` for the historical period maps.
+    proj_kw : dict, optional
+        Additional keyword arguments to pass to `_plt_map` for the projected period maps.
+    legend_labels : dict, optional
+        A dictionary mapping variable names to custom labels for the legends. If not provided, variable names
+        will be capitalized and used as labels.
+    robustness : bool, optional
+        If True, overlays robustness categories on the projected period maps using `plt_robustness_categories`.
+    """
+
+    def _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels: dict | None = None, robustness: bool = False):
+        if labels is None:
+            hist_var = hist_var.capitalize()
+            proj_var = proj_var.capitalize()
+        else:
+            hist_var = labels.get(hist_var, hist_var.capitalize())
+            proj_var = labels.get(proj_var, proj_var.capitalize())
+
+        fig.colorbar(mpl.cm.ScalarMappable(**hist_kw), cax=axd["J"], orientation="horizontal", label=hist_var)
+
+        if nlgd == 1:  # noqa: PLR2004
+            cbbox = axd["J"].get_position()
+            axd["J"].set_position(  # reduce size and center
+                [cbbox.x0 + cbbox.width / 2 * 0.5, cbbox.y0 + cbbox.height / 2, cbbox.width * 0.5, cbbox.height]
+            )
+        elif nlgd == 2:  # noqa: PLR2004
+            if not robustness:
+                fig.colorbar(mpl.cm.ScalarMappable(**proj_kw), cax=axd["K"], orientation="horizontal", label=proj_var)
+            else:
+                robustness_categories_lgd(
+                    axd["K"], loc="lower center", frameon=False, ncol=2, bbox_to_anchor=(0.5, -1.5)
+                )
+        else:
+            divider = make_axes_locatable(axd["K"])
+            cax_cbar = divider.append_axes("left", size="100%", pad=0.05)
+            fig.colorbar(mpl.cm.ScalarMappable(**proj_kw), cax=cax_cbar, orientation="horizontal", label=proj_var)
+            cax_left = divider.append_axes("left", size="50%", pad=0.05)
+            cax_left.axis("off")
+            cax_robustness = divider.append_axes("right", size="100%", pad=0.05)
+            robustness_categories_lgd(
+                cax_robustness, loc="lower center", frameon=False, ncol=2, bbox_to_anchor=(0, -1.5)
+            )
+            cax_robustness.axis("off")
+        if (nlgd == 2 and robustness) or nlgd == 3:  # noqa: PLR2004
+            axd["K"].axis("off")
+
+    if hist_kw is None:
+        hist_kw = {}
+    if proj_kw is None:
+        proj_kw = {}
+
+    if hist_var == proj_var and not robustness:
+        mosaic, nlgd = "AAAA;BCDE;FGHI;.JJ.", 1
+    elif hist_var == proj_var and robustness:
+        mosaic, nlgd = "AAAA;BCDE;FGHI;.JK.", 2
+    elif hist_var != proj_var and not robustness:
+        mosaic, nlgd = "AAAA;BCDE;FGHI;J.K.", 2
+    else:
+        mosaic, nlgd = "AAAA;BCDE;FGHI;JKKK", 3
+
+    fig = plt.figure(figsize=(18, 12))
+    axd = fig.subplot_mosaic(mosaic, height_ratios=[0.2, 1, 1, 0.05])
+    fig.subplots_adjust(left=0.05, right=1, top=0.95, bottom=0.05, hspace=0.05, wspace=0.05)
+    fig.suptitle(suptitle, fontweight="bold", fontsize=12)
+    plt_timeline(axd["A"], "#b0b0b0")
+    plt_scenario_maps(
+        ds,
+        [axd["B"], axd["C"], axd["D"], axd["E"]],
+        scenarios[0],
+        hist_var=hist_var,
+        proj_var=proj_var,
+        scenario_label=scenarios[0].upper(),
+        hist_kw=hist_kw,
+        proj_kw=proj_kw,
+        robustness=robustness,
+    )
+    plt_scenario_maps(
+        ds,
+        [axd["F"], axd["G"], axd["H"], axd["I"]],
+        scenarios[1],
+        hist_var=hist_var,
+        proj_var=proj_var,
+        scenario_label=scenarios[1].upper(),
+        hist_kw=hist_kw,
+        proj_kw=proj_kw,
+        robustness=robustness,
+    )
+
+    _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels=legend_labels, robustness=robustness)
