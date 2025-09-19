@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+__all__ = [
+    "plt_robustness_categories",
+    "robustness_categories_lgd",
+    "plt_scenario_maps",
+    "plt_timeline",
+    "summary_figure",
+    "cmap_boundnorm",
+    "suitability_boundnorm",
+    "change_boundnorm",
+]
+
 
 def plt_robustness_categories(da, ax):
     r"""
