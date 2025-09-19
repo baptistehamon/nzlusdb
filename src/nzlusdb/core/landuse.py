@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import matplotlib.pyplot as plt
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
 from xclim import ensembles as xens
 
-from nzlusdb import __version__
+from nzlusdb import DOCPATH, __version__
 from nzlusdb.core.climdataset import climateDS
+from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.suitability.lsa import LSAPATH
@@ -143,6 +145,49 @@ class LandUse:
 
         data = data.set_index(time=["scenario", "period"])
         self._write_output_as_raster(data, resolution=resolution)
+
+    def make_summary_figs(self, data, resolution: str = "5km") -> None:
+        """
+        Generate and save summary figures.
+
+        Two figure are made. The first shows historical and projected suitability, the second shows
+        historical suitability and projected changes with robustness. In each figure, the historical
+        period is 1980-2009 and the projected periods are 2010-2039, 2040-2069 and 2070-2099 for the
+        SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            Dataset output from `period_mmm_change_robustness`, with the multi-index 'time' dimension
+            combining 'period' and 'scenario'.
+        resolution : str
+            Resolution of the output files (e.g., '5km', '1km').
+        """
+        fp = DOCPATH / "_static/summary_figs"
+        fp.mkdir(parents=True, exist_ok=True)
+
+        summary_figure(
+            data,
+            f"Historical and Projected Suitability for {self.name.capitalize()}",
+            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
+            proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
+        )
+        fname = f"{self.name}_suitability_SSP245-SSP585_{resolution}_{self.version}.png"
+        plt.savefig(fp / fname, dpi=300)
+        plt.close()
+
+        summary_figure(
+            data,
+            f"Historical Suitability and Projected Changes for {self.name.capitalize()}",
+            proj_var="change",
+            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
+            proj_kw={"norm": change_boundnorm, "cmap": "PiYG"},
+            legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
+            robustness=True,
+        )
+        fname = f"{self.name}_suitability_change_SSP245-SSP585_{resolution}_{self.version}.png"
+        plt.savefig(fp / fname, dpi=300)
+        plt.close()
 
     @staticmethod
     def period_mmm_change_robustness(data: xr.DataArray, delta_method="absolute") -> xr.Dataset:
@@ -345,7 +390,3 @@ class LandUse:
                 if val.category == "climate":
                     val.indicator = val.indicator.interp_like(target, method="nearest")
         return sc
-
-    def write_data(): ...
-
-    def make_plot(): ...
