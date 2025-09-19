@@ -262,7 +262,7 @@ def summary_figure(
         if nlgd == 1:  # noqa: PLR2004
             cbbox = axd["J"].get_position()
             axd["J"].set_position(  # reduce size and center
-                [cbbox.x0 + cbbox.width / 2 * 0.5, cbbox.y0 + cbbox.height / 2, cbbox.width * 0.5, cbbox.height]
+                [cbbox.x0 + cbbox.width / 2 * 0.5, cbbox.y0, cbbox.width * 0.5, cbbox.height]
             )
         elif nlgd == 2:  # noqa: PLR2004
             if not robustness:
