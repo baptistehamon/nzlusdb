@@ -3,9 +3,10 @@ name: Render & Publish Quarto
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
-  build-deploy:
+  quarto-build-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,10 +17,34 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      - name: Render and Publish
+      - name: Render Quarto
+        uses: quarto-dev/quarto-actions/render@v2
+        with:
+          path: docs
+
+      - name: Publish to GitHub Pages
+        if : github.event_name != 'pull_request'
         uses: quarto-dev/quarto-actions/publish@v2
         with:
+          render: false
           path: docs
           target: gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Netlify PR Preview
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './docs/_build'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-github-deployment: false
+          enable-commit-status: false
+          enable-commit-comment: false
+          enable-pull-request-comment: true
+          overwrites-pull-request-comment: true
+          alias: deploy-preview-${{ github.event.number }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
