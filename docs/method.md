@@ -1,4 +1,11 @@
-<iframe
-    src="comingsoon.html"
-    style="width: 100%; height: 40vh; border: none;"
-></iframe>
+---
+title: Land Suitability Analysis
+---
+
+## Concept
+
+Introduction to LSA concept.
+
+## Approach
+
+Short description of LSA approach used.
