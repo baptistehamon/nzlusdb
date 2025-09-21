@@ -1,0 +1,58 @@
+[
+  {
+    "objectID": "method.html",
+    "href": "method.html",
+    "title": "Land Suitability Analysis",
+    "section": "",
+    "text": "Introduction to LSA concept."
+  },
+  {
+    "objectID": "method.html#concept",
+    "href": "method.html#concept",
+    "title": "Land Suitability Analysis",
+    "section": "",
+    "text": "Introduction to LSA concept."
+  },
+  {
+    "objectID": "method.html#approach",
+    "href": "method.html#approach",
+    "title": "Land Suitability Analysis",
+    "section": "Approach",
+    "text": "Approach\nShort description of LSA approach used."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "",
+    "text": "Description of the New Zealand Land Use Suitability Database."
+  },
+  {
+    "objectID": "index.html#about-the-nzlusdb",
+    "href": "index.html#about-the-nzlusdb",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "",
+    "text": "Description of the New Zealand Land Use Suitability Database."
+  },
+  {
+    "objectID": "landuses/landuse.html",
+    "href": "landuses/landuse.html",
+    "title": "Land Use",
+    "section": "",
+    "text": "Figures of historical and projected suitability, and projected changes."
+  },
+  {
+    "objectID": "landuses/landuse.html#historical-and-projected-suitability",
+    "href": "landuses/landuse.html#historical-and-projected-suitability",
+    "title": "Land Use",
+    "section": "",
+    "text": "Figures of historical and projected suitability, and projected changes."
+  },
+  {
+    "objectID": "landuses/landuse.html#suitability-criteria",
+    "href": "landuses/landuse.html#suitability-criteria",
+    "title": "Land Use",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nList of criteria used."
+  }
+]
