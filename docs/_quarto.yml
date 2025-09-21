@@ -9,10 +9,11 @@ format:
     theme: cosmo
 
 website:
-  title: nzlusdb
+  title: NZ Land Use Suitability Database
   page-navigation: true
   navbar:
     # search: false
+    title: nzlusdb
     left:
       - text: Home
         href: index.md
@@ -27,8 +28,8 @@ website:
         text: Source Code
         href: https://github.com/baptistehamon/nzlusdb
   page-footer:
-    left:
-      - text: NZ Land Use Suitability Database<br>© 2025, Baptiste Hamon
+    left: |
+      NZ Land Use Suitability Database<br>© 2025, <a href="https://www.linkedin.com/in/baptiste-hamon-75378114b" target="_blank">Baptiste Hamon</a>
     right: |
       [![](/_static/logos/FT2050-full_colour.png){fig-alt="Food Transition 2050" height=75px}](https://www.canterbury.ac.nz)
       [![](/_static/logos/UCBlack.png){fig-alt="University of Canterbury" height=75px}](https://www.canterbury.ac.nz)
