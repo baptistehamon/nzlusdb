@@ -10,7 +10,7 @@ from lsapy import LandSuitabilityAnalysis
 from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
-from nzlusdb import DOCPATH, __version__, nzlusdb_attrs
+from nzlusdb import DOCPATH, nzlusdb_attrs, release
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
@@ -47,7 +47,7 @@ class LandUse:
         `run_lsa` is called.
     """
 
-    def __init__(self, name: str, description: str = "", resolution: str = "5km", version: str = __version__):
+    def __init__(self, name: str, description: str = "", resolution: str = "5km", version: str = release):
         self.name = name
         self.description = description
         self.resolution = resolution
