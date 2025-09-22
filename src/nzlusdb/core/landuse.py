@@ -100,7 +100,7 @@ class LandUse:
 
         for res in resolution:
             self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"])
+            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], agg_methods="wgmean")
             data = self.open_suitability()
             ds = self.period_mmm_change_robustness(data, delta_method="absolute")
             self.write_output(ds, variable="suitability")
