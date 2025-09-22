@@ -19,9 +19,6 @@ from nzlusdb.suitability.lsa import LSAPATH
 from nzlusdb.utils import write_netcdf
 
 
-class LusDb: ...
-
-
 class LandUse:
     """
     Land Use class for NZLUSDB.
@@ -41,6 +38,8 @@ class LandUse:
         Name of the land use.
     description : str
         Description of the land use.
+    resolution : str
+        Resolution of the land use analysis ('1km' or '5km').
     version : str
         Version of the land use analysis.
     criteria : dict
@@ -48,9 +47,10 @@ class LandUse:
         `run_lsa` is called.
     """
 
-    def __init__(self, name: str, description: str = "", version: str = __version__):
+    def __init__(self, name: str, description: str = "", resolution: str = "5km", version: str = __version__):
         self.name = name
         self.description = description
+        self.resolution = resolution
         self.version = version
         self._get_criteria_info()
         self.path = LSAPATH / self.name
@@ -66,7 +66,18 @@ class LandUse:
             raise ValueError("Criteria must be a dictionary.")
         self._criteria = value
 
-    def run_lsa(self, scenario: str | list[str], resolution: str | list[str], **kwargs) -> xr.Dataset:
+    @property
+    def resolution(self):
+        """Resolution of the land use analysis."""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value: str):
+        if value not in ["1km", "5km"]:
+            raise ValueError("Resolution must be '1km' or '5km'.")
+        self._resolution = value
+
+    def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
 
@@ -74,8 +85,6 @@ class LandUse:
         ----------
         scenario : str or list of str
             Scenario(s) to use (e.g., 'historical', 'ssp126', 'ssp585').
-        resolution : str or list of str
-            Resolution(s) to use (e.g., '5km', '1km').
         **kwargs : dict
             Additional keyword arguments to pass to `LandSuitabilityAnalysis.run()`.
 
@@ -86,24 +95,16 @@ class LandUse:
         """
         if isinstance(scenario, str):
             scenario = [scenario]
-        if isinstance(resolution, str):
-            resolution = [resolution]
 
-        for res in resolution:
-            for scen in scenario:
-                out = self._run_lsa(scenario=scen, resolution=res, **kwargs)
-                self.path.mkdir(parents=True, exist_ok=True)
-                fp = self.path / f"{self.name}_suitability_{scen}_{res}_v{self.version}.nc"
-                write_netcdf(out, fp, progressbar=True, verbose=True)
+        for scen in scenario:
+            out = self._run_lsa(scenario=scen, **kwargs)
+            self.path.mkdir(parents=True, exist_ok=True)
+            fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+            write_netcdf(out, fp, progressbar=True, verbose=True)
 
-    def open_suitability(self, resolution: str = "5km") -> xr.Dataset:
+    def open_suitability(self) -> xr.Dataset:
         """
         Open suitability dataset for given resolution.
-
-        Parameters
-        ----------
-        resolution : str
-            Resolution of the suitability dataset (e.g., '5km', '1km').
 
         Returns
         -------
@@ -112,8 +113,8 @@ class LandUse:
         """
         files = list(self.path.glob("*.nc"))
 
-        hist_scenario = climateDS[f"nzlusdb_{resolution}"].hist_scenario
-        proj_scenarios = climateDS[f"nzlusdb_{resolution}"].proj_scenario
+        hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
+        proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
 
         hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
         proj = []
@@ -123,7 +124,7 @@ class LandUse:
             proj.append(ds)
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
-    def open_mmm_data(self, variable: str = "suitability", resolution: str = "5km") -> xr.Dataset:
+    def open_mmm_data(self, variable: str = "suitability") -> xr.Dataset:
         """
         Open multi-model mean change and robustness dataset for given variable and resolution.
 
@@ -131,18 +132,16 @@ class LandUse:
         ----------
         variable : str
             Name of the variable data corresponds to (default is 'suitability').
-        resolution : str
-            Resolution of the dataset (e.g., '5km', '1km').
 
         Returns
         -------
         xr.Dataset
             Multi-model mean change and robustness dataset.
         """
-        file = f"{self.name}_{variable}-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        file = f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         return xr.open_dataset(self.path / file)
 
-    def write_output(self, data: xr.Dataset, variable: str, resolution: str = "5km") -> None:
+    def write_output(self, data: xr.Dataset, variable: str) -> None:
         """
         Write data to NetCDF and GeoTIFF files.
 
@@ -155,21 +154,19 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
-        resolution : str
-            Resolution of the output files (e.g., '5km', '1km').
 
         Returns
         -------
         None
             Writes NetCDF and GeoTIFF files to the appropriate directories.
         """
-        fp = self.path / f"{self.name}_{variable}-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        fp = self.path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
         data = data.set_index(time=["scenario", "period"])
-        self._write_output_as_raster(data, resolution=resolution)
+        self._write_output_as_raster(data)
 
-    def summary_figs(self, data, resolution: str = "5km") -> None:
+    def summary_figs(self, data) -> None:
         """
         Generate and save summary figures.
 
@@ -183,8 +180,6 @@ class LandUse:
         data : xr.Dataset
             Dataset output from `period_mmm_change_robustness`, with the multi-index 'time' dimension
             combining 'period' and 'scenario'.
-        resolution : str
-            Resolution of the output files (e.g., '5km', '1km').
         """
         fp = DOCPATH / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
@@ -195,7 +190,7 @@ class LandUse:
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
         )
-        fname = f"{self.name}_suitability_SSP245-SSP585_{resolution}_{self.version}.png"
+        fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
@@ -208,19 +203,12 @@ class LandUse:
             legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
             robustness=True,
         )
-        fname = f"{self.name}_suitability_change_SSP245-SSP585_{resolution}_{self.version}.png"
+        fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
-    def stats_summary(self, resolution: str = "5km") -> None:
-        """
-        Generate and save national and regional suitability statistics summary.
-
-        Parameters
-        ----------
-        resolution : str
-            Resolution to use (e.g., '5km', '1km').
-        """
+    def stats_summary(self) -> None:
+        """Generate and save national and regional suitability statistics summary."""
 
         def _add_coords(df, mapping):
             df.insert(1, "period", df["time"].map(mapping["period"]))
@@ -230,7 +218,7 @@ class LandUse:
         agmask = self._agriculture_mask()
         regions = gpd.read_file(r"R:\DATA\GIS-NZ\statsnz-regional-council-2022-clipped-generalised").to_crs(epsg=4326)
 
-        data = self.open_mmm_data(resolution=resolution)
+        data = self.open_mmm_data()
         data = data.where(agmask == 1)
 
         mapping = {
@@ -238,7 +226,7 @@ class LandUse:
             "period": {time: period for time, period in zip(data["time"].values, data["period"].values)},
         }
 
-        cell_area = (int(resolution.replace("km", "")) ** 2, "km2")
+        cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
 
         args = {
             "on_vars": ["suitability"],
@@ -264,10 +252,12 @@ class LandUse:
         )
         reg_stats = _add_coords(reg_stats, mapping)
         nz_stats.to_csv(
-            self.path / f"{self.name}_national_suitability_stats_summary_{resolution}_v{self.version}.csv", index=False
+            self.path / f"{self.name}_national_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            index=False,
         )
         reg_stats.to_csv(
-            self.path / f"{self.name}_regional_suitability_stats_summary_{resolution}_v{self.version}.csv", index=False
+            self.path / f"{self.name}_regional_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            index=False,
         )
 
     @staticmethod
@@ -353,17 +343,17 @@ class LandUse:
 
         return xr.merge([out, delta]).reset_index("time")
 
-    def _run_lsa(self, scenario: str = "historical", resolution: str = "5km", **kwargs) -> xr.Dataset:
-        """Internal method to run LSA for a single scenario and resolution."""
+    def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
+        """Internal method to run LSA for a single scenario."""
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
             long_name=f"{self.name.capitalize()} Suitability",
-            criteria=self._load_criteria_indicators(scenario=scenario, resolution=resolution),
+            criteria=self._load_criteria_indicators(scenario=scenario),
         )
         return lsa.run(**kwargs)
 
-    def _write_output_as_raster(self, data: xr.Dataset, variable: str, resolution: str = "5km") -> None:
+    def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
         """
         Write output data as GeoTIFF files.
 
@@ -376,8 +366,6 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
-        resolution : str
-            Resolution of the output files (e.g., '5km', '1km').
 
         Returns
         -------
@@ -403,7 +391,7 @@ class LandUse:
                     continue
                 da = data[var].sel(time=time)
                 da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat").rio.write_crs("EPSG:4326")
-                fp = path / f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{resolution}_v{self.version}.tif"
+                fp = path / f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{self.resolution}_v{self.version}.tif"
                 da.rio.to_raster(fp)
 
     def _get_criteria_info(self) -> None:
@@ -419,9 +407,9 @@ class LandUse:
         else:
             raise ValueError(f"Criteria indicators '{crop_criteria_indicators}' not found in criteria module.")
 
-    def _load_criteria_indicators(self, scenario, resolution) -> dict:
+    def _load_criteria_indicators(self, scenario) -> dict:
         """Load criteria indicators based on scenario and resolution."""
-        clim_res = {"5km": "25km", "1km": "5km"}.get(resolution, resolution)
+        clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
         sc = self.criteria
         for key, val in sc.items():
             if key in self._criteria_indicators:
@@ -434,7 +422,7 @@ class LandUse:
                 if val.category == "climate":
                     file = f"{file}_{scenario}_{clim_res}.nc"
                 elif val.category == "soilTerrain":
-                    file = f"{file}_NZ{resolution}.nc"
+                    file = f"{file}_NZ{self.resolution}.nc"
                 else:
                     raise ValueError(f"Unknown category '{val.category}' for criteria '{key}'.")
 
@@ -443,6 +431,25 @@ class LandUse:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
         sc = self._interpolate_indicator(sc)
         return sc
+
+    def _agriculture_mask(self) -> xr.DataArray:
+        """Create a mask for agricultural land use areas."""
+        # conservation land areas
+        doc = xr.open_dataarray(
+            rf"R:\DATA\GIS-NZ\lds-doc-public-conservation-areas\doc-public-conservation-areas_NZ{self.resolution}.nc"
+        )
+        doc = doc.sel(lat=slice(-34, -48), lon=slice(166, 180))  # crop to NZ
+        doc_mask = xr.where(doc.isnull(), 1, 0)
+        # land use map
+        lum = xr.open_dataarray(
+            rf"R:\DATA\GIS-NZ\mfe-lucas-nz-land-use-map-2020-v003\lucas-nz-land-use-map-2020_NZ{self.resolution}.nc"
+        )
+        # non-agricultural land use classes
+        # Natural forest 71, open water 79, wetland 80, settlement 81, other 82
+        # 71=0, 79=8, 80=9, 81=10, 82=11 : see LUM attrs
+        lum_mask = xr.where(lum.isin([0, 8, 9, 10, 11]), 0, 1)
+
+        return xr.where((doc_mask + lum_mask) > 0, 1, 0)
 
     @staticmethod
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
@@ -471,22 +478,3 @@ class LandUse:
                 if val.category == "climate":
                     val.indicator = val.indicator.interp_like(target, method="nearest")
         return sc
-
-    @staticmethod
-    def _agriculture_mask():
-        # conservation land areas
-        doc = xr.open_dataarray(
-            r"R:\DATA\GIS-NZ\lds-doc-public-conservation-areas\doc-public-conservation-areas_NZ5km.nc"
-        )
-        doc = doc.sel(lat=slice(-34, -48), lon=slice(166, 180))  # crop to NZ
-        doc_mask = xr.where(doc.isnull(), 1, 0)
-        # land use map
-        lum = xr.open_dataarray(
-            r"R:\DATA\GIS-NZ\mfe-lucas-nz-land-use-map-2020-v003\lucas-nz-land-use-map-2020_NZ5km.nc"
-        )
-        # non-agricultural land use classes
-        # Natural forest 71, open water 79, wetland 80, settlement 81, other 82
-        # 71=0, 79=8, 80=9, 81=10, 82=11 : see LUM attrs
-        lum_mask = xr.where(lum.isin([0, 8, 9, 10, 11]), 0, 1)
-
-        return xr.where((doc_mask + lum_mask) > 0, 1, 0)
