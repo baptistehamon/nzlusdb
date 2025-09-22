@@ -166,7 +166,7 @@ class LandUse:
         data = data.set_index(time=["scenario", "period"])
         self._write_output_as_raster(data)
 
-    def summary_figs(self, data) -> None:
+    def summary_figs(self) -> None:
         """
         Generate and save summary figures.
 
@@ -174,13 +174,9 @@ class LandUse:
         historical suitability and projected changes with robustness. In each figure, the historical
         period is 1980-2009 and the projected periods are 2010-2039, 2040-2069 and 2070-2099 for the
         SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
-
-        Parameters
-        ----------
-        data : xr.Dataset
-            Dataset output from `period_mmm_change_robustness`, with the multi-index 'time' dimension
-            combining 'period' and 'scenario'.
         """
+        data = self.open_mmm_data()
+
         fp = DOCPATH / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
 
