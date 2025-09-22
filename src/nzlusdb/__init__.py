@@ -1,4 +1,4 @@
-"""Python Code of New Zealand Land Use Database (NZLUSDB)."""
+"""Python Code of New Zealand Land Use Suitability Database (NZLUSDB)."""
 
 from pathlib import Path
 
@@ -10,3 +10,11 @@ __all__ = ["ROOTPATH"]
 
 ROOTPATH = Path(r"R:\DATA\NZLUSDB")
 DOCPATH = Path(__file__).parent.parent.parent / "docs"
+
+nzlusdb_attrs = {
+    "title": "New Zealand Land Use Suitability Database (NZLUSDB)",
+    "institution": "Department of Civil and Environmental Engineering, University of Canterbury, Christchurch 8140, NZ",
+    "contact": "Baptiste Hamon: baptiste.hamon@pg.canterbury.ac.nz",
+    "reference": "https://baptistehamon.github.io/nzlusdb/",
+    "version": f"v{__version__}",
+}

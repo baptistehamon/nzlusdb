@@ -10,7 +10,7 @@ from lsapy import LandSuitabilityAnalysis
 from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
-from nzlusdb import DOCPATH, __version__
+from nzlusdb import DOCPATH, __version__, nzlusdb_attrs
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
@@ -54,6 +54,9 @@ class LandUse:
         self.version = version
         self._get_criteria_info()
         self.path = LSAPATH / self.name
+        self._nzlusdb_attrs = nzlusdb_attrs
+        if self._nzlusdb_attrs.get("version", None) != f"v{self.version}":
+            self._nzlusdb_attrs["version"] = f"v{self.version}"
 
     @property
     def criteria(self):
@@ -102,7 +105,15 @@ class LandUse:
             self.resolution = res
             self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], agg_methods="wgmean")
             data = self.open_suitability()
-            ds = self.period_mmm_change_robustness(data, delta_method="absolute")
+            ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
+                {
+                    **self._nzlusdb_attrs,
+                    **{
+                        "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
+                        + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
+                    },
+                }
+            )
             self.write_output(ds, variable="suitability")
             self.summary_figs()
             self.stats_summary()
@@ -128,6 +139,8 @@ class LandUse:
 
         for scen in scenario:
             out = self._run_lsa(scenario=scen, **kwargs)
+            out.attrs.update({**self._nzlusdb_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
+            out["suitability"].attrs.update({"long_name": "Suitability"})
             self.path.mkdir(parents=True, exist_ok=True)
             fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
             write_netcdf(out, fp, progressbar=True, verbose=True)
@@ -351,6 +364,8 @@ class LandUse:
                 delta.attrs["units"] = data.attrs["units"]
         elif delta_method == "relative":
             delta = ((data_proj - data_hist) / data_hist * 100).mean("realization").rename("change")
+            delta.attrs["units"] = "%"
+        delta.attrs["long_name"] = "Change"
 
         delta = xr.merge(
             [
