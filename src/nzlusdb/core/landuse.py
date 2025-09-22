@@ -77,6 +77,36 @@ class LandUse:
             raise ValueError("Resolution must be '1km' or '5km'.")
         self._resolution = value
 
+    def run_workflow(self, resolution: list[str] | str | None = None):
+        """
+        Run the full land suitability analysis (LSA) workflow.
+
+        This method runs the LSA for the specified resolution(s) and scenarios, computes the multi-model mean
+        changes and robustness, writes the outputs to NetCDF and GeoTIFF files, and generates summary figures
+        and statistics.
+
+        Parameters
+        ----------
+        resolution : list of str, str, or None
+            Resolution(s) to use for the analysis ('1km' or '5km'). If None, uses the instance's resolution attribute.
+            Default is None.
+        """
+        if resolution is None:
+            if self.resolution is None:
+                raise ValueError("Resolution must be set before running workflow.")
+            resolution = [self.resolution]
+        elif isinstance(resolution, str):
+            resolution = [resolution]
+
+        for res in resolution:
+            self.resolution = res
+            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"])
+            data = self.open_suitability()
+            ds = self.period_mmm_change_robustness(data, delta_method="absolute")
+            self.write_output(ds, variable="suitability")
+            self.summary_figs()
+            self.stats_summary()
+
     def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
@@ -164,7 +194,7 @@ class LandUse:
         data.to_netcdf(fp)
 
         data = data.set_index(time=["scenario", "period"])
-        self._write_output_as_raster(data)
+        self._write_output_as_raster(data, variable)
 
     def summary_figs(self) -> None:
         """
@@ -176,6 +206,7 @@ class LandUse:
         SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
         """
         data = self.open_mmm_data()
+        data = data.set_index(time=["scenario", "period"])
 
         fp = DOCPATH / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
@@ -186,7 +217,7 @@ class LandUse:
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
         )
-        fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_{self.version}.png"
+        fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
@@ -199,7 +230,7 @@ class LandUse:
             legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
             robustness=True,
         )
-        fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_{self.version}.png"
+        fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
