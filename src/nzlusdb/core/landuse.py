@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
+from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
 from nzlusdb import DOCPATH, __version__
@@ -94,7 +97,8 @@ class LandUse:
                 write_netcdf(out, fp, progressbar=True, verbose=True)
 
     def open_suitability(self, resolution: str = "5km") -> xr.Dataset:
-        """Open suitability dataset for given resolution.
+        """
+        Open suitability dataset for given resolution.
 
         Parameters
         ----------
@@ -118,6 +122,25 @@ class LandUse:
             ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
             proj.append(ds)
         return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
+
+    def open_mmm_data(self, variable: str = "suitability", resolution: str = "5km") -> xr.Dataset:
+        """
+        Open multi-model mean change and robustness dataset for given variable and resolution.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable data corresponds to (default is 'suitability').
+        resolution : str
+            Resolution of the dataset (e.g., '5km', '1km').
+
+        Returns
+        -------
+        xr.Dataset
+            Multi-model mean change and robustness dataset.
+        """
+        file = f"{self.name}_{variable}-MMM-change-robustness_{resolution}_v{self.version}.nc"
+        return xr.open_dataset(self.path / file)
 
     def write_output(self, data: xr.Dataset, variable: str, resolution: str = "5km") -> None:
         """
@@ -146,7 +169,7 @@ class LandUse:
         data = data.set_index(time=["scenario", "period"])
         self._write_output_as_raster(data, resolution=resolution)
 
-    def make_summary_figs(self, data, resolution: str = "5km") -> None:
+    def summary_figs(self, data, resolution: str = "5km") -> None:
         """
         Generate and save summary figures.
 
@@ -188,6 +211,64 @@ class LandUse:
         fname = f"{self.name}_suitability_change_SSP245-SSP585_{resolution}_{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
+
+    def stats_summary(self, resolution: str = "5km") -> None:
+        """
+        Generate and save national and regional suitability statistics summary.
+
+        Parameters
+        ----------
+        resolution : str
+            Resolution to use (e.g., '5km', '1km').
+        """
+
+        def _add_coords(df, mapping):
+            df.insert(1, "period", df["time"].map(mapping["period"]))
+            df.insert(2, "scenario", df["time"].map(mapping["scenario"]))
+            return df.drop(columns=["time"])
+
+        agmask = self._agriculture_mask()
+        regions = gpd.read_file(r"R:\DATA\GIS-NZ\statsnz-regional-council-2022-clipped-generalised").to_crs(epsg=4326)
+
+        data = self.open_mmm_data(resolution=resolution)
+        data = data.where(agmask == 1)
+
+        mapping = {
+            "scenario": {time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values)},
+            "period": {time: period for time, period in zip(data["time"].values, data["period"].values)},
+        }
+
+        cell_area = (int(resolution.replace("km", "")) ** 2, "km2")
+
+        args = {
+            "on_vars": ["suitability"],
+            "on_dims": ["time"],
+            "dropna": True,
+            "bins": np.linspace(0, 1, 11),
+            "cell_area": cell_area,
+            "all_bins": True,
+        }
+
+        nz_stats = stats_summary(
+            data,
+            **args,
+        )
+        nz_stats = _add_coords(nz_stats, mapping)
+
+        reg_stats = spatial_stats_summary(
+            data,
+            areas=regions,
+            name="region",
+            mask_kwargs={"names": "REGC2022_1"},
+            **args,
+        )
+        reg_stats = _add_coords(reg_stats, mapping)
+        nz_stats.to_csv(
+            self.path / f"{self.name}_national_suitability_stats_summary_{resolution}_v{self.version}.csv", index=False
+        )
+        reg_stats.to_csv(
+            self.path / f"{self.name}_regional_suitability_stats_summary_{resolution}_v{self.version}.csv", index=False
+        )
 
     @staticmethod
     def period_mmm_change_robustness(data: xr.DataArray, delta_method="absolute") -> xr.Dataset:
@@ -390,3 +471,22 @@ class LandUse:
                 if val.category == "climate":
                     val.indicator = val.indicator.interp_like(target, method="nearest")
         return sc
+
+    @staticmethod
+    def _agriculture_mask():
+        # conservation land areas
+        doc = xr.open_dataarray(
+            r"R:\DATA\GIS-NZ\lds-doc-public-conservation-areas\doc-public-conservation-areas_NZ5km.nc"
+        )
+        doc = doc.sel(lat=slice(-34, -48), lon=slice(166, 180))  # crop to NZ
+        doc_mask = xr.where(doc.isnull(), 1, 0)
+        # land use map
+        lum = xr.open_dataarray(
+            r"R:\DATA\GIS-NZ\mfe-lucas-nz-land-use-map-2020-v003\lucas-nz-land-use-map-2020_NZ5km.nc"
+        )
+        # non-agricultural land use classes
+        # Natural forest 71, open water 79, wetland 80, settlement 81, other 82
+        # 71=0, 79=8, 80=9, 81=10, 82=11 : see LUM attrs
+        lum_mask = xr.where(lum.isin([0, 8, 9, 10, 11]), 0, 1)
+
+        return xr.where((doc_mask + lum_mask) > 0, 1, 0)
