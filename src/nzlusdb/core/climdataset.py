@@ -286,7 +286,7 @@ climateDS = {
         chunks={"realization": -1},
     ),
     "nzlusdb_1km": ClimDataset(
-        name="NIWA-CMIP6",
+        name="NIWA CMIP6 Downscaling",
         path=Path(r"R:\DATA\NIWA-CMIP6"),
         model=["ACCESS-CM2", "AWI-CM-1-1-MR", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "NorESM2-MM"],
         scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"],
