@@ -7,6 +7,8 @@ format:
   html:
     toc: true
     theme: cosmo
+    grid:
+      body-width: 900px
 
 website:
   title: NZ Land Use Suitability Database
