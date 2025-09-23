@@ -27,8 +27,8 @@ class LandUse:
     ----------
     name : str
         Name of the land use.
-    description : str, optional
-        Description of the land use.
+    long_name : str, optional
+        Long name of the land use.
     version : str, optional
         Version of the land use analysis. Default is the current package version.
 
@@ -36,8 +36,8 @@ class LandUse:
     ----------
     name : str
         Name of the land use.
-    description : str
-        Description of the land use.
+    long_name : str
+        Long name of the land use.
     resolution : str
         Resolution of the land use analysis ('1km' or '5km').
     version : str
@@ -47,9 +47,9 @@ class LandUse:
         `run_lsa` is called.
     """
 
-    def __init__(self, name: str, description: str = "", resolution: str = "5km", version: str = release):
+    def __init__(self, name: str, long_name: str | None = None, resolution: str = "5km", version: str = release):
         self.name = name
-        self.description = description
+        self.long_name = long_name if long_name else name.capitalize()
         self.resolution = resolution
         self.version = version
         self._get_criteria_info()
@@ -226,7 +226,7 @@ class LandUse:
 
         summary_figure(
             data,
-            f"Historical and Projected Suitability for {self.name.capitalize()}",
+            f"Historical and Projected Suitability for {self.long_name}",
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
@@ -237,7 +237,7 @@ class LandUse:
 
         summary_figure(
             data,
-            f"Historical Suitability and Projected Changes for {self.name.capitalize()}",
+            f"Historical Suitability and Projected Changes for {self.long_name}",
             proj_var="change",
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": change_boundnorm, "cmap": "PiYG"},
@@ -392,7 +392,7 @@ class LandUse:
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
-            long_name=f"{self.name.capitalize()} Suitability",
+            long_name=f"{self.long_name} Suitability",
             criteria=self._load_criteria_indicators(scenario=scenario),
         )
         return lsa.run(**kwargs)
