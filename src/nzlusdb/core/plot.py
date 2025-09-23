@@ -144,6 +144,7 @@ def plt_scenario_maps(
         transform=axs[0].transAxes,
         rotation="vertical",
         fontweight="bold",
+        fontsize=12,
     )
     _plt_map(ds.sel(time=("historical", "1980-2009"))[hist_var], axs[0], "", **hist_kw, **kwargs)
     _plt_map(ds.sel(time=(scenario, "2010-2039"))[proj_var], axs[1], "", **proj_kw, **kwargs)
@@ -181,6 +182,7 @@ def plt_timeline(ax, color="black"):
         color=color,
         fontweight="bold",
         fontstyle="italic",
+        fontsize=12,
     )
     ax.text(
         0.625,
@@ -193,11 +195,52 @@ def plt_timeline(ax, color="black"):
         color=color,
         fontweight="bold",
         fontstyle="italic",
+        fontsize=12,
     )
-    ax.text(0.125, 0.3, "1980-2009", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
-    ax.text(0.375, 0.3, "2010-2039", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
-    ax.text(0.625, 0.3, "2040-2069", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
-    ax.text(0.875, 0.3, "2070-2099", ha="center", va="center", transform=ax.transAxes, color=color, fontweight="bold")
+    ax.text(
+        0.125,
+        0.3,
+        "1980-2009",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        color=color,
+        fontweight="bold",
+        fontsize=12,
+    )
+    ax.text(
+        0.375,
+        0.3,
+        "2010-2039",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        color=color,
+        fontweight="bold",
+        fontsize=12,
+    )
+    ax.text(
+        0.625,
+        0.3,
+        "2040-2069",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        color=color,
+        fontweight="bold",
+        fontsize=12,
+    )
+    ax.text(
+        0.875,
+        0.3,
+        "2070-2099",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        color=color,
+        fontweight="bold",
+        fontsize=12,
+    )
     ax.plot([0, 0], [0.45, 0.55], color=color, linewidth=2)
     ax.plot([0.25, 0.25], [0.45, 0.55], color=color, linewidth=2)
     ax.plot([1, 1], [0.45, 0.55], color=color, linewidth=2)
@@ -214,6 +257,7 @@ def summary_figure(
     scenarios: tuple = ("ssp245", "ssp585"),
     hist_kw: dict | None = None,
     proj_kw: dict | None = None,
+    scenario_labels: str | None = None,
     legend_labels: dict | None = None,
     robustness: bool = False,
 ):
@@ -242,6 +286,9 @@ def summary_figure(
         Additional keyword arguments to pass to `_plt_map` for the historical period maps.
     proj_kw : dict, optional
         Additional keyword arguments to pass to `_plt_map` for the projected period maps.
+    scenario_labels : tuple of str, optional
+        A tuple containing labels to display for the two scenarios on the left side of the plots.
+        Defaults to the uppercase scenario names.
     legend_labels : dict, optional
         A dictionary mapping variable names to custom labels for the legends. If not provided, variable names
         will be capitalized and used as labels.
@@ -289,6 +336,8 @@ def summary_figure(
         hist_kw = {}
     if proj_kw is None:
         proj_kw = {}
+    if scenario_labels is None:
+        scenario_labels = (scenarios[0].upper(), scenarios[1].upper())
 
     if hist_var == proj_var and not robustness:
         mosaic, nlgd = "AAAA;BCDE;FGHI;.JJ.", 1
@@ -302,7 +351,7 @@ def summary_figure(
     fig = plt.figure(figsize=(18, 12))
     axd = fig.subplot_mosaic(mosaic, height_ratios=[0.2, 1, 1, 0.05])
     fig.subplots_adjust(left=0.05, right=1, top=0.95, bottom=0.05, hspace=0.05, wspace=0.05)
-    fig.suptitle(suptitle, fontweight="bold", fontsize=12)
+    fig.suptitle(suptitle, fontweight="bold", fontsize=14)
     plt_timeline(axd["A"], "#b0b0b0")
     plt_scenario_maps(
         ds,
@@ -310,7 +359,7 @@ def summary_figure(
         scenarios[0],
         hist_var=hist_var,
         proj_var=proj_var,
-        scenario_label=scenarios[0].upper(),
+        scenario_label=scenario_labels[0],
         hist_kw=hist_kw,
         proj_kw=proj_kw,
         robustness=robustness,
@@ -321,7 +370,7 @@ def summary_figure(
         scenarios[1],
         hist_var=hist_var,
         proj_var=proj_var,
-        scenario_label=scenarios[1].upper(),
+        scenario_label=scenario_labels[1],
         hist_kw=hist_kw,
         proj_kw=proj_kw,
         robustness=robustness,
