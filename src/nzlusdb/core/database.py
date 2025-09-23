@@ -28,6 +28,7 @@ class DataBase:
         self.path.mkdir(parents=True, exist_ok=True)
         self.pathdoc = Path(__file__).parent.parent.parent.parent / "docs"
         self._landuses = {}
+        self._lu_names = {}
 
     @property
     def name(self) -> str:
@@ -54,6 +55,9 @@ class DataBase:
 
     def register(self, cls_: "LandUse"):
         """Register a land use class in the database."""
+        self._lu_names[cls_.name] = cls_.name
+        if cls_.name in self._landuses:
+            raise ValueError(f"Land use '{cls_.name}' already registered in the database.")
         self._landuses[cls_.name] = cls_
 
     def __getitem__(self, key) -> "LandUse":
