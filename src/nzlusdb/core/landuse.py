@@ -10,12 +10,10 @@ from lsapy import LandSuitabilityAnalysis
 from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
-from nzlusdb import DOCPATH, nzlusdb_attrs, release
+import nzlusdb
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
-from nzlusdb.suitability.indicators import INDICATORPATH
-from nzlusdb.suitability.lsa import LSAPATH
 from nzlusdb.utils import write_netcdf
 
 
@@ -47,16 +45,16 @@ class LandUse:
         `run_lsa` is called.
     """
 
-    def __init__(self, name: str, long_name: str | None = None, resolution: str = "5km", version: str = release):
+    def __init__(self, name: str, long_name: str | None = None, resolution: str = "5km", version: str = ""):
         self.name = name
         self.long_name = long_name if long_name else name.capitalize()
         self.resolution = resolution
         self.version = version
         self._get_criteria_info()
-        self.path = LSAPATH / self.name
-        self._nzlusdb_attrs = nzlusdb_attrs
-        if self._nzlusdb_attrs.get("version", None) != f"v{self.version}":
-            self._nzlusdb_attrs["version"] = f"v{self.version}"
+        self.path = nzlusdb.db.path / "suitability" / self.name
+        self._db_attrs = nzlusdb.db.attrs
+        if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
+            self._db_attrs["version"] = f"v{nzlusdb.release}"
 
     @property
     def criteria(self):
@@ -107,8 +105,8 @@ class LandUse:
             data = self.open_suitability()
             ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
                 {
-                    **self._nzlusdb_attrs,
-                    **{
+                    **self._db_attrs
+                    ** {
                         "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
                         + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
                     },
@@ -139,7 +137,7 @@ class LandUse:
 
         for scen in scenario:
             out = self._run_lsa(scenario=scen, **kwargs)
-            out.attrs.update({**self._nzlusdb_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
+            out.attrs.update({**self._db_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
             out["suitability"].attrs.update({"long_name": "Suitability"})
             self.path.mkdir(parents=True, exist_ok=True)
             fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
@@ -221,7 +219,7 @@ class LandUse:
         data = self.open_mmm_data()
         data = data.set_index(time=["scenario", "period"])
 
-        fp = DOCPATH / "_static/summary_figs"
+        fp = nzlusdb.db.pathdoc / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
 
         summary_figure(
@@ -498,7 +496,7 @@ class LandUse:
     @staticmethod
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
         """Load an indicator from a NetCDF file."""
-        ds = xr.open_dataset(INDICATORPATH / file)
+        ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file)
         if variable:
             return ds[variable]
         elif len(ds.data_vars) == 1:
