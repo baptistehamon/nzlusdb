@@ -105,8 +105,8 @@ class LandUse:
             data = self.open_suitability()
             ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
                 {
-                    **self._db_attrs
-                    ** {
+                    **self._db_attrs,
+                    **{
                         "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
                         + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
                     },
