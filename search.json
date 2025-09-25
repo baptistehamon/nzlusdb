@@ -21,20 +21,6 @@
     "text": "Approach\nShort description of LSA approach used."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "New Zealand Land Use Suitability Database",
-    "section": "",
-    "text": "Description of the New Zealand Land Use Suitability Database."
-  },
-  {
-    "objectID": "index.html#about-the-nzlusdb",
-    "href": "index.html#about-the-nzlusdb",
-    "title": "New Zealand Land Use Suitability Database",
-    "section": "",
-    "text": "Description of the New Zealand Land Use Suitability Database."
-  },
-  {
     "objectID": "landuses/landuse.html",
     "href": "landuses/landuse.html",
     "title": "Land Use",
@@ -54,5 +40,19 @@
     "title": "Land Use",
     "section": "Suitability Criteria",
     "text": "Suitability Criteria\nList of criteria used."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "",
+    "text": "Description of the New Zealand Land Use Suitability Database."
+  },
+  {
+    "objectID": "index.html#about-the-nzlusdb",
+    "href": "index.html#about-the-nzlusdb",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "",
+    "text": "Description of the New Zealand Land Use Suitability Database."
   }
 ]
