@@ -1,5 +1,5 @@
 ---
-title: Land Use Name
+title: "Land Use Name"
 ---
 
 ## Historical and Projected Suitability
@@ -8,12 +8,16 @@ title: Land Use Name
 
 ### Suitability Values
 
-![](../_static/summary_figs/)
+![](../_static/summary_figs/suitability.png)
 
 ### Suitability Changes
 
-![](../_static/summary_figs/)
+![](../_static/summary_figs/suitability.png)
 
 :::
 
 ## Suitability Criteria
+
+The following criteria were used to model the suitability of "Land Use Name":
+
+"criteria_table"
