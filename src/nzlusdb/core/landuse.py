@@ -115,6 +115,7 @@ class LandUse:
             self.write_output(ds, variable="suitability")
             self.summary_figs()
             self.stats_summary()
+            self.add_to_doc(overwrite=True)
 
     def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
         """
@@ -385,6 +386,38 @@ class LandUse:
 
         return xr.merge([out, delta]).reset_index("time")
 
+    def add_to_doc(self, overwrite=False):
+        """
+        Add land use to the documentation registry and create a markdown doc.
+
+        Parameters
+        ----------
+        overwrite : bool, optional
+            If True, overwrite existing markdown doc if it exists. Default is False.
+        """
+        fp = nzlusdb.db.pathdoc / "landuses"
+        doc_landuses = nzlusdb.db.doc_registery()
+        if self.name in doc_landuses:
+            if doc_landuses[self.name] != self.long_name:
+                raise ValueError(
+                    f"Land use '{self.name}' already exists with a different long name "
+                    f"('{doc_landuses[self.name]}' != '{self.long_name}')"
+                )
+        else:
+            nzlusdb.db.register_in_doc(self.name, self.long_name)
+
+        if not overwrite and (fp / f"{self.name}.md").exists():
+            raise FileExistsError(f"Markdown doc for land use '{self.name}' already exists.")
+        with open(fp / "_landuse.md", encoding="utf-8") as f:
+            md = f.read()
+        md = md.replace('"Land Use Name"', self.long_name)
+        fend = f"SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        md = md.replace("suitability.png", f"{self.name}_suitability_{fend}")
+        md = md.replace("suitability_change.png", f"{self.name}_suitability_change_{fend}")
+        md = md.replace('"criteria_table"', self._criteria_table())
+        with open(fp / f"{self.name}.md", "w", encoding="utf-8") as f:
+            f.write(md)
+
     def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario."""
         lsa = LandSuitabilityAnalysis(
@@ -520,3 +553,16 @@ class LandUse:
                 if val.category == "climate":
                     val.indicator = val.indicator.interp_like(target, method="nearest")
         return sc
+
+    def _criteria_table(self) -> str:
+        _criteria = {criteria.attrs.get("long_name"): criteria.category for _, criteria in self._criteria.items()}
+        table = "| Criteria | Category |\n"
+        table += "|:--------:|:---------|\n"
+        for c, cat in _criteria.items():
+            if cat == "soilTerrain":
+                category = "soil/Terrain"
+            else:
+                category = cat.capitalize()
+            table += f"| {c} | {category} |\n"
+        table += ': {tbl-colwidth:"[25,75]"}'
+        return table
