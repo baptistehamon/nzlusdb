@@ -29,4 +29,4 @@ The following criteria were used to model the suitability of Manuka:
 | soil/Terrain | Soil Potential Plant Available Water (mm) |
 | Climate | Mean daily minimum temperature between Jun 15 and Sep 15 (°C). |
 | Climate | Mean daily maximum temperature between Oct 15 and Jan 31 (°C). |
-: {tbl-colwidth:"[25,75]"}
+: {tbl-colwidths:"[25,75]"}
