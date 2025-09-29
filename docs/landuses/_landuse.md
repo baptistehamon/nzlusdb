@@ -12,7 +12,7 @@ title: "Land Use Name"
 
 ### Suitability Changes
 
-![](../_static/summary_figs/suitability.png)
+![](../_static/summary_figs/suitability_change.png)
 
 :::
 
