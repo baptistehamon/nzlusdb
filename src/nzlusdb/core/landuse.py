@@ -396,7 +396,7 @@ class LandUse:
             If True, overwrite existing markdown doc if it exists. Default is False.
         """
         fp = nzlusdb.db.pathdoc / "landuses"
-        doc_landuses = nzlusdb.db.doc_registery()
+        doc_landuses = nzlusdb.db.doc_registry()
         if self.name in doc_landuses:
             if doc_landuses[self.name] != self.long_name:
                 raise ValueError(
