@@ -556,13 +556,13 @@ class LandUse:
 
     def _criteria_table(self) -> str:
         _criteria = {criteria.attrs.get("long_name"): criteria.category for _, criteria in self._criteria.items()}
-        table = "| Criteria | Category |\n"
+        table = "| Category | Criteria |\n"
         table += "|:--------:|:---------|\n"
         for c, cat in _criteria.items():
             if cat == "soilTerrain":
                 category = "soil/Terrain"
             else:
                 category = cat.capitalize()
-            table += f"| {c} | {category} |\n"
+            table += f"| {category} | {c} |\n"
         table += ': {tbl-colwidth:"[25,75]"}'
         return table
