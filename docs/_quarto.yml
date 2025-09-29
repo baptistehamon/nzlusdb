@@ -31,6 +31,8 @@ website:
         menu:
           - text: Land Use
             href: landuses/landuse.md
+          - text: Manuka
+            href: landuses/manuka.md
     tools:
       - icon: github
         text: Source Code
