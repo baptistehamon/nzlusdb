@@ -21,6 +21,27 @@
     "text": "Approach\nShort description of LSA approach used."
   },
   {
+    "objectID": "landuses/manuka.html",
+    "href": "landuses/manuka.html",
+    "title": "Manuka",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/manuka.html#historical-and-projected-suitability",
+    "href": "landuses/manuka.html#historical-and-projected-suitability",
+    "title": "Manuka",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/manuka.html#suitability-criteria",
+    "href": "landuses/manuka.html#suitability-criteria",
+    "title": "Manuka",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Manuka:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nClimate\nMean daily minimum temperature between Jun 15 and Sep 15 (°C)\n\n\nClimate\nMean daily maximum temperature between Oct 15 and Jan 31 (°C)"
+  },
+  {
     "objectID": "landuses/landuse.html",
     "href": "landuses/landuse.html",
     "title": "Land Use",
