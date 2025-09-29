@@ -72,7 +72,7 @@ class DataBase:
         """Register a land use in the documentation registry."""
         if not (self.pathdoc / "landuses_registry.txt").exists():
             (self.pathdoc / "landuses_registry.txt").touch()
-        landuses = self.doc_registery()
+        landuses = self.doc_registry()
         if name in landuses:
             if landuses[name] != long_name:
                 raise ValueError(
