@@ -564,5 +564,5 @@ class LandUse:
             else:
                 category = cat.capitalize()
             table += f"| {category} | {c} |\n"
-        table += ': {tbl-colwidth:"[25,75]"}'
+        table += ': {tbl-colwidths:"[25,75]"}'
         return table
