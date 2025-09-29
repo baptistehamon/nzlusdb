@@ -45,14 +45,14 @@ manuka_criteria = {
     ),
     "tn_mean": SuitabilityCriteria(
         name="tn_mean",
-        long_name="Mean daily minimum temperature between Jun 15 and Sep 15 (°C).",
+        long_name="Mean daily minimum temperature between Jun 15 and Sep 15 (°C)",
         weight=2.5,
         category="climate",
         func=SuitabilityFunction(name="vetharaniam2022_eq3", params={"a": 2.333, "b": -2.144}),
     ),
     "tx_mean": SuitabilityCriteria(
         name="tx_mean",
-        long_name="Mean daily maximum temperature between Oct 15 and Jan 31 (°C).",
+        long_name="Mean daily maximum temperature between Oct 15 and Jan 31 (°C)",
         weight=2.5,
         category="climate",
         func=SuitabilityFunction(name="vetharaniam2022_eq5", params={"a": -7.920, "b": 11.70}),
