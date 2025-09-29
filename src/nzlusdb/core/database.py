@@ -60,6 +60,29 @@ class DataBase:
             raise ValueError(f"Land use '{cls_.name}' already registered in the database.")
         self._landuses[cls_.name] = cls_
 
+    def doc_registry(self):
+        """Get the land use documentation registry."""
+        if not (self.pathdoc / "landuses_registry.txt").exists():
+            return {}
+        with open(self.pathdoc / "landuses_registry.txt", encoding="utf-8") as f:
+            landuses = {line.split(": ")[0]: line.split(": ")[1].replace("\n", "") for line in f.readlines()}
+        return landuses
+
+    def register_in_doc(self, name, long_name):
+        """Register a land use in the documentation registry."""
+        if not (self.pathdoc / "landuses_registry.txt").exists():
+            (self.pathdoc / "landuses_registry.txt").touch()
+        landuses = self.doc_registery()
+        if name in landuses:
+            if landuses[name] != long_name:
+                raise ValueError(
+                    f"Land use '{name}' already exists with a different long name ('{landuses[name]}' != '{long_name}')"
+                )
+            return
+        else:
+            with open(self.pathdoc / "landuses_registry.txt", "a", encoding="utf-8") as f:
+                f.write(f"{name}: {long_name}\n")
+
     def __getitem__(self, key) -> "LandUse":
         """Get a land use class from the database."""
         if key not in self._landuses:
