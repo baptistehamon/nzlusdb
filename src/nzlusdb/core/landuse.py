@@ -487,6 +487,8 @@ class LandUse:
         clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
         sc = self.criteria
         for key, val in sc.items():
+            if key == "preprocess":
+                continue
             if key in self._criteria_indicators:
                 file = self._criteria_indicators[key]
                 if isinstance(file, tuple):
@@ -505,6 +507,15 @@ class LandUse:
             else:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
         sc = self._interpolate_indicator(sc)
+
+        preprocess = self._criteria_indicators.get("preprocess")
+        if preprocess:
+            for key, ops in preprocess.items():
+                if key in sc:
+                    for op, params in ops.items():
+                        sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
+                else:
+                    raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
 
     def _agriculture_mask(self) -> xr.DataArray:
