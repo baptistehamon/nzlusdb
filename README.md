@@ -12,7 +12,7 @@ The New Zealand Land Use Suitability Database (NZLUSDB) provides detailed inform
 The database contains suitability data at a 5 km resolution for the historical period (1980-2009) and three future time periods - near-term (2010-2039), mid-term (2040-2069), and long-term (2070-2099) - under four Shared Socioeconomic Pathways (SSPs): SSP1-2.6, SSP2-4.5, SSP3-7.0, and SSP5-8.5. For the future periods, suitability is also provided as changes compared to the historical period.
 The NZLUSDB also includes national and regional statistics summaries for each land use and time period.
 
-**Land Uses Included**
+**Land Uses Included**:
 - Apple
 - Avocado
 - Cherry
