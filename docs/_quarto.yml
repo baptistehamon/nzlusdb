@@ -25,12 +25,12 @@ website:
     left:
       - text: Home
         href: index.md
-      - text: Method
-        href: method.md
       - text: Land Uses
         menu:
-          - text: Land Use
-            href: landuses/landuse.md
+          - text: Citrus
+            href: landuses/citrus.md
+          - text: Manuka
+            href: landuses/manuka.md
     tools:
       - icon: github
         text: Source Code

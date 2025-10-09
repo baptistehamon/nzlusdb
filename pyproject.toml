@@ -44,7 +44,7 @@ Issues = "https://github.com/baptistehamon/nzlusdb/issues"
 # Zenodo = ""
 
 [tool.bumpversion]
-current_version = "0.0-dev6"
+current_version = "1.0-dev0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -101,6 +101,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/nzlusdb/core/climdataset.py" = ["N803", "N816"]
+"src/nzlusdb/suitability/indicators/*.py" = ["N806"]
 # "docs/*.py" = []
 # "src/nzlusdb/**/__init__.py" = []
 # "tests/**/test*.py" = []

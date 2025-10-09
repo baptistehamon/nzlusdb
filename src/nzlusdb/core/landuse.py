@@ -105,8 +105,8 @@ class LandUse:
             data = self.open_suitability()
             ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
                 {
-                    **self._db_attrs
-                    ** {
+                    **self._db_attrs,
+                    **{
                         "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
                         + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
                     },
@@ -115,6 +115,7 @@ class LandUse:
             self.write_output(ds, variable="suitability")
             self.summary_figs()
             self.stats_summary()
+            self.add_to_doc(overwrite=True)
 
     def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
         """
@@ -385,6 +386,38 @@ class LandUse:
 
         return xr.merge([out, delta]).reset_index("time")
 
+    def add_to_doc(self, overwrite=False):
+        """
+        Add land use to the documentation registry and create a markdown doc.
+
+        Parameters
+        ----------
+        overwrite : bool, optional
+            If True, overwrite existing markdown doc if it exists. Default is False.
+        """
+        fp = nzlusdb.db.pathdoc / "landuses"
+        doc_landuses = nzlusdb.db.doc_registry()
+        if self.name in doc_landuses:
+            if doc_landuses[self.name] != self.long_name:
+                raise ValueError(
+                    f"Land use '{self.name}' already exists with a different long name "
+                    f"('{doc_landuses[self.name]}' != '{self.long_name}')"
+                )
+        else:
+            nzlusdb.db.register_in_doc(self.name, self.long_name)
+
+        if not overwrite and (fp / f"{self.name}.md").exists():
+            raise FileExistsError(f"Markdown doc for land use '{self.name}' already exists.")
+        with open(fp / "_landuse.md", encoding="utf-8") as f:
+            md = f.read()
+        md = md.replace('"Land Use Name"', self.long_name)
+        fend = f"SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        md = md.replace("suitability.png", f"{self.name}_suitability_{fend}")
+        md = md.replace("suitability_change.png", f"{self.name}_suitability_change_{fend}")
+        md = md.replace('"criteria_table"', self._criteria_table())
+        with open(fp / f"{self.name}.md", "w", encoding="utf-8") as f:
+            f.write(md)
+
     def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario."""
         lsa = LandSuitabilityAnalysis(
@@ -454,6 +487,8 @@ class LandUse:
         clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
         sc = self.criteria
         for key, val in sc.items():
+            if key == "preprocess":
+                continue
             if key in self._criteria_indicators:
                 file = self._criteria_indicators[key]
                 if isinstance(file, tuple):
@@ -472,6 +507,15 @@ class LandUse:
             else:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
         sc = self._interpolate_indicator(sc)
+
+        preprocess = self._criteria_indicators.get("preprocess")
+        if preprocess:
+            for key, ops in preprocess.items():
+                if key in sc:
+                    for op, params in ops.items():
+                        sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
+                else:
+                    raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
 
     def _agriculture_mask(self) -> xr.DataArray:
@@ -520,3 +564,16 @@ class LandUse:
                 if val.category == "climate":
                     val.indicator = val.indicator.interp_like(target, method="nearest")
         return sc
+
+    def _criteria_table(self) -> str:
+        _criteria = {criteria.attrs.get("long_name"): criteria.category for _, criteria in self._criteria.items()}
+        table = "| Category | Criteria |\n"
+        table += "|:--------:|:---------|\n"
+        for c, cat in _criteria.items():
+            if cat == "soilTerrain":
+                category = "soil/Terrain"
+            else:
+                category = cat.capitalize()
+            table += f"| {category} | {c} |\n"
+        table += ': {tbl-colwidths="[25,75]"}'
+        return table
