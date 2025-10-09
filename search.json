@@ -88,13 +88,34 @@
     "href": "index.html",
     "title": "New Zealand Land Use Suitability Database",
     "section": "",
-    "text": "Description of the New Zealand Land Use Suitability Database."
+    "text": "The New Zealand Land Use Suitability Database (NZLUSDB) provides detailed information on the historical and projected agroclimatic suitability of various land uses across New Zealand. The database was created using the New Zealand Gridded Land Information Dataset (NZGLID) and the NEX-GDDP-CMIP6 climate projections. The NZLUSDB is designed to support land use planning, agricultural decision-making, and climate change adaptation strategies in New Zealand."
   },
   {
     "objectID": "index.html#about-the-nzlusdb",
     "href": "index.html#about-the-nzlusdb",
     "title": "New Zealand Land Use Suitability Database",
     "section": "",
-    "text": "Description of the New Zealand Land Use Suitability Database."
+    "text": "The New Zealand Land Use Suitability Database (NZLUSDB) provides detailed information on the historical and projected agroclimatic suitability of various land uses across New Zealand. The database was created using the New Zealand Gridded Land Information Dataset (NZGLID) and the NEX-GDDP-CMIP6 climate projections. The NZLUSDB is designed to support land use planning, agricultural decision-making, and climate change adaptation strategies in New Zealand."
+  },
+  {
+    "objectID": "index.html#database-contents",
+    "href": "index.html#database-contents",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "Database Contents",
+    "text": "Database Contents\nThe database contains suitability data at a 5 km resolution for the historical period (1980-2009) and three future time periods - near-term (2010-2039), mid-term (2040-2069), and long-term (2070-2099) - under four Shared Socioeconomic Pathways (SSPs): SSP1-2.6, SSP2-4.5, SSP3-7.0, and SSP5-8.5. For the future periods, suitability is also provided as changes compared to the historical period. The NZLUSDB also includes national and regional statistics summaries for each land use and time period.\nLand Uses Included:\n\nApple\nAvocado\nCherry\nCitrus\nGrapevine\nHops\nKiwifruit\nMaize\nManuka\nWheat"
+  },
+  {
+    "objectID": "index.html#data-access",
+    "href": "index.html#data-access",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "Data Access",
+    "text": "Data Access\nWe are in the process of preparing the NZLUSDB for public release."
+  },
+  {
+    "objectID": "index.html#credits",
+    "href": "index.html#credits",
+    "title": "New Zealand Land Use Suitability Database",
+    "section": "Credits",
+    "text": "Credits\nThe NZLUSDB project started as part of a PhD funded by the Food Transition 2050 Joint Postgraduate School and hosted by the University of Canterbury."
   }
 ]
