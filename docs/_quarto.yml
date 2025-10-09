@@ -12,12 +12,6 @@ format:
 
 website:
   title: NZ Land Use Suitability Database
-  announcement:
-    icon: tools
-    dismissable: false
-    content: "**Coming Soon!** - The website is under construction. Thank you for your patience."
-    type: primary
-    position: below-navbar
   page-navigation: true
   navbar:
     # search: false
