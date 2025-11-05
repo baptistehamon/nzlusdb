@@ -103,6 +103,7 @@ ignore = [
 "src/nzlusdb/core/climdataset.py" = ["N803", "N816"]
 "src/nzlusdb/suitability/indicators/*.py" = ["N806"]
 "src/nzlusdb/core/indicators.py" = ["PLC2701"]
+"src/nzlusdb/utils.py" = ["PLR2004"]
 # "docs/*.py" = []
 # "src/nzlusdb/**/__init__.py" = []
 # "tests/**/test*.py" = []
