@@ -55,7 +55,7 @@ def compute(resolution="5km"):
     for res in resolution:
         climDS = climateDS[f"nzlusdb_{res}"]
 
-        for scen in ["ssp245", "ssp370", "ssp585"]:  # climDS.scenario:
+        for scen in climDS.scenario:
             tperiod = open_climdata_timeserie(
                 climDS, scen, ["pr", "tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
             )
