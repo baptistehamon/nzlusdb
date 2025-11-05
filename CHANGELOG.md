@@ -11,9 +11,12 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The following land use has been added:
   - Manuka ([GH#2](https://github.com/baptistehamon/nzlusdb/issues/2), [PR#8](https://github.com/baptistehamon/nzlusdb/pull/8))
   - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
+  - Apple ([GH16#](https://github.com/baptistehamon/nzlusdb/issues/16), [PR#18](https://github.com/baptistehamon/nzlusdb/pull/18))
 
 ### Internal Changes
 - A preprocessing step has been added enabling to preprocess criteria indicators before running the LSA ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9)).
 - The Command Line Interface (CLI) has been improved ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9)).
 - The README file has been updated ([GH10#](https://github.com/baptistehamon/nzlusdb/issues/10), [PR#15](https://github.com/baptistehamon/nzlusdb/pull/15)).
 - The home page of the website has been updated ([GH10#](https://github.com/baptistehamon/nzlusdb/issues/10), [PR#15](https://github.com/baptistehamon/nzlusdb/pull/15)).
+- The `day_full_bloom`, `frost_survival` and `sunburn_survival` indices and indicators, and  have been added to support the computation apple climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
+- The `downweight` and `downweight_season` functions have been added to support the computation of some climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
