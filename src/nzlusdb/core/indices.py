@@ -89,7 +89,6 @@ def frost_survival(
     )
 
     out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
-    # out = out.where(tasmin.isel(time=0).notnull(), np.nan)
     out = out.assign_attrs(units="")
     return out
 
@@ -133,6 +132,5 @@ def sunburn_survival(
     )
 
     out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
-    # out = out.where(tasmax.isel(time=0).notnull(), np.nan)
     out = out.assign_attrs(units="")
     return out

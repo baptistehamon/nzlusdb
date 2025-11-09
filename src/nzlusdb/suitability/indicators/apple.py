@@ -30,15 +30,15 @@ def chill_units(data, res):
         data = data.chunk({"time": 365})
 
     # loop over years to avoid memory issues
-    year = np.unique(data.time.dt.year.values)
+    years = np.unique(data.time.dt.year.values)
     out = []
-    for y in year[:-1]:
+    for y in years[:-1]:
         _data = data.sel(time=slice(f"{y}-05-01", f"{y}-08-31")).convert_calendar("noleap")
         tas = make_hourly_temperature(_data["tasmin"], _data["tasmax"])
         cu = atmos.chill_units(tas, date_bounds=("05-01", "08-31"), freq="YS-MAY")
         if res == "5km":
-            fname = INDICATORPATH / f"temp_chill_units_{y}_5km_temp.nc"
-            write_netcdf(cu, INDICATORPATH / f"temp_chill_units_{y}_5km_temp.nc", progressbar=True, verbose=False)
+            fname = INDICATORPATH / f"tmp_chill_units_{y}_5km.nc"
+            write_netcdf(cu, INDICATORPATH / f"tmp_chill_units_{y}_5km.nc", progressbar=True, verbose=False)
             out.append(fname)
         else:
             out.append(cu)
@@ -67,8 +67,8 @@ def growing_degree_days_dfb(data, dfb, res):
         return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
     elif res == "5km":
         # use index to avoid memory issues with indicator health checks
-        _data = select_time(data, doy_bounds=(dfb, end))
-        out = xci.growing_degree_days(_data, thresh="10 degC", freq="YS-JUL")
+        data_yr = select_time(data, doy_bounds=(dfb, end))
+        out = xci.growing_degree_days(data_yr, thresh="10 degC", freq="YS-JUL")
         out = out.where(data.isel(time=0).notnull(), np.nan)
         das, params, dsattrs = atmos.growing_degree_days._parse_variables_from_call(
             args=[data], kwds={"thresh": "10 degC", "freq": "YS-JUL"}
@@ -85,30 +85,78 @@ def growing_degree_days_dfb(data, dfb, res):
 
 
 @climdata
-def frost_survival(data, dfb):
+def frost_survival(data, dfb, res):
     """Frost survival during growth period (from 3 weeks before full bloom to end of April)."""
-    data = data.chunk({"realization": 3})
-    start = days_since_to_doy(doy_to_days_since(dfb) - 21)
-    end = days_since_to_doy(doy_to_days_since(start) + 8)
 
-    weights = select_time(xr.where(data.notnull(), 1, np.nan), doy_bounds=(start, 120))
-    weights = weights.rename("weight")
-    weights = downweight_season(
-        weights, "doy_bounds", {"start": (start, end), "end": (91, 120)}, values=0, interp_method="linear"
-    )
+    def _downweight(data, start, end):
+        weights = select_time(xr.where(data.notnull(), 1, np.nan), doy_bounds=(start, 120))
+        weights = weights.rename("weight")
+        weights = downweight_season(
+            weights, "doy_bounds", {"start": (start, end), "end": (91, 120)}, values=0, interp_method="linear"
+        )
+        return weights
 
-    return indicators.frost_survival(data, weights, freq="YS-JUL", doy_bounds=(start, 120))
+    if res == "25km":
+        data = data.chunk({"realization": 3})
+        start = days_since_to_doy(doy_to_days_since(dfb) - 21)
+        end = days_since_to_doy(doy_to_days_since(start) + 8)
+        weights = _downweight(data, start, end)
+        return indicators.frost_survival(data, weights, freq="YS-JUL", doy_bounds=(start, 120))
+
+    if res == "5km":
+        # loop over years to avoid memory issues
+        years = np.unique(data.time.dt.year.values)
+        out = []
+        for y in years[:-1]:
+            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-04-30"))
+            dfb_yr = dfb.sel(time=f"{y}-07-01")
+            start = days_since_to_doy(doy_to_days_since(dfb_yr) - 21)
+            end = days_since_to_doy(doy_to_days_since(start) + 8)
+            weights = _downweight(data_yr, start, end)
+            fs = indicators.frost_survival(data_yr, weights, freq="YS-JUL", doy_bounds=(start, 120))
+            fname = INDICATORPATH / f"tmp_frost_survival_{y}_5km.nc"
+            write_netcdf(fs, fname, progressbar=True, verbose=False)
+            out.append(fname)
+
+        fp = out
+        out = xr.open_mfdataset(out, combine="by_coords").load()["frost_survival"]
+        for f in fp:
+            f.unlink()
+        return out
 
 
 @climdata
-def sunburn_survival(data):
+def sunburn_survival(data, res):
     """Sunburn survival from Oct 1 to Apr 30."""
-    data = data.chunk({"realization": 3})
-    weights = select_time(xr.where(data.notnull(), 1, np.nan), date_bounds=("10-01", "04-30"))
-    weights = weights.rename("weight")
-    weights = downweight(weights, "date_bounds", ("04-01", "04-30"), downweight_to=0)
 
-    return indicators.sunburn_survival(data, weights, freq="YS-JUL", date_bounds=("10-01", "04-30"))
+    def _downweight(data):
+        weights = select_time(xr.where(data.notnull(), 1, np.nan), date_bounds=("10-01", "04-30"))
+        weights = weights.rename("weight")
+        weights = downweight(weights, "date_bounds", ("04-01", "04-30"), downweight_to=0)
+        return weights
+
+    if res == "25km":
+        data = data.chunk({"realization": 3})
+        weights = _downweight(data)
+        return indicators.sunburn_survival(data, weights, freq="YS-JUL", date_bounds=("10-01", "04-30"))
+
+    if res == "5km":
+        # loop over years to avoid memory issues
+        years = np.unique(data.time.dt.year.values)
+        out = []
+        for y in years[:-1]:
+            data_yr = data.sel(time=slice(f"{y}-10-01", f"{y + 1}-04-30"))
+            weights = _downweight(data_yr)
+            ss = indicators.sunburn_survival(data_yr, weights, freq="YS-JUL", date_bounds=("10-01", "04-30"))
+            fname = INDICATORPATH / f"tmp_sunburn_survival_{y}_5km.nc"
+            write_netcdf(ss, fname, progressbar=True, verbose=False)
+            out.append(fname)
+
+        fp = out
+        out = xr.open_mfdataset(out, combine="by_coords").load()["sunburn_survival"]
+        for f in fp:
+            f.unlink()
+        return out
 
 
 def compute(resolution="5km"):
@@ -166,7 +214,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fsg = frost_survival(climDS, "tasmin", dfb=dfb, period=tperiod, units="")
+                fsg = frost_survival(climDS, "tasmin", dfb=dfb, period=tperiod, units="", res=climDS.res)
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Sunburn Survival
@@ -174,7 +222,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                sbs = sunburn_survival(climDS, "tasmax", period=tperiod, units="")
+                sbs = sunburn_survival(climDS, "tasmax", period=tperiod, units="", res=climDS.res)
                 write_netcdf(sbs, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 
