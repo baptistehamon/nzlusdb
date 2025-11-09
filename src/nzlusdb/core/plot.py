@@ -130,10 +130,6 @@ def plt_scenario_maps(
         scenario_label = scenario.upper()
     if variable is None and (hist_var is None or proj_var is None):
         raise ValueError("Either variable or both hist_var and proj_var must be provided.")
-    elif hist_var is None:
-        hist_var = variable
-    elif proj_var is None:
-        proj_var = variable
 
     plt.text(
         -0.1,
@@ -156,7 +152,7 @@ def plt_scenario_maps(
         plt_robustness_categories(ds.sel(time=(scenario, "2070-2099")).robustness_categories, axs[3])
 
 
-def plt_timeline(ax, color="black"):
+def plt_timeline(ax, color="black", variable: str = "Suitability"):
     """
     Create a timeline plot indicating historical and projected periods.
 
@@ -187,7 +183,7 @@ def plt_timeline(ax, color="black"):
     ax.text(
         0.625,
         0.5,
-        "Projected Suitability",
+        f"Projected {variable}",
         ha="center",
         va="center",
         transform=ax.transAxes,
@@ -249,7 +245,7 @@ def plt_timeline(ax, color="black"):
     ax.axis("off")
 
 
-def summary_figure(
+def summary_figure(  # noqa: PLR0915
     ds,
     suptitle: str,
     hist_var: str = "suitability",
@@ -260,6 +256,7 @@ def summary_figure(
     scenario_labels: str | None = None,
     legend_labels: dict | None = None,
     robustness: bool = False,
+    timeline_label: str = "Suitability",
 ):
     """
     Create a summary figure with historical and projected maps for two scenarios.
@@ -294,6 +291,9 @@ def summary_figure(
         will be capitalized and used as labels.
     robustness : bool, optional
         If True, overlays robustness categories on the projected period maps using `plt_robustness_categories`.
+    timeline_label : str, optional
+        Label to display for the projected periods on the timeline ("Projected {timeline_label}").
+        Default is "Suitability".
     """
 
     def _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels: dict | None = None, robustness: bool = False):
@@ -313,7 +313,12 @@ def summary_figure(
             )
         elif nlgd == 2:  # noqa: PLR2004
             if not robustness:
-                fig.colorbar(mpl.cm.ScalarMappable(**proj_kw), cax=axd["K"], orientation="horizontal", label=proj_var)
+                cbar = fig.colorbar(
+                    mpl.cm.ScalarMappable(**proj_kw), cax=axd["K"], orientation="horizontal", label=proj_var
+                )
+                # Adjust colorbar ticks for change maps
+                cbar.ax.tick_params(length=0, which="minor")
+                cbar.ax.set_xticks(np.arange(-0.4, 0.6, 0.2))
             else:
                 robustness_categories_lgd(
                     axd["K"], loc="lower center", frameon=False, ncol=2, bbox_to_anchor=(0.5, -1.5)
@@ -321,7 +326,12 @@ def summary_figure(
         else:
             divider = make_axes_locatable(axd["K"])
             cax_cbar = divider.append_axes("left", size="100%", pad=0.05)
-            fig.colorbar(mpl.cm.ScalarMappable(**proj_kw), cax=cax_cbar, orientation="horizontal", label=proj_var)
+            cbar = fig.colorbar(
+                mpl.cm.ScalarMappable(**proj_kw), cax=cax_cbar, orientation="horizontal", label=proj_var
+            )
+            # Adjust colorbar ticks for change maps
+            cbar.ax.tick_params(length=0, which="minor")
+            cbar.ax.set_xticks(np.arange(-0.4, 0.6, 0.2))
             cax_left = divider.append_axes("left", size="50%", pad=0.05)
             cax_left.axis("off")
             cax_robustness = divider.append_axes("right", size="100%", pad=0.05)
@@ -352,7 +362,7 @@ def summary_figure(
     axd = fig.subplot_mosaic(mosaic, height_ratios=[0.2, 1, 1, 0.05])
     fig.subplots_adjust(left=0.05, right=1, top=0.95, bottom=0.05, hspace=0.05, wspace=0.05)
     fig.suptitle(suptitle, fontweight="bold", fontsize=14)
-    plt_timeline(axd["A"], "#b0b0b0")
+    plt_timeline(axd["A"], "#b0b0b0", variable=timeline_label)
     plt_scenario_maps(
         ds,
         [axd["B"], axd["C"], axd["D"], axd["E"]],
@@ -401,4 +411,4 @@ def cmap_boundnorm(bounds: list, cmap: str, **kwargs):
 
 
 suitability_boundnorm = cmap_boundnorm(bounds=np.arange(0, 1.1, 0.1), cmap="cividis")
-change_boundnorm = cmap_boundnorm(bounds=np.arange(-0.3, 0.4, 0.1), cmap="PiYG", extend="both")
+change_boundnorm = cmap_boundnorm(bounds=np.arange(-0.55, 0.6, 0.1), cmap="PiYG", extend="both")

@@ -229,6 +229,7 @@ class LandUse:
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
+            timeline_label="Suitability",
         )
         fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
@@ -243,6 +244,7 @@ class LandUse:
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
             legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
             robustness=True,
+            timeline_label="Changes",
         )
         fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
