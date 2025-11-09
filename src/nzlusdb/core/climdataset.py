@@ -315,7 +315,10 @@ def climdata(func):
             climDS.data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq
         )
         data = data.chunk(climDS.chunks)
-        res: xr.DataArray = func(data, **kwargs).convert_calendar("standard")
+        res = func(data, **kwargs)
+        if not isinstance(res, xr.DataArray):
+            return res
+        res = res.convert_calendar("standard")
         if offset:
             res = res.assign_coords(time=(pd.to_datetime(res.time) + pd.DateOffset(**offset)))
         if units:

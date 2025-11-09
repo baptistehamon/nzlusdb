@@ -6,8 +6,9 @@ import sys
 import nzlusdb
 from nzlusdb.core.landuse import LandUse
 
-nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
+nzlusdb.db.register(LandUse(name="apple", version="1.0"))
 nzlusdb.db.register(LandUse(name="citrus", version="1.0"))
+nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run NZLUSDB workflow for a given land use")

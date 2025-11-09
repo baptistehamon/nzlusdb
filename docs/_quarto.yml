@@ -21,6 +21,8 @@ website:
         href: index.md
       - text: Land Uses
         menu:
+          - text: Apple
+            href: landuses/apple.md
           - text: Citrus
             href: landuses/citrus.md
           - text: Manuka
