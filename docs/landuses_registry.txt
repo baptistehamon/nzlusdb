@@ -1,3 +1,4 @@
 manuka: Manuka
 citrus: Citrus
 apple: Apple
+hops: Hops
