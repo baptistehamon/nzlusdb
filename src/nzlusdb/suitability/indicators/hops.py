@@ -71,8 +71,10 @@ def tx_mean(data):
 
 
 @climdata
-def year_with_hot_week(data):
+def year_with_hot_week(data, res):
     """Number of years with at least one hot week (3 days over 35C in a 7-day period) between Mar 1 and Apr 20."""
+    if res == "5km":
+        data = data.chunk({"realization": 3})
     hd = atmos.hot_days(data, thresh="35 degC", freq="7D", date_bounds=("03-01", "04-20"))
     out = compare(hd, ">=", 3).assign_attrs(units="")
     out = count_occurrences(out, threshold="0", op=">", freq="YS-JUL")
@@ -141,7 +143,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL")
+                yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL", res=climDS.res)
                 # work around to handle historical and projection transition for rolling sum
                 if scen != "historical":
                     histfile = f"years-7days-3txge35_0301-0420_10yr_annual_historical_{climDS.res}.nc"
