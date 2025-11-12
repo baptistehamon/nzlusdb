@@ -6,7 +6,8 @@ import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
 from xclim.core.calendar import get_calendar, select_time
-from xclim.core.units import convert_units_to, declare_units
+from xclim.core.units import Quantified, convert_units_to, declare_units
+from xclim.indices.generic import threshold_count, to_agg_units
 
 
 @declare_units(tasmax="[temperature]")
@@ -134,3 +135,29 @@ def sunburn_survival(
     out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
     return out
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def chilling_hours(tas: xr.DataArray, thresh: Quantified = "7 degC", freq: str = "YS") -> xr.DataArray:
+    r"""
+    Chilling hours.
+
+    Number of hours where the hourly temperature is below a threshold temperature.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean hourly temperature.
+    thresh : Quantified
+        Chilling temperature.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Chilling hours.
+    """
+    frz = convert_units_to(thresh, tas)
+    out = threshold_count(tas, "<", frz, freq)
+    return to_agg_units(out, tas, "count")

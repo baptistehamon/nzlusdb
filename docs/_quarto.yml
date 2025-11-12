@@ -25,6 +25,8 @@ website:
             href: landuses/apple.md
           - text: Citrus
             href: landuses/citrus.md
+          - text: Hops
+            href: landuses/hops.md
           - text: Manuka
             href: landuses/manuka.md
     tools:

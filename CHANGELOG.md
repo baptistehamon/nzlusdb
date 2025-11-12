@@ -9,9 +9,10 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 
 ### Land Uses
 - The following land use has been added:
-  - Manuka ([GH#2](https://github.com/baptistehamon/nzlusdb/issues/2), [PR#8](https://github.com/baptistehamon/nzlusdb/pull/8))
-  - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
   - Apple ([GH16#](https://github.com/baptistehamon/nzlusdb/issues/16), [PR#18](https://github.com/baptistehamon/nzlusdb/pull/18))
+  - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
+  - Hops ([GH22#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#23](https://github.com/baptistehamon/nzlusdb/pull/23))
+  - Manuka ([GH#2](https://github.com/baptistehamon/nzlusdb/issues/2), [PR#8](https://github.com/baptistehamon/nzlusdb/pull/8))
 
 ### Internal Changes
 - A preprocessing step has been added enabling to preprocess criteria indicators before running the LSA ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9)).
@@ -22,6 +23,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The `downweight` and `downweight_season` functions have been added to support the computation of some climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
 - The colorbar for suitability changes has been updated to avoid confusion ([GH#17](https://github.com/baptistehamon/nzlusdb/issues/17), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
 - The definition of the standardization function of `SuitabilityCriteria` has been updated reflecting `lsapy` v0.3.0 changes ([GH#20](https://github.com/baptistehamon/nzlusdb/issues/20), [PR#21](https://github.com/baptistehamon/nzlusdb/pull/21))
+- The `chill_hours` indicator has been added to support the computation of hops climate indicators ([GH#23](https://github.com/baptistehamon/nzlusdb/pull/23)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).

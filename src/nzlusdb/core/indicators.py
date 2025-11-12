@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from xclim.indicators.atmos._temperature import Temp, TempWithIndexing
+from xclim.indicators.atmos._temperature import Temp, TempHourlyWithIndexing, TempWithIndexing
 
 from nzlusdb.core import indices
 
@@ -38,4 +38,15 @@ sunburn_survival = TempWithIndexing(
     abstract="Sunburn survival is computed as a function of maximum temperature following vetharaniam et al. (2022).",
     compute=indices.sunburn_survival,
     cell_methods="time: prod",
+)
+
+chilling_hours = TempHourlyWithIndexing(
+    title="Chilling hours",
+    identifier="chilling_hours",
+    units="",
+    long_name="Number of hours where the hourly temperature is below {thresh}",
+    description="{freq} number of hours where the hourly temperature is below {thresh}.",
+    abstract="Number of hours where the hourly temperature is below a given threshold.",
+    cell_methods="time: sum over hours",
+    compute=indices.chilling_hours,
 )

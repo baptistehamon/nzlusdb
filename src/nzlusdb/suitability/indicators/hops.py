@@ -1,0 +1,164 @@
+"""Hops suitability climate indicators."""
+
+import argparse
+
+import numpy as np
+import xarray as xr
+from xclim.indicators import atmos
+from xclim.indices.generic import compare, count_occurrences
+from xclim.indices.helpers import make_hourly_temperature
+
+from nzlusdb.core import indicators
+from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
+from nzlusdb.suitability.indicators import INDICATORPATH
+from nzlusdb.utils import write_netcdf
+
+
+# Define indicators
+@climdata
+def prcptot(data):
+    """Total annual precipitation."""
+    return atmos.precip_accumulation(data, freq="YS-JUL")
+
+
+@climdata
+def chilling_hours(data, res):
+    """Chilling hours between May 1 and Aug 30."""
+    if "latitude" in data.coords:  # rename dims for 1km climate data
+        data = data.rename({"latitude": "lat", "longitude": "lon"})
+        data = data.chunk({"time": 365})
+
+    # loop over years to avoid memory issues
+    years = np.unique(data.time.dt.year.values)
+    out = []
+    for y in years[:-1]:
+        _data = data.sel(time=slice(f"{y}-05-01", f"{y}-08-30")).convert_calendar("noleap")
+        tas = make_hourly_temperature(_data["tasmin"], _data["tasmax"])
+        ch = indicators.chilling_hours(tas, thresh="7 degC", date_bounds=("05-01", "08-30"), freq="YS-MAY")
+        if res == "5km":
+            fname = INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc"
+            write_netcdf(ch, INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc", progressbar=True, verbose=False)
+            out.append(fname)
+        else:
+            out.append(ch)
+
+    if res == "25km":
+        out = xr.concat(out, dim="time")
+    if res == "5km":
+        fp = out
+        out = xr.open_mfdataset(out, combine="by_coords").load()["chilling_hours"]
+        for f in fp:
+            f.unlink()
+    return out
+
+
+@climdata
+def tn_mean(data):
+    """Mean minimum temperature between Aug 15 and Oct 15."""
+    return atmos.tn_mean(data, freq="YS-JUL", date_bounds=("08-15", "10-15"))
+
+
+@climdata
+def tg_mean(data):
+    """Mean temperature between Dec 1 and Jan 31."""
+    return atmos.tg_mean(data, freq="YS-JUL", date_bounds=("12-01", "01-31"))
+
+
+@climdata
+def tx_mean(data):
+    """Mean maximum temperature between Feb 1 and Mar 15."""
+    return atmos.tx_mean(data, freq="YS-JUL", date_bounds=("02-01", "03-15"))
+
+
+@climdata
+def year_with_hot_week(data, res):
+    """Number of years with at least one hot week (3 days over 35C in a 7-day period) between Mar 1 and Apr 20."""
+    if res == "5km":
+        data = data.chunk({"realization": 3})
+    hd = atmos.hot_days(data, thresh="35 degC", freq="7D", date_bounds=("03-01", "04-20"))
+    out = compare(hd, ">=", 3).assign_attrs(units="")
+    out = count_occurrences(out, threshold="0", op=">", freq="YS-JUL")
+    out = count_occurrences(out, threshold="1 week", op=">=", freq="YS-JUL")
+    out = out.rename("year_with_hot_week")
+    return out.where(data.isel(time=0).notnull())
+
+
+def compute(resolution="5km"):
+    """Compute and save all hops climate indicators."""
+    if isinstance(resolution, str):
+        resolution = [resolution]
+
+    for res in resolution:
+        climDS = climateDS[f"nzlusdb_{res}"]
+
+        for scen in climDS.scenario:
+            tperiod = open_climdata_timeserie(
+                climDS, scen, ["pr", "tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
+            )
+
+            # Total Precip
+            fname = f"prcptot_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm/day")
+                write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+            # Chilling Hours
+            fname = f"ch_0501-0830_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                ch = chilling_hours(
+                    climDS, ["tasmin", "tasmax"], period=tperiod, freq="YS-MAY", offset={"months": 2}, res=climDS.res
+                )
+                write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+            # Mean Min Tempareture
+            fname = f"tnm_0815-1015_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                tnm = tn_mean(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUL")
+                write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+            # Mean Tempareture
+            fname = f"tgm_1201-0131_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                tgm = tg_mean(climDS, "tas", period=tperiod, units="degC")
+                write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+            # Mean Max Tempareture
+            fname = f"txm_0201-0315_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                txm = tx_mean(climDS, "tasmax", period=tperiod, units="degC")
+                write_netcdf(txm, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+            # Years with Hot Week
+            fname = f"years-7days-3txge35_0301-0420_10yr_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL", res=climDS.res)
+                # work around to handle historical and projection transition for rolling sum
+                if scen != "historical":
+                    histfile = f"years-7days-3txge35_0301-0420_10yr_annual_historical_{climDS.res}.nc"
+                    hist = xr.open_dataarray(INDICATORPATH / histfile)
+                    hist = hist.isel(time=slice(-9, None))
+                    projtime = yhw.time.values
+                    yhw = xr.concat([hist, yhw], dim="time")
+                yhw = yhw.chunk({"time": -1}).rolling(time=10).sum()  # 10-yr rolling sum
+                if scen != "historical":
+                    yhw = yhw.sel(time=projtime)
+                write_netcdf(yhw, INDICATORPATH / fname, progressbar=True, verbose=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Compute and save all hops climate indicators.")
+    parser.add_argument("--res", nargs="+", default=["5km", "1km"], help="Resolution(s) to process (e.g. 5km, 1km)")
+    args = parser.parse_args()
+    compute(args.res)
