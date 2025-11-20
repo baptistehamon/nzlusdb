@@ -87,7 +87,7 @@ def growing_degree_days_dfb(data, dfb, res):
 
 @climdata
 def frost_survival(data, dfb, res):
-    """Frost survival during growth period (from 3 weeks before full bloom to end of April)."""
+    """Frost survival during growing period (from 3 weeks before full bloom to end of April)."""
 
     def _downweight(data, start, end):
         weights = select_time(xr.where(data.notnull(), 1, np.nan), doy_bounds=(start, 120))

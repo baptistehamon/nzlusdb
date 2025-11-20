@@ -127,7 +127,7 @@ hops_criteria_indicators = {
     "drainage_class": ("New-Zealand-Gridded-Land-Information-Dataset", "drainage"),
     "ph": ("New-Zealand-Gridded-Land-Information-Dataset", "ph"),
     "rainfall_excess": "prcptot_annual",
-    "chilling_hours": "ch_0501-0830_annual",
+    "chilling_hours": "ch7_0501-0830_annual",
     "tn_mean": "tnm_0815-1015_annual",
     "tg_mean": "tgm_1201-0131_annual",
     "tx_mean": "txm_0201-0315_annual",
