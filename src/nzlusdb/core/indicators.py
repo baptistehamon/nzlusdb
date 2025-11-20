@@ -35,7 +35,7 @@ sunburn_survival = TempWithIndexing(
     units="",
     long_name="Sunburn survival",
     description="Sunburn survival computed as a function of maximum temperature.",
-    abstract="Sunburn survival is computed as a function of maximum temperature following vetharaniam et al. (2022).",
+    abstract="Sunburn survival is computed as a function of maximum temperature following Vetharaniam et al. (2022).",
     compute=indices.sunburn_survival,
     cell_methods="time: prod",
 )
