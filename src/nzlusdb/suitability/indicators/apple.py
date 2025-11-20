@@ -2,6 +2,7 @@
 
 import argparse
 
+import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
 import xclim.indices as xci
@@ -101,7 +102,14 @@ def frost_survival(data, dfb, res):
         start = days_since_to_doy(doy_to_days_since(dfb) - 21)
         end = days_since_to_doy(doy_to_days_since(start) + 8)
         weights = _downweight(data, start, end)
-        return indicators.frost_survival(data, weights, freq="YS-JUL", doy_bounds=(start, 120))
+        return indicators.frost_survival(
+            data,
+            weights,
+            func=lstd.vetharaniam2022_eq3,
+            fparams={"a": 1, "b": -3},
+            freq="YS-JUL",
+            doy_bounds=(start, 120),
+        )
 
     if res == "5km":
         # loop over years to avoid memory issues
@@ -113,7 +121,14 @@ def frost_survival(data, dfb, res):
             start = days_since_to_doy(doy_to_days_since(dfb_yr) - 21)
             end = days_since_to_doy(doy_to_days_since(start) + 8)
             weights = _downweight(data_yr, start, end)
-            fs = indicators.frost_survival(data_yr, weights, freq="YS-JUL", doy_bounds=(start, 120))
+            fs = indicators.frost_survival(
+                data_yr,
+                weights,
+                func=lstd.vetharaniam2022_eq3,
+                fparams={"a": 1, "b": -3},
+                freq="YS-JUL",
+                doy_bounds=(start, 120),
+            )
             fname = INDICATORPATH / f"tmp_frost_survival_{y}_5km.nc"
             write_netcdf(fs, fname, progressbar=True, verbose=False)
             out.append(fname)
@@ -138,7 +153,14 @@ def sunburn_survival(data, res):
     if res == "25km":
         data = data.chunk({"realization": 3})
         weights = _downweight(data)
-        return indicators.sunburn_survival(data, weights, freq="YS-JUL", date_bounds=("10-01", "04-30"))
+        return indicators.sunburn_survival(
+            data,
+            weights,
+            func=lstd.logistic,
+            fparams={"a": -0.52, "b": 37.5},
+            freq="YS-JUL",
+            date_bounds=("10-01", "04-30"),
+        )
 
     if res == "5km":
         # loop over years to avoid memory issues
@@ -147,7 +169,14 @@ def sunburn_survival(data, res):
         for y in years[:-1]:
             data_yr = data.sel(time=slice(f"{y}-10-01", f"{y + 1}-04-30"))
             weights = _downweight(data_yr)
-            ss = indicators.sunburn_survival(data_yr, weights, freq="YS-JUL", date_bounds=("10-01", "04-30"))
+            ss = indicators.sunburn_survival(
+                data_yr,
+                weights,
+                func=lstd.logistic,
+                fparams={"a": -0.52, "b": 37.5},
+                freq="YS-JUL",
+                date_bounds=("10-01", "04-30"),
+            )
             fname = INDICATORPATH / f"tmp_sunburn_survival_{y}_5km.nc"
             write_netcdf(ss, fname, progressbar=True, verbose=False)
             out.append(fname)
