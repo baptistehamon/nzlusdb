@@ -58,7 +58,7 @@ blueberry_criteria = {
     ),
     "frost_survival": SuitabilityCriteria(
         name="frost_survival",
-        long_name="Frost survival flowering period (from Sept 1 to Oct 31)",
+        long_name="Frost survival during flowering period (from Sept 1 to Oct 31)",
         weight=2,
         category="climate",
         is_computed=True,
