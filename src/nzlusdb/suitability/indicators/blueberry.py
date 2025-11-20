@@ -47,7 +47,7 @@ def chilling_hours(data, res):
 
 @climdata
 def frost_survival(data, res):
-    """Frost survival from Sept 1 to Oct 31."""
+    """Frost survival flowering period (from Sept 1 to Oct 31)."""
     if res == "25km":
         data = data.chunk({"realization": 3})
         return indicators.frost_survival(
