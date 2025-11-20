@@ -105,7 +105,7 @@ def compute(resolution="5km"):
                 write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Chilling Hours
-            fname = f"ch_0501-0830_annual_{scen}_{climDS.res}.nc"
+            fname = f"ch7_0501-0830_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:

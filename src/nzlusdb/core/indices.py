@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import lsapy.standardize as lstd
+from typing import Callable
+
 import numpy as np
 import xarray as xr
 from xclim.core.calendar import get_calendar, select_time
@@ -55,6 +56,8 @@ def day_full_bloom(
 def frost_survival(
     tasmin: xr.DataArray,
     weights: xr.DataArray | int | float = 1,
+    func: Callable | None = None,
+    fparams: dict | None = None,
     freq: str = "YS",
 ):
     """
@@ -66,6 +69,10 @@ def frost_survival(
         Minimum temperature.
     weights : xr.DataArray, optional
         Weights to apply to daily survival probabilities. Default is 1 (no weighting).
+    func : Callable, optional
+        Function to compute daily survival probabilities.
+    fparams : dict, optional
+        Parameters to pass to `func`.
     freq : str, optional
         Resampling frequency. Default is "YS".
 
@@ -83,9 +90,9 @@ def frost_survival(
     tasmin = convert_units_to(tasmin, "degC")
 
     out = xr.apply_ufunc(
-        lstd.vetharaniam2022_eq3,
+        func,
         tasmin,
-        kwargs={"a": 1, "b": -3},
+        kwargs=fparams,
         dask="parallelized",
     )
 
@@ -98,6 +105,8 @@ def frost_survival(
 def sunburn_survival(
     tasmax: xr.DataArray,
     weights: xr.DataArray | int | float = 1,
+    func: Callable | None = None,
+    fparams: dict | None = None,
     freq: str = "YS",
 ):
     """
@@ -109,6 +118,10 @@ def sunburn_survival(
         Maximum temperature.
     weights : xr.DataArray, optional
         Weights to apply to daily survival probabilities. Default is 1 (no weighting).
+    func : Callable, optional
+        Function to compute daily survival probabilities.
+    fparams : dict, optional
+        Parameters to pass to `func`.
     freq : str, optional
         Resampling frequency. Default is "YS".
 
@@ -126,9 +139,9 @@ def sunburn_survival(
     tasmax = convert_units_to(tasmax, "degC")
 
     out = xr.apply_ufunc(
-        lstd.logistic,
+        func,
         tasmax,
-        kwargs={"a": -0.52, "b": 37.5},
+        kwargs=fparams,
         dask="parallelized",
     )
 
