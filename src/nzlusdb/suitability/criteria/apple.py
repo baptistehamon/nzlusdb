@@ -66,7 +66,7 @@ apple_criteria = {
     ),
     "frost_survival": SuitabilityCriteria(
         name="frost_survival",
-        long_name="Frost survival during growth period (from 3 weeks before full bloom to end of April)",
+        long_name="Frost survival during growing period (from 3 weeks before full bloom to end of April)",
         weight=2,
         category="climate",
         is_computed=True,
