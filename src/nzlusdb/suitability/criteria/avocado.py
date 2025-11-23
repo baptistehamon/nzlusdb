@@ -60,7 +60,7 @@ avocado_criteria = {
         long_name="Mean annual temperature",
         weight=2,
         category="climate",
-        func=lstd.vetharaniam2022_eq8,
+        func=lstd.vetharaniam2024_eq8,
         fparams={"a": 2.073e-3, "b": 17.50, "c": 4.000},
     ),
 }
