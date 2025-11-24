@@ -23,6 +23,8 @@ website:
         menu:
           - text: Apple
             href: landuses/apple.md
+          - text: Avocado
+            href: landuses/avocado.md
           - text: Blueberry
             href: landuses/blueberry.md
           - text: Citrus

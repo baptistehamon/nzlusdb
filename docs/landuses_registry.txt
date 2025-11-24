@@ -3,3 +3,4 @@ citrus: Citrus
 apple: Apple
 hops: Hops
 blueberry: Blueberry
+avocado: Avocado
