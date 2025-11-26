@@ -114,7 +114,7 @@ def compute(resolution="5km"):
                 )
                 write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Min Tempareture
+            # Mean Min Temperature
             fname = f"tnm_0815-1015_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
@@ -122,7 +122,7 @@ def compute(resolution="5km"):
                 tnm = tn_mean(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUL")
                 write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Tempareture
+            # Mean Temperature
             fname = f"tgm_1201-0131_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
@@ -130,7 +130,7 @@ def compute(resolution="5km"):
                 tgm = tg_mean(climDS, "tas", period=tperiod, units="degC")
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Max Tempareture
+            # Mean Max Temperature
             fname = f"txm_0201-0315_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")

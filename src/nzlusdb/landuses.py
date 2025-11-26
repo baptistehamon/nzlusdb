@@ -7,6 +7,7 @@ import nzlusdb
 from nzlusdb.core.landuse import LandUse
 
 nzlusdb.db.register(LandUse(name="apple", version="1.0"))
+nzlusdb.db.register(LandUse(name="avocado", version="1.0"))
 nzlusdb.db.register(LandUse(name="blueberry", version="1.0"))
 nzlusdb.db.register(LandUse(name="citrus", version="1.0"))
 nzlusdb.db.register(LandUse(name="hops", version="1.0"))

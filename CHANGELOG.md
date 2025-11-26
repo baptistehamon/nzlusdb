@@ -10,6 +10,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 ### Land Uses
 - The following land use has been added:
   - Apple ([GH16#](https://github.com/baptistehamon/nzlusdb/issues/16), [PR#18](https://github.com/baptistehamon/nzlusdb/pull/18))
+  - Avocado ([GH27#](https://github.com/baptistehamon/nzlusdb/issues/27), [PR#30](https://github.com/baptistehamon/nzlusdb/pull/30))
   - Blueberry ([GH25#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#26](https://github.com/baptistehamon/nzlusdb/pull/23))
   - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
   - Hops ([GH22#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#23](https://github.com/baptistehamon/nzlusdb/pull/23))
