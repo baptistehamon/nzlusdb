@@ -63,25 +63,25 @@
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Blueberry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nChilling hours between May 1 and Aug 31\n\n\nClimate\nFrost survival flowering period (from Sept 1 to Oct 31)\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30"
   },
   {
-    "objectID": "landuses/landuse.html",
-    "href": "landuses/landuse.html",
-    "title": "Land Use",
+    "objectID": "landuses/avocado.html",
+    "href": "landuses/avocado.html",
+    "title": "Avocado",
     "section": "",
-    "text": "Figures of historical and projected suitability, and projected changes."
+    "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/landuse.html#historical-and-projected-suitability",
-    "href": "landuses/landuse.html#historical-and-projected-suitability",
-    "title": "Land Use",
+    "objectID": "landuses/avocado.html#historical-and-projected-suitability",
+    "href": "landuses/avocado.html#historical-and-projected-suitability",
+    "title": "Avocado",
     "section": "",
-    "text": "Figures of historical and projected suitability, and projected changes."
+    "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/landuse.html#suitability-criteria",
-    "href": "landuses/landuse.html#suitability-criteria",
-    "title": "Land Use",
+    "objectID": "landuses/avocado.html#suitability-criteria",
+    "href": "landuses/avocado.html#suitability-criteria",
+    "title": "Avocado",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nList of criteria used."
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Avocado:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nAnnual frost survival\n\n\nClimate\nMean annual temperature"
   },
   {
     "objectID": "landuses/citrus.html",
@@ -103,6 +103,27 @@
     "title": "Citrus",
     "section": "Suitability Criteria",
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Citrus:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nRainfall excess: annual total precipitation (mm)\n\n\nClimate\nMean daily minimum temperature between Aug 15 and Oct 15 (°C)\n\n\nClimate\nMean daily temperature between Sep 15 and Nov 15 (°C)\n\n\nClimate\nMean daily maximum temperature between Jan 1 and Feb 15 (°C)\n\n\nClimate\nNumber of years with at least one hot week (3 days over 35C in a 7-day period) between Dec 1 and Feb 28 (over 10 years)"
+  },
+  {
+    "objectID": "landuses/landuse.html",
+    "href": "landuses/landuse.html",
+    "title": "Land Use",
+    "section": "",
+    "text": "Figures of historical and projected suitability, and projected changes."
+  },
+  {
+    "objectID": "landuses/landuse.html#historical-and-projected-suitability",
+    "href": "landuses/landuse.html#historical-and-projected-suitability",
+    "title": "Land Use",
+    "section": "",
+    "text": "Figures of historical and projected suitability, and projected changes."
+  },
+  {
+    "objectID": "landuses/landuse.html#suitability-criteria",
+    "href": "landuses/landuse.html#suitability-criteria",
+    "title": "Land Use",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nList of criteria used."
   },
   {
     "objectID": "landuses/apple.html",
