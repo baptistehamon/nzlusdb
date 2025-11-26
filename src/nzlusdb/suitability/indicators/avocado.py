@@ -21,7 +21,7 @@ def frost_survival(data, res):
         return indicators.frost_survival(
             data,
             func=lstd.vetharaniam2022_eq3,
-            fparams={"a": 1.1, "b": -4.5},
+            fparams={"a": 1.3, "b": -3},
             freq="YS-JUL",
         )
 
@@ -30,11 +30,11 @@ def frost_survival(data, res):
         years = np.unique(data.time.dt.year.values)
         out = []
         for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-04-30"))
+            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
             fs = indicators.frost_survival(
                 data_yr,
                 func=lstd.vetharaniam2022_eq3,
-                fparams={"a": -1.3, "b": -3},
+                fparams={"a": 1.3, "b": -3},
                 freq="YS-JUL",
             )
             fname = INDICATORPATH / f"tmp_frost_survival_{y}_5km.nc"

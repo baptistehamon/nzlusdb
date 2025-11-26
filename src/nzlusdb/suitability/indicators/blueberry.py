@@ -63,7 +63,7 @@ def frost_survival(data, res):
         years = np.unique(data.time.dt.year.values)
         out = []
         for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-04-30"))
+            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
             fs = indicators.frost_survival(
                 data_yr,
                 func=lstd.vetharaniam2022_eq3,
