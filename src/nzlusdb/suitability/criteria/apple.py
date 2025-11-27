@@ -46,7 +46,7 @@ apple_criteria = {
         weight=1,
         category="climate",
         func=lstd.logistic,
-        fparams={"a": 0.005000, "b": 700.0},
+        fparams={"a": 0.008000, "b": 700.0},
     ),
     "growing_degree_days": SuitabilityCriteria(
         name="growing_degree_days",
