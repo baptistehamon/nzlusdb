@@ -68,7 +68,8 @@ kiwifruit_criteria = {
         long_name="Minimum annual temperature",
         weight=2,
         category="climate",
-        is_computed=True,
+        func=lstd.logistic,
+        fparams={"a": 1.200, "b": -13.00},
     ),
 }
 
