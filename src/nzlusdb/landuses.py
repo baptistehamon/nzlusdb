@@ -11,6 +11,7 @@ nzlusdb.db.register(LandUse(name="avocado", version="1.0"))
 nzlusdb.db.register(LandUse(name="blueberry", version="1.0"))
 nzlusdb.db.register(LandUse(name="citrus", version="1.0"))
 nzlusdb.db.register(LandUse(name="hops", version="1.0"))
+nzlusdb.db.register(LandUse(name="kiwifruit", version="1.0"))
 nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
 
 if __name__ == "__main__":

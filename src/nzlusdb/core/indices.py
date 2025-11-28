@@ -52,6 +52,46 @@ def day_full_bloom(
     return out
 
 
+@declare_units(tas="[temperature]")
+def day_budbreak(
+    tas: xr.DataArray,
+    freq: str = "YS",
+) -> xr.DataArray:
+    """
+    Day of budbreak for kiwifruit.
+
+    The day of budbreak is computed as a function of the mean temperature
+    from May to July following the formula from Vetharaniam et al. (2022):
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Mean temperature.
+    freq : str, optional
+        Resampling frequency.
+
+    Returns
+    -------
+    xr.DataArray
+        Day of the year of budbreak.
+
+    Warnings
+    --------
+    This indices is specific to kiwifruit grown in New Zealand.
+
+    References
+    ----------
+    Vetharaniam, I., Müller, K., Stanley, J., Van den Dijssel, C., Timar, L., & Cummins, M. (2021).
+    Modelling the effect of climate change on land suitability for growing perennial crops (p. 362).
+    A Plant & Food Research report prepared for: Ministry for Primary Industries. Milestone No. 87023 & 73685.
+    Contract  No. 34671. Job code: P/405421/01. PFR SPTS No. 20712.
+    """
+    tas = select_time(convert_units_to(tas, "degC"), month=[5, 6, 7]).resample(time=freq).mean()
+    out = np.minimum(335, 225 + np.exp(0.267 * tas)).round()
+    out = out.assign_attrs(units="", is_dayofyear=np.int32(1), get_calendar=get_calendar(tas))
+    return out
+
+
 @declare_units(tasmin="[temperature]")
 def frost_survival(
     tasmin: xr.DataArray,

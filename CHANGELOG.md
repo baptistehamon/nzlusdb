@@ -14,6 +14,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   - Blueberry ([GH25#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#26](https://github.com/baptistehamon/nzlusdb/pull/23))
   - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
   - Hops ([GH22#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#23](https://github.com/baptistehamon/nzlusdb/pull/23))
+  - Kiwifruit ([GH28#](https://github.com/baptistehamon/nzlusdb/issues/28), [PR#32](https://github.com/baptistehamon/nzlusdb/pull/32))
   - Manuka ([GH#2](https://github.com/baptistehamon/nzlusdb/issues/2), [PR#8](https://github.com/baptistehamon/nzlusdb/pull/8))
 
 ### Internal Changes
@@ -25,8 +26,9 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The `downweight` and `downweight_season` functions have been added to support the computation of some climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
 - The colorbar for suitability changes has been updated to avoid confusion ([GH#17](https://github.com/baptistehamon/nzlusdb/issues/17), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
 - The definition of the standardization function of `SuitabilityCriteria` has been updated reflecting `lsapy` v0.3.0 changes ([GH#20](https://github.com/baptistehamon/nzlusdb/issues/20), [PR#21](https://github.com/baptistehamon/nzlusdb/pull/21))
-- The `chill_hours` indicator has been added to support the computation of hops climate indicators ([GH#23](https://github.com/baptistehamon/nzlusdb/pull/23)).
-- `func` and `fparams` arguments have been added to `indices.frost_survival` and `indices.sunburn_survival` to make them customizable ([GH#24](https://github.com/baptistehamon/nzlusdb/pull/24)).
+- The `chill_hours` indicator has been added to support the computation of hops climate indicators ([PR#23](https://github.com/baptistehamon/nzlusdb/pull/23)).
+- `func` and `fparams` arguments have been added to `indices.frost_survival` and `indices.sunburn_survival` to make them customizable ([PR#24](https://github.com/baptistehamon/nzlusdb/pull/24)).
+- The `day_budbreak` indicator has been added to support the computation of kiwifruit climate indicators ([PR#32](https://github.com/baptistehamon/nzlusdb/pull/32)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).

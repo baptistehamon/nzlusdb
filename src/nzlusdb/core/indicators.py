@@ -18,6 +18,18 @@ day_full_bloom = Temp(
     compute=indices.day_full_bloom,
 )
 
+day_budbreak = Temp(
+    title="Day of budbreak for kiwifruit",
+    identifier="day_budbreak",
+    units="",
+    standard_name="day_of_year",
+    long_name="Day of budbreak for kiwifruit",
+    description="Day of budbreak for kiwifruit as computed from mean temperature from May to July.",
+    abstract="The day of budbreak is computed as a function of the mean temperature from May to July following the "
+    "formula from Vetharaniam et al. (2022).",
+    compute=indices.day_budbreak,
+)
+
 frost_survival = TempWithIndexing(
     title="Frost survival",
     identifier="frost_survival",
