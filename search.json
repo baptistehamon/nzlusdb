@@ -81,7 +81,7 @@
     "href": "landuses/apple.html#suitability-criteria",
     "title": "Apple",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Apple:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChill units between May 1 and Aug 31\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30\n\n\nClimate\nGrowing degree days between day of full bloom and 50 days after\n\n\nClimate\nFrost survival during growth period (from 3 weeks before full bloom to end of April)\n\n\nClimate\nSunburn survival from Oct 1 to Apr 30"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Apple:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChill units between May 1 and Aug 31\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30\n\n\nClimate\nGrowing degree days between day of full bloom and 50 days after\n\n\nClimate\nFrost survival during growing period (from 3 weeks before full bloom to end of April)\n\n\nClimate\nSunburn survival from Oct 1 to Apr 30"
   },
   {
     "objectID": "landuses/landuse.html",
