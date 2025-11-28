@@ -4,3 +4,4 @@ apple: Apple
 hops: Hops
 blueberry: Blueberry
 avocado: Avocado
+kiwifruit: Kiwifruit
