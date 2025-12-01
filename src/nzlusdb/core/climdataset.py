@@ -309,6 +309,7 @@ def climdata(func):
         freq="YS-JUL",
         units=None,
         offset=None,
+        convert_calendar=True,
         **kwargs,
     ):
         data = select_hist_proj(
@@ -318,7 +319,8 @@ def climdata(func):
         res = func(data, **kwargs)
         if not isinstance(res, xr.DataArray):
             return res
-        res = res.convert_calendar("standard")
+        if convert_calendar:
+            res = res.convert_calendar("standard")
         if offset:
             res = res.assign_coords(time=(pd.to_datetime(res.time) + pd.DateOffset(**offset)))
         if units:
