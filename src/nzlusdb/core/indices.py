@@ -214,3 +214,53 @@ def chilling_hours(tas: xr.DataArray, thresh: Quantified = "7 degC", freq: str =
     frz = convert_units_to(thresh, tas)
     out = threshold_count(tas, "<", frz, freq)
     return to_agg_units(out, tas, "count")
+
+
+@declare_units(hurs="[]")
+def cracking_survival(
+    hurs: xr.DataArray,
+    weights: xr.DataArray | int | float = 1,
+    func: Callable | None = None,
+    fparams: dict | None = None,
+    freq: str = "YS",
+):
+    """
+    Cracking survival computed as a function of daily relative humidity.
+
+    Parameters
+    ----------
+    hurs : xr.DataArray
+        Relative humidity.
+    weights : xr.DataArray, optional
+        Weights to apply to daily survival probabilities. Default is 1 (no weighting).
+    func : Callable, optional
+        Function to compute daily survival probabilities.
+    fparams : dict, optional
+        Parameters to pass to `func`.
+    freq : str, optional
+        Resampling frequency. Default is "YS".
+
+    Returns
+    -------
+    xr.DataArray
+        Cracking survival.
+
+    References
+    ----------
+    Vetharaniam, I., Müller, K., Stanley, J., Van den Dijssel, C., Timar, L., & Cummins, M. (2021).
+    Modelling the effect of climate change on land suitability for growing perennial crops (p. 362).
+    A Plant & Food Research report prepared for: Ministry for Primary Industries. Milestone No. 87023 & 73685.
+    Contract  No. 34671. Job code: P/405421/01. PFR SPTS No. 20712.
+    """
+    tasmax = convert_units_to(hurs, "%")
+
+    out = xr.apply_ufunc(
+        func,
+        tasmax,
+        kwargs=fparams,
+        dask="parallelized",
+    )
+
+    out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
+    out = out.assign_attrs(units="")
+    return out

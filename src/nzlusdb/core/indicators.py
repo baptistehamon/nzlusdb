@@ -62,3 +62,14 @@ chilling_hours = TempHourlyWithIndexing(
     cell_methods="time: sum over hours",
     compute=indices.chilling_hours,
 )
+
+sunburn_survival = TempWithIndexing(
+    title="Craking survival",
+    identifier="cracking_survival",
+    units="",
+    long_name="Cracking survival",
+    description="Cracking survival computed as a function of daily relative humidity.",
+    abstract="Cracking survival computed as a function of daily relative humidity following Vetharaniam et al. (2021).",
+    compute=indices.cracking_survival,
+    cell_methods="time: prod",
+)
