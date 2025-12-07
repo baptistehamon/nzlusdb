@@ -11,7 +11,8 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The following land use has been added:
   - Apple ([GH16#](https://github.com/baptistehamon/nzlusdb/issues/16), [PR#18](https://github.com/baptistehamon/nzlusdb/pull/18))
   - Avocado ([GH27#](https://github.com/baptistehamon/nzlusdb/issues/27), [PR#30](https://github.com/baptistehamon/nzlusdb/pull/30))
-  - Blueberry ([GH25#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#26](https://github.com/baptistehamon/nzlusdb/pull/23))
+  - Blueberry ([GH25#](https://github.com/baptistehamon/nzlusdb/issues/25), [PR#26](https://github.com/baptistehamon/nzlusdb/pull/26))
+  - Cherry ([GH29#](https://github.com/baptistehamon/nzlusdb/issues/29), [PR#34](https://github.com/baptistehamon/nzlusdb/pull/34))
   - Citrus ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9), [PR#13](https://github.com/baptistehamon/nzlusdb/pull/13))
   - Hops ([GH22#](https://github.com/baptistehamon/nzlusdb/issues/22), [PR#23](https://github.com/baptistehamon/nzlusdb/pull/23))
   - Kiwifruit ([GH28#](https://github.com/baptistehamon/nzlusdb/issues/28), [PR#32](https://github.com/baptistehamon/nzlusdb/pull/32))
@@ -29,6 +30,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The `chill_hours` indicator has been added to support the computation of hops climate indicators ([PR#23](https://github.com/baptistehamon/nzlusdb/pull/23)).
 - `func` and `fparams` arguments have been added to `indices.frost_survival` and `indices.sunburn_survival` to make them customizable ([PR#24](https://github.com/baptistehamon/nzlusdb/pull/24)).
 - The `day_budbreak` indicator has been added to support the computation of kiwifruit climate indicators ([PR#32](https://github.com/baptistehamon/nzlusdb/pull/32)).
+- The `cracking_survival` index and indicator have been added to support the computation of cherry climate indicators ([PR#34](https://github.com/baptistehamon/nzlusdb/pull/34)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
