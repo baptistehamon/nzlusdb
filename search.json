@@ -105,6 +105,27 @@
     "text": "Suitability Criteria\nList of criteria used."
   },
   {
+    "objectID": "landuses/cherry.html",
+    "href": "landuses/cherry.html",
+    "title": "Cherry",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/cherry.html#historical-and-projected-suitability",
+    "href": "landuses/cherry.html#historical-and-projected-suitability",
+    "title": "Cherry",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/cherry.html#suitability-criteria",
+    "href": "landuses/cherry.html#suitability-criteria",
+    "title": "Cherry",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Cherry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nGrowing degree days between day of budbreak and Apr 30\n\n\nClimate\nFrost and cold indicator as the product of frost survival and days from budbreak to 31 Dec\n\n\nClimate\nCraking survival from Nov 1 to ripening"
+  },
+  {
     "objectID": "landuses/citrus.html",
     "href": "landuses/citrus.html",
     "title": "Citrus",
