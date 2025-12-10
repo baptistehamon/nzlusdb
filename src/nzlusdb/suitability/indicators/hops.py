@@ -34,7 +34,7 @@ def chilling_hours(data, res):
     for y in years[:-1]:
         _data = data.sel(time=slice(f"{y}-05-01", f"{y}-08-30")).convert_calendar("noleap")
         tas = make_hourly_temperature(_data["tasmin"], _data["tasmax"])
-        ch = indicators.chilling_hours(tas, thresh="7 degC", date_bounds=("05-01", "08-30"), freq="YS-MAY")
+        ch = indicators.chilling_hours(tas, high="7 degC", date_bounds=("05-01", "08-30"), freq="YS-MAY")
         if res == "5km":
             fname = INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc"
             write_netcdf(ch, INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc", progressbar=True, verbose=False)

@@ -55,10 +55,10 @@ sunburn_survival = TempWithIndexing(
 chilling_hours = TempHourlyWithIndexing(
     title="Chilling hours",
     identifier="chilling_hours",
-    units="",
-    long_name="Number of hours where the hourly temperature is below {thresh}",
-    description="{freq} number of hours where the hourly temperature is below {thresh}.",
-    abstract="Number of hours where the hourly temperature is below a given threshold.",
+    units="hours",
+    long_name="Number of hours where the hourly temperature is between {low} and {high}",
+    description="{freq} number of hours where the hourly temperature higher than {low} and lower or equal to {high}.",
+    abstract="Number of hours with hourly temperature between lower and upper limits.",
     cell_methods="time: sum over hours",
     compute=indices.chilling_hours,
 )
