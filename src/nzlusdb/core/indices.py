@@ -142,7 +142,7 @@ def frost_survival(
 
 
 @declare_units(tasmax="[temperature]")
-def sunburn_survival(
+def tasmax_survival(
     tasmax: xr.DataArray,
     weights: xr.DataArray | int | float = 1,
     func: Callable | None = None,
@@ -150,7 +150,7 @@ def sunburn_survival(
     freq: str = "YS",
 ):
     """
-    Sunburn survival computed as a function of daily maximum temperature.
+    Survival rate computed as a function of daily maximum temperature.
 
     Parameters
     ----------
@@ -168,7 +168,7 @@ def sunburn_survival(
     Returns
     -------
     xr.DataArray
-        Sunburn survival.
+        Survival rate.
 
     References
     ----------

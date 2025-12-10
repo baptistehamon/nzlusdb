@@ -48,7 +48,7 @@ sunburn_survival = TempWithIndexing(
     long_name="Sunburn survival",
     description="Sunburn survival computed as a function of maximum temperature.",
     abstract="Sunburn survival is computed as a function of maximum temperature following Vetharaniam et al. (2022).",
-    compute=indices.sunburn_survival,
+    compute=indices.tasmax_survival,
     cell_methods="time: prod",
 )
 
@@ -71,5 +71,16 @@ sunburn_survival = TempWithIndexing(
     description="Cracking survival computed as a function of daily relative humidity.",
     abstract="Cracking survival computed as a function of daily relative humidity following Vetharaniam et al. (2021).",
     compute=indices.cracking_survival,
+    cell_methods="time: prod",
+)
+
+heat_survival = TempWithIndexing(
+    title="Heat survival",
+    identifier="heat_survival",
+    units="",
+    long_name="Heat survival",
+    description="Heat survival computed as a function of maximum temperature.",
+    abstract="Heat survival is computed as a function of maximum temperature following Vetharaniam et al. (2021).",
+    compute=indices.tasmax_survival,
     cell_methods="time: prod",
 )
