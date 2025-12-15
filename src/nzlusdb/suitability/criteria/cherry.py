@@ -80,5 +80,5 @@ cherry_criteria_indicators = {
     "chilling_hours": "ch7_0601-0831_annual",
     "growing_degree_days": "cherry_gdd4.5_dbb-0430_annual",
     "frost_cold": "cherry_frost-cold_opencluster-ripening_annual",
-    "cracking_survival": "cherry_craking-survival_1101-ripening_annual",
+    "cracking_survival": "cherry_cracking-survival_1101-ripening_annual",
 }
