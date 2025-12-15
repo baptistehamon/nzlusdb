@@ -63,8 +63,8 @@ chilling_hours = TempHourlyWithIndexing(
     compute=indices.chilling_hours,
 )
 
-sunburn_survival = TempWithIndexing(
-    title="Craking survival",
+cracking_survival = TempWithIndexing(
+    title="Cracking survival",
     identifier="cracking_survival",
     units="",
     long_name="Cracking survival",
