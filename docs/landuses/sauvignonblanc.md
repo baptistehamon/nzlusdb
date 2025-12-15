@@ -1,24 +1,8 @@
 ---
-title: Grapevines
+title: Sauvignon blanc
 ---
 
 ## Historical and Projected Suitability
-
-### Pinot Noir
-
-::: {.panel-tabset}
-
-#### Suitability Values
-
-![](../_static/summary_figs/pinotnoir_suitability_SSP245-SSP585_5km_v1.0.png)
-
-#### Suitability Changes
-
-![](../_static/summary_figs/pinotnoir_suitability_change_SSP245-SSP585_5km_v1.0.png)
-
-:::
-
-## Sauvignon Blanc
 
 ::: {.panel-tabset}
 
@@ -34,7 +18,7 @@ title: Grapevines
 
 ## Suitability Criteria
 
-The following criteria were used to model the suitability of Pinotnoir:
+The following criteria were used to model the suitability of Sauvignon blanc:
 
 | Category | Criteria |
 |:--------:|:---------|
