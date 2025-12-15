@@ -6,3 +6,5 @@ blueberry: Blueberry
 avocado: Avocado
 kiwifruit: Kiwifruit
 cherry: Cherry
+pinotnoir: Pinot noir
+sauvignonblanc: Sauvignon blanc

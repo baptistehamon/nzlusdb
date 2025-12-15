@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 from xclim.core.calendar import get_calendar, select_time
 from xclim.core.units import Quantified, convert_units_to, declare_units
-from xclim.indices.generic import threshold_count, to_agg_units
+from xclim.indices.generic import domain_count, to_agg_units
 
 
 @declare_units(tasmax="[temperature]")
@@ -142,7 +142,7 @@ def frost_survival(
 
 
 @declare_units(tasmax="[temperature]")
-def sunburn_survival(
+def tasmax_survival(
     tasmax: xr.DataArray,
     weights: xr.DataArray | int | float = 1,
     func: Callable | None = None,
@@ -150,7 +150,7 @@ def sunburn_survival(
     freq: str = "YS",
 ):
     """
-    Sunburn survival computed as a function of daily maximum temperature.
+    Survival rate computed as a function of daily maximum temperature.
 
     Parameters
     ----------
@@ -168,7 +168,7 @@ def sunburn_survival(
     Returns
     -------
     xr.DataArray
-        Sunburn survival.
+        Survival rate.
 
     References
     ----------
@@ -190,19 +190,23 @@ def sunburn_survival(
     return out
 
 
-@declare_units(tas="[temperature]", thresh="[temperature]")
-def chilling_hours(tas: xr.DataArray, thresh: Quantified = "7 degC", freq: str = "YS") -> xr.DataArray:
+@declare_units(tas="[temperature]", low="[temperature]", high="[temperature]")
+def chilling_hours(
+    tas: xr.DataArray, low: Quantified = "-1E3 degC", high: Quantified = "7 degC", freq: str = "YS"
+) -> xr.DataArray:
     r"""
     Chilling hours.
 
-    Number of hours where the hourly temperature is below a threshold temperature.
+    Number of hours where the hourly temperature is within low and high thresholds.
 
     Parameters
     ----------
     tas : xarray.DataArray
         Mean hourly temperature.
-    thresh : Quantified
-        Chilling temperature.
+    low : Quantified
+        Lower temperature threshold.
+    high : Quantified
+        Upper temperature threshold.
     freq : str
         Resampling frequency.
 
@@ -211,8 +215,9 @@ def chilling_hours(tas: xr.DataArray, thresh: Quantified = "7 degC", freq: str =
     xarray.DataArray, [time]
         Chilling hours.
     """
-    frz = convert_units_to(thresh, tas)
-    out = threshold_count(tas, "<", frz, freq)
+    low = convert_units_to(low, tas)
+    high = convert_units_to(high, tas)
+    out = domain_count(tas, low, high, freq)
     return to_agg_units(out, tas, "count")
 
 

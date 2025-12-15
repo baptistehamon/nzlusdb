@@ -14,6 +14,8 @@ nzlusdb.db.register(LandUse(name="citrus", version="1.0"))
 nzlusdb.db.register(LandUse(name="hops", version="1.0"))
 nzlusdb.db.register(LandUse(name="kiwifruit", version="1.0"))
 nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
+nzlusdb.db.register(LandUse(name="pinotnoir", long_name="Pinot noir", version="1.0"))
+nzlusdb.db.register(LandUse(name="sauvignonblanc", long_name="Sauvignon blanc", version="1.0"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run NZLUSDB workflow for a given land use")
