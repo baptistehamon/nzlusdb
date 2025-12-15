@@ -153,11 +153,11 @@ def frost_cold(frost_survival, days_budbreak_to_31dec):
 
 
 @climdata
-def craking_survival(data, weight, res):
-    """Craking survival from Nov 1 to ripening."""
+def cracking_survival(data, weight, res):
+    """Cracking survival from Nov 1 to ripening."""
     data = data.chunk({"realization": 3})
     if res == "25km":
-        return indicators.sunburn_survival(
+        return indicators.cracking_survival(
             data,
             weight,
             func=lstd.logistic,
@@ -173,7 +173,7 @@ def craking_survival(data, weight, res):
         for y in years[:-1]:
             data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
             weight_yr = weight.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
-            ss = indicators.sunburn_survival(
+            ss = indicators.cracking_survival(
                 data_yr,
                 weight_yr,
                 func=lstd.logistic,
@@ -358,11 +358,11 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 write_netcdf(fc, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Craking Survival
-            fname = f"cherry_craking-survival_1101-ripening_annual_{scen}_{climDS.res}.nc"
+            fname = f"cherry_cracking-survival_1101-ripening_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                cs = craking_survival(
+                cs = cracking_survival(
                     climDS, "hurs", weight=(1 - ripening_prob), period=tperiod, units="", res=climDS.res
                 )
                 write_netcdf(cs, INDICATORPATH / fname, progressbar=True, verbose=True)

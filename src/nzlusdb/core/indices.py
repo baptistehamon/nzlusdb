@@ -136,7 +136,7 @@ def frost_survival(
         dask="parallelized",
     )
 
-    out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
+    out = (out**weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
     return out
 
@@ -185,7 +185,7 @@ def sunburn_survival(
         dask="parallelized",
     )
 
-    out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
+    out = (out**weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
     return out
 
@@ -261,6 +261,6 @@ def cracking_survival(
         dask="parallelized",
     )
 
-    out = (1 - (1 - out) * weights).resample(time=freq).prod("time")
+    out = (out**weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
     return out
