@@ -515,7 +515,11 @@ class LandUse:
             for key, ops in preprocess.items():
                 if key in sc:
                     for op, params in ops.items():
-                        sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
+                        if op == "func":
+                            func, f_params = params
+                            sc[key].indicator = func(sc[key].indicator, **f_params)
+                        else:
+                            sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
                 else:
                     raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
