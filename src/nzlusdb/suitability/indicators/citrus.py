@@ -65,7 +65,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm/day")
+                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm")
                 write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Mean Min Temperature
