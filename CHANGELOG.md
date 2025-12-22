@@ -39,5 +39,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
-- Fix standardization function parameters error for apple chill units criteria ([GH#31](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#33](https://github.com/baptistehamon/nzlusdb/pull/33)).
-- Fix cherry cracking survival indicator computation ([PR#36](https://github.com/baptistehamon/nzlusdb/pull/36))
+- Fix standardization function parameters error for apple chill units criteria ([GH#31](https://github.com/baptistehamon/nzlusdb/issues/31), [PR#33](https://github.com/baptistehamon/nzlusdb/pull/33)).
+- Fix cherry cracking survival indicator computation ([PR#36](https://github.com/baptistehamon/nzlusdb/pull/36)).
+- Fix citrus and hops annual total precipitation indicator unit ([GH#39](https://github.com/baptistehamon/nzlusdb/issues/39), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
+- Fix computation of citrus and hops years rolling sum indicators ([GH#40](https://github.com/baptistehamon/nzlusdb/issues/40), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).

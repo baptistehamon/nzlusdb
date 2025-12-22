@@ -83,7 +83,7 @@ def year_with_hot_week(data, res):
     return out.where(data.isel(time=0).notnull())
 
 
-def compute(resolution="5km"):
+def compute(resolution="5km"):  # noqa: PLR0915
     """Compute and save all hops climate indicators."""
     if isinstance(resolution, str):
         resolution = [resolution]
@@ -101,7 +101,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm/day")
+                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm")
                 write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Chilling Hours
@@ -145,13 +145,15 @@ def compute(resolution="5km"):
             else:
                 yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL", res=climDS.res)
                 # work around to handle historical and projection transition for rolling sum
-                if scen != "historical":
-                    histfile = f"years-7days-3txge35_0301-0420_10yr_annual_historical_{climDS.res}.nc"
-                    hist = xr.open_dataarray(INDICATORPATH / histfile)
+                if scen == "historical":
+                    yhw.to_netcdf(INDICATORPATH / "tmp_hot-week.nc")
+                else:
+                    hist = xr.open_dataarray(INDICATORPATH / "tmp_hot-week.nc")
                     hist = hist.isel(time=slice(-9, None))
                     projtime = yhw.time.values
                     yhw = xr.concat([hist, yhw], dim="time")
                 yhw = yhw.chunk({"time": -1}).rolling(time=10).sum()  # 10-yr rolling sum
+
                 if scen != "historical":
                     yhw = yhw.sel(time=projtime)
                 write_netcdf(yhw, INDICATORPATH / fname, progressbar=True, verbose=True)
