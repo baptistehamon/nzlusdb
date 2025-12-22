@@ -8,3 +8,4 @@ kiwifruit: Kiwifruit
 cherry: Cherry
 pinotnoir: Pinot noir
 sauvignonblanc: Sauvignon blanc
+wheatearly: Early ripening wheat
