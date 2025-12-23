@@ -6,7 +6,7 @@ from nzlusdb.core.database import DataBase
 
 __author__ = "Baptiste Hamon"
 __email__ = "baptiste.hamon@pg.canterbury.ac.nz"
-__version__ = "1.0-dev11"
+__version__ = "1.0-dev12"
 release = __version__.split("-", maxsplit=1)[0]
 
 __all__ = ["db", "release"]
