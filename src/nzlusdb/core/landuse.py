@@ -546,7 +546,7 @@ class LandUse:
     @staticmethod
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
         """Load an indicator from a NetCDF file."""
-        ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file)
+        ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file, decode_timedelta=False)
         if variable:
             return ds[variable]
         elif len(ds.data_vars) == 1:
