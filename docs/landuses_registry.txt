@@ -9,3 +9,4 @@ cherry: Cherry
 pinotnoir: Pinot noir
 sauvignonblanc: Sauvignon blanc
 wheatearly: Early ripening wheat
+wheatlate: Late ripening wheat
