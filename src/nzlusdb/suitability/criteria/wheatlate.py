@@ -1,11 +1,23 @@
 """Late wheat LSA Criteria."""
 
 import lsapy.standardize as lstd
+import numpy as np
 import pandas as pd
 from lsapy import SuitabilityCriteria
 from xclim.core.calendar import doy_to_days_since
 
 __all__ = ["wheatlate_criteria", "wheatlate_criteria_indicators"]
+
+
+def leroux_sigmoid(x, a, b):
+    """Le Roux et al. (2024) sigmoid function."""
+    return 1 / (1 + np.exp(np.subtract(a, x) / b))
+
+
+def leroux_exp(x, a, b):
+    """Le Roux et al. (2024) modified exponential function."""
+    return np.minimum(a * np.exp(b / x), 1)
+
 
 wheatlate_criteria = {
     "potential_rooting_depth": SuitabilityCriteria(
@@ -48,29 +60,29 @@ wheatlate_criteria = {
         func=lstd.vetharaniam2022_eq5,
         fparams={"a": 0.6759, "b": 1284},
     ),
-    "winter_frost_frequency": SuitabilityCriteria(
-        name="winter_frost_frequency",
-        long_name="Number of years with at least 5 days below -8°C between crop emergence and ear 1cm",
-        weight=1.0,
-        category="climate",
-        func=lstd.logistic,
-        fparams={"a": -2.326, "b": 3.143},
-    ),
-    "growth_frost_frequency": SuitabilityCriteria(
-        name="growth_frost_frequency",
-        long_name="Number of years with at least 5 days below -2°C between ear 1cm and flag leaf",
+    "winter_frost_days": SuitabilityCriteria(
+        name="winter_frost_days",
+        long_name="Number of days below -8°C between crop emergence and ear 1cm",
         weight=1,
         category="climate",
-        func=lstd.logistic,
-        fparams={"a": -4.652, "b": 2.572},
+        func=leroux_exp,
+        fparams={"a": 0.04, "b": 6.0},
     ),
-    "flowering_heat_frequency": SuitabilityCriteria(
-        name="flowering_heat_frequency",
-        long_name="Number of years with at least 5 days above 30°C between anthesis +/- 30 days",
+    "growth_frost_days": SuitabilityCriteria(
+        name="growth_frost_days",
+        long_name="Number of days below -5°C between ear 1cm and flag leaf",
         weight=1,
         category="climate",
-        func=lstd.logistic,
-        fparams={"a": -2.326, "b": 3.143},
+        func=leroux_sigmoid,
+        fparams={"a": 2.8, "b": -0.5},
+    ),
+    "flowering_heat_days": SuitabilityCriteria(
+        name="flowering_heat_days",
+        long_name="Number of days above 30°C between anthesis +/- 30 days",
+        weight=1,
+        category="climate",
+        func=leroux_sigmoid,
+        fparams={"a": 2.8, "b": -0.5},
     ),
     "maturity_date": SuitabilityCriteria(
         name="maturity_date",
@@ -103,9 +115,9 @@ wheatlate_criteria_indicators = {
         "profile_total_available_water",
     ),
     "annual_rainfall_excess": "prcptot_annual",
-    "winter_frost_frequency": "wheatlate_years-5fdm8_emergence-ear1cm_5yr_annual",
-    "growth_frost_frequency": "wheatlate_years-5fdm2_ear1cm-flagleaf_5yr_annual",
-    "flowering_heat_frequency": "wheatlate_years-5txge30_30anthesis-anthesis30_5yr_annual",
+    "winter_frost_days": "wheatlate_fdm8_emergence-ear1cm_annual",
+    "growth_frost_days": "wheatlate_fdm5_ear1cm-flagleaf_annual",
+    "flowering_heat_days": "wheatlate_txge30_30anthesis-anthesis30_annual",
     "maturity_date": "wheatlate_maturity_annual",
     "preprocess": {
         "maturity_date": {"convert_calendar": {"calendar": "standard"}, "func": (_format_maturity_date, {})}

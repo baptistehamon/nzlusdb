@@ -7,7 +7,6 @@ import pynar as pn
 import xarray as xr
 from xclim.core.calendar import days_since_to_doy, doy_to_days_since
 from xclim.indicators import atmos
-from xclim.indices.generic import count_occurrences
 
 from nzlusdb.core.climdataset import TIMEPERIOD, climateDS, climdata, open_climdata_timeserie, select_hist_proj
 from nzlusdb.suitability.indicators import INDICATORPATH
@@ -138,94 +137,31 @@ def prcptot(data):
     return atmos.precip_accumulation(data, freq="YS-JUL")
 
 
-def _frost_year(fd):
-    """Helper function to compute frost days for a year."""
-    out = count_occurrences(fd, threshold="5 days", op=">=", freq="YS-APR")
-    return out.where(fd.isel(time=0).notnull())
+@climdata
+def winter_frost_days(data, s1, s2):
+    """Number of days below -8°C between crop emergence and ear 1cm."""
+    data = _rename_latlon(data)
+    return atmos.frost_days(data, thresh="-8 degC", freq="YS-APR", doy_bounds=(s1, s2))
 
 
 @climdata
-def year_with_winter_frost(data, s1, s2, res):
-    """Number of years with at least 5 day below -8°C between crop emergence and ear 1cm."""
-    if res == "25km":
-        out = atmos.frost_days(data, thresh="-8 degC", freq="YS-APR", doy_bounds=(s1, s2))
-
-    elif res == "5km":
-        data = _rename_latlon(data)
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 1}-03-31"))
-            fd = atmos.frost_days(data_yr, thresh="-8 degC", freq="YS-APR", doy_bounds=(s1, s2))
-            fname = INDICATORPATH / f"tmp_frost-days_{res}_{y}.nc"
-            write_netcdf(fd, fname, progressbar=True, verbose=False)
-            out.append(fname)
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords", decode_timedelta=False).load()["frost_days"]
-        for f in fp:
-            f.unlink()
-    return _frost_year(fd=out).rename("year_with_winter_frost")
+def growth_frost_days(data, s2, s3):
+    """Number of days below -5°C between ear 1cm and flag leaf."""
+    data = _rename_latlon(data)
+    return atmos.frost_days(data, thresh="-5 degC", freq="YS-APR", doy_bounds=(s2, s3))
 
 
 @climdata
-def year_with_growth_frost(data, s2, s3, res):
-    """Number of years with at least 5 day below -2°C between ear 1cm and flag leaf."""
-    if res == "25km":
-        out = atmos.frost_days(data, thresh="-2 degC", freq="YS-APR", doy_bounds=(s2, s3))
-
-    elif res == "5km":
-        data = _rename_latlon(data)
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 1}-03-31"))
-            fd = atmos.frost_days(data_yr, thresh="-2 degC", freq="YS-APR", doy_bounds=(s2, s3))
-            fname = INDICATORPATH / f"tmp_frost-days_{res}_{y}.nc"
-            write_netcdf(fd, fname, progressbar=True, verbose=False)
-            out.append(fname)
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords", decode_timedelta=False).load()["frost_days"]
-        for f in fp:
-            f.unlink()
-    return _frost_year(fd=out).rename("year_with_growth_frost")
-
-
-@climdata
-def year_with_flowering_heat(data, s4, res):
-    """Number of years with at least 5 days above 30°C between anthesis +/- 30 days."""
-
-    def _year_heat(hd):
-        out = count_occurrences(hd, threshold="5 days", op=">=", freq="YS-APR")
-        return out.where(data.isel(time=0).notnull())
-
+def flowering_heat_days(data, s4):
+    """Number of days above 30°C between anthesis +/- 30 days."""
+    data = _rename_latlon(data)
     start = days_since_to_doy(doy_to_days_since(s4) - 30)
     end = days_since_to_doy(doy_to_days_since(s4) + 30)
-
-    if res == "25km":
-        out = atmos.hot_days(data, thresh="30 degC", freq="YS-APR", doy_bounds=(start, end))
-
-    elif res == "5km":
-        data = _rename_latlon(data)
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 1}-03-31"))
-            hd = atmos.hot_days(data_yr, thresh="30 degC", freq="YS-APR", doy_bounds=(start, end))
-            fname = INDICATORPATH / f"tmp_hot-days_{res}_{y}.nc"
-            write_netcdf(hd, fname, progressbar=True, verbose=False)
-            out.append(fname)
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords", decode_timedelta=False).load()["hot_days"]
-        for f in fp:
-            f.unlink()
-    return _year_heat(hd=out).rename("year_with_flowering_heat")
+    return atmos.hot_days(data, thresh="30 degC", freq="YS-APR", doy_bounds=(start, end))
 
 
 def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
-    """Compute and save all Pinot noir climate indicators."""
+    """Compute and save all late wheat climate indicators."""
     if isinstance(resolution, str):
         resolution = [resolution]
 
@@ -292,78 +228,37 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 prtot = prcptot(climDS, "pr", period=tperiod, units="mm")
                 write_netcdf(prtot, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Years with Winter Frost
-            fname = f"wheatlate_years-5fdm8_emergence-ear1cm_5yr_annual_{scen}_{climDS.res}.nc"
+            # Winter Frost Days
+            fname = f"wheatlate_fdm8_emergence-ear1cm_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                ywf = year_with_winter_frost(
-                    climDS, "tasmin", s1=s1, s2=s2, res=climDS.res, period=tperiod, freq="YS-APR", offset={"months": 3}
+                fdm8 = winter_frost_days(
+                    climDS, "tasmin", s1=s1, s2=s2, period=tperiod, freq="YS-APR", offset={"months": 3}
                 )
-                # work around to handle historical and projection transition for rolling sum
-                if scen == "historical":
-                    ywf.to_netcdf(INDICATORPATH / "tmp_wheatlate_winter-frost.nc")
-                else:
-                    histfile = "tmp_wheatlate_winter-frost.nc"
-                    hist = xr.open_dataarray(INDICATORPATH / histfile)
-                    hist = hist.isel(time=slice(-4, None))
-                    projtime = ywf.time.values
-                    ywf = xr.concat([hist, ywf], dim="time")
-                ywf = ywf.chunk({"time": -1}).rolling(time=5).sum()  # 5-yr rolling sum
+                write_netcdf(fdm8, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-                if scen != "historical":
-                    ywf = ywf.sel(time=projtime)
-                write_netcdf(ywf, INDICATORPATH / fname, progressbar=True, verbose=True)
-
-            # Years with Growth Frost
-            fname = f"wheatlate_years-5fdm2_ear1cm-flagleaf_5yr_annual_{scen}_{climDS.res}.nc"
+            # Growth Frost Days
+            fname = f"wheatlate_fdm5_ear1cm-flagleaf_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                ygf = year_with_growth_frost(
-                    climDS, "tasmin", s2=s2, s3=s3, res=climDS.res, period=tperiod, freq="YS-APR", offset={"months": 3}
+                fdm2 = growth_frost_days(
+                    climDS, "tasmin", s2=s2, s3=s3, period=tperiod, freq="YS-APR", offset={"months": 3}
                 )
-                # work around to handle historical and projection transition for rolling sum
-                if scen == "historical":
-                    ygf.to_netcdf(INDICATORPATH / "tmp_wheatlate_growth-frost.nc")
-                else:
-                    histfile = "tmp_wheatlate_growth-frost.nc"
-                    hist = xr.open_dataarray(INDICATORPATH / histfile)
-                    hist = hist.isel(time=slice(-4, None))
-                    projtime = ygf.time.values
-                    ygf = xr.concat([hist, ygf], dim="time")
-                ygf = ygf.chunk({"time": -1}).rolling(time=5).sum()  # 5-yr rolling sum
+                write_netcdf(fdm2, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-                if scen != "historical":
-                    ygf = ygf.sel(time=projtime)
-                write_netcdf(ygf, INDICATORPATH / fname, progressbar=True, verbose=True)
-
-            # Years with Flowering Heat
-            fname = f"wheatlate_years-5txge30_30anthesis-anthesis30_5yr_annual_{scen}_{climDS.res}.nc"
+            # Flowering Heat Days
+            fname = f"wheatlate_txge30_30anthesis-anthesis30_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                yfh = year_with_flowering_heat(
-                    climDS, "tasmax", s4=s4, res=climDS.res, period=tperiod, freq="YS-APR", offset={"months": 3}
-                )
-                # work around to handle historical and projection transition for rolling sum
-                if scen == "historical":
-                    yfh.to_netcdf(INDICATORPATH / "tmp_wheatlate_flowering-heat.nc")
-                else:
-                    histfile = "tmp_wheatlate_flowering-heat.nc"
-                    hist = xr.open_dataarray(INDICATORPATH / histfile)
-                    hist = hist.isel(time=slice(-4, None))
-                    projtime = yfh.time.values
-                    yfh = xr.concat([hist, yfh], dim="time")
-                yfh = yfh.chunk({"time": -1}).rolling(time=5).sum()  # 5-yr rolling sum
-
-                if scen != "historical":
-                    yfh = yfh.sel(time=projtime)
-                write_netcdf(yfh, INDICATORPATH / fname, progressbar=True, verbose=True)
+                tx30 = flowering_heat_days(climDS, "tasmax", s4=s4, period=tperiod, freq="YS-APR", offset={"months": 3})
+                write_netcdf(tx30, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute and save all Pinot noir climate indicators.")
+    parser = argparse.ArgumentParser(description="Compute and save all late wheat climate indicators.")
     parser.add_argument("--res", nargs="+", default=["5km", "1km"], help="Resolution(s) to process (e.g. 5km, 1km)")
     args = parser.parse_args()
     compute(args.res)
