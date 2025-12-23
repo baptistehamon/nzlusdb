@@ -39,6 +39,8 @@ website:
             href: landuses/kiwifruit.md
           - text: Manuka
             href: landuses/manuka.md
+          - text: Wheat
+            href: landuses/wheat.md
     tools:
       - icon: github
         text: Source Code
