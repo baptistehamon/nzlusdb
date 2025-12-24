@@ -34,7 +34,7 @@ title: Grapevines
 
 ## Suitability Criteria
 
-The following criteria were used to model the suitability of Pinotnoir:
+The following criteria were used to model the suitability of grapevines:
 
 | Category | Criteria |
 |:--------:|:---------|
