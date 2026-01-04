@@ -46,3 +46,4 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - Fix cherry cracking survival indicator computation ([PR#36](https://github.com/baptistehamon/nzlusdb/pull/36)).
 - Fix citrus and hops annual total precipitation indicator unit ([GH#39](https://github.com/baptistehamon/nzlusdb/issues/39), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
 - Fix computation of citrus and hops years rolling sum indicators ([GH#40](https://github.com/baptistehamon/nzlusdb/issues/40), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
+- Fix typo issue in grapevine documentation ([PR#43](https://github.com/baptistehamon/nzlusdb/pull/43)).
