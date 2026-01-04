@@ -186,7 +186,7 @@
     "href": "landuses/grapevines.html#suitability-criteria",
     "title": "Grapevines",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Pinotnoir:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of grapevines:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
   },
   {
     "objectID": "landuses/cherry.html",
