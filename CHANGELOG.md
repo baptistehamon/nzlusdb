@@ -47,3 +47,4 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - Fix citrus and hops annual total precipitation indicator unit ([GH#39](https://github.com/baptistehamon/nzlusdb/issues/39), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
 - Fix computation of citrus and hops years rolling sum indicators ([GH#40](https://github.com/baptistehamon/nzlusdb/issues/40), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
 - Fix typo issue in grapevine documentation ([PR#43](https://github.com/baptistehamon/nzlusdb/pull/43)).
+- The fruit cracking criteria for cherry has been removed considering unbias corrected relative humidity data ([GH#44](https://github.com/baptistehamon/nzlusdb/issues/44), [PR#45](https://github.com/baptistehamon/nzlusdb/pull/45)).
