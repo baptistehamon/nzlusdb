@@ -145,7 +145,7 @@ def downweight_season(
         raise ValueError("length of 'include_bounds' must be 2")
 
     out = weight.copy()
-    for params in zip(period_type, periods.keys(), periods.values(), values, include_bounds):
+    for params in zip(period_type, periods.keys(), periods.values(), values, include_bounds, strict=False):
         ptype, period, prange, dw, inc_bnd = params
         if period == "start":
             dw = {"downweight_from": dw}

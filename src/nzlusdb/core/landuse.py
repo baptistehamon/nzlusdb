@@ -265,8 +265,10 @@ class LandUse:
         data = data.where(agmask == 1)
 
         mapping = {
-            "scenario": {time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values)},
-            "period": {time: period for time, period in zip(data["time"].values, data["period"].values)},
+            "scenario": {
+                time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values, strict=True)
+            },
+            "period": {time: period for time, period in zip(data["time"].values, data["period"].values, strict=True)},
         }
 
         cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
