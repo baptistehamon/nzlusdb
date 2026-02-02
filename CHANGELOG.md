@@ -40,6 +40,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The criteria indicator preprocessing functionality has been used to update allowing custom functions ([PR#42](https://github.com/baptistehamon/nzlusdb/pull/42)).
 - The `decode_timedelta` of `xr.open_dataarray` in `nzlusdb.core.landuse.LandUse._load_indicator` has been set to `False` ([PR#42](https://github.com/baptistehamon/nzlusdb/pull/42)).
 - The weight of maturity date criteria for wheat has been changed to 0.25 ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
+- The computation of flowering date for Pinot Noir and Sauvignon Blanc has been added ([PR#50](https://github.com/baptistehamon/nzlusdb/pull/50)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
