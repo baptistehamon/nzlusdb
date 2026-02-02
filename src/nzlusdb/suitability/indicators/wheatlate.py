@@ -60,7 +60,7 @@ def emergence(climds, tperiod, res):
             params=PHENO_PARAMS,
             is_photoperiod=False,
             is_vernalisation=False,
-            start_cycle_doy=105,  # sowing date: Apr 15
+            cycle_start="04-15",
             freq="YS-APR",
         )
 
@@ -100,8 +100,8 @@ def ear_1cm(climds, tperiod, s1, res):
             params=PHENO_PARAMS,
             is_photoperiod=True,
             is_vernalisation=True,
-            start_cycle_doy=105,  # sowing date: Apr 15
-            from_doy=s1,
+            cycle_start="04-15",
+            start_from=s1,
             freq="YS-APR",
         )
 
@@ -143,8 +143,8 @@ def flag_leaf(climds, tperiod, s2, res):
             params=PHENO_PARAMS,
             is_photoperiod=True,
             is_vernalisation=True,
-            start_cycle_doy=105,  # sowing date: Apr 15
-            from_doy=s2,
+            cycle_start="04-15",
+            start_from=s2,
             freq="YS-APR",
         )
 
@@ -186,8 +186,8 @@ def anthesis(climds, tperiod, s3, res):
             params=PHENO_PARAMS,
             is_photoperiod=True,
             is_vernalisation=True,
-            start_cycle_doy=105,  # sowing date: Apr 15
-            from_doy=s3,
+            cycle_start="04-15",
+            start_from=s3,
             freq="YS-APR",
         )
 
@@ -229,8 +229,8 @@ def maturity(climds, tperiod, s4, res):
             params=PHENO_PARAMS,
             is_photoperiod=False,
             is_vernalisation=False,
-            start_cycle_doy=105,  # sowing date: Apr 15
-            from_doy=s4,
+            cycle_start="04-15",
+            start_from=s4,
             freq="YS-APR",
         )
 

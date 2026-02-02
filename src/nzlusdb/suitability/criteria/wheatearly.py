@@ -87,7 +87,7 @@ wheatearly_criteria = {
     "maturity_date": SuitabilityCriteria(
         name="maturity_date",
         long_name="Date of Maturity",
-        weight=1,
+        weight=0.25,
         category="climate",
         func=lstd.boolean,
         fparams={"op": "<=", "thresh": 364},
