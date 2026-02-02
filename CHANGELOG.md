@@ -39,6 +39,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The `heat_survival` index and indicator have been added to support the computation of grapevine climate indicators ([PR#37](https://github.com/baptistehamon/nzlusdb/pull/37)).
 - The criteria indicator preprocessing functionality has been used to update allowing custom functions ([PR#42](https://github.com/baptistehamon/nzlusdb/pull/42)).
 - The `decode_timedelta` of `xr.open_dataarray` in `nzlusdb.core.landuse.LandUse._load_indicator` has been set to `False` ([PR#42](https://github.com/baptistehamon/nzlusdb/pull/42)).
+- The weight of maturity date criteria for wheat has been changed to 0.25 ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
@@ -48,3 +49,4 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - Fix computation of citrus and hops years rolling sum indicators ([GH#40](https://github.com/baptistehamon/nzlusdb/issues/40), [PR#41](https://github.com/baptistehamon/nzlusdb/pull/41)).
 - Fix typo issue in grapevine documentation ([PR#43](https://github.com/baptistehamon/nzlusdb/pull/43)).
 - The fruit cracking criteria for cherry has been removed considering unbias corrected relative humidity data ([GH#44](https://github.com/baptistehamon/nzlusdb/issues/44), [PR#45](https://github.com/baptistehamon/nzlusdb/pull/45)).
+- Fix error in wheat phenological stages computation due to correction in [pynar package](https://forge.inrae.fr/agroclim/Indicators/OutilsPourIndicateurs/fonctionspython/pynar/-/merge_requests/17) and wheat suitability has been recomputed ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
