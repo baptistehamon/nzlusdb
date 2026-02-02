@@ -30,6 +30,20 @@ def day_budbreak(data):
 
 
 @climdata
+def flowering(data):
+    """Day of flowering."""
+    return atmos.degree_days_exceedance_date(
+        data,
+        thresh="0 degC",
+        sum_thresh="1282 K days",
+        op=">=",
+        after_date="08-29",
+        never_reached="06-30",
+        freq="YS-JUL",
+    )
+
+
+@climdata
 def veraison(data):
     """Day of veraison."""
     return atmos.degree_days_exceedance_date(
@@ -178,6 +192,15 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 dbb = day_budbreak(climDS, "tas", period=tperiod)
                 write_netcdf(dbb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dbb = xr.open_dataarray(INDICATORPATH / fname)
+
+            # Day of Flowering
+            fname = f"sauvignonblanc_flowering_annual_{scen}_{climDS.res}.nc"
+            if (INDICATORPATH / fname).exists():
+                print(f"{fname} exists, skipping...")
+            else:
+                flow = flowering(climDS, "tas", period=tperiod)
+                write_netcdf(flow, INDICATORPATH / fname, progressbar=True, verbose=True)
+            flow = xr.open_dataarray(INDICATORPATH / fname)
 
             # Day of Veraison
             fname = f"sauvignonblanc_veraison_annual_{scen}_{climDS.res}.nc"
