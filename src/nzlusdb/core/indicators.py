@@ -84,3 +84,35 @@ heat_survival = TempWithIndexing(
     compute=indices.tasmax_survival,
     cell_methods="time: prod",
 )
+
+hot_days_frequency = TempWithIndexing(
+    title="Hot days frequency",
+    identifier="hot_days_frequency",
+    units="%",
+    long_name="Frequency of hot days where daily maximum temperature exceeds threshold {thresh}",
+    description="{freq} frequency of days where the daily maximum temperature exceeds {thresh}.",
+    abstract="Frequency of days where the daily maximum temperature exceeds a given threshold.",
+    compute=indices.hot_days_frequency,
+)
+
+cold_days = TempWithIndexing(
+    title="Cold days",
+    identifier="cold_days",
+    units="days",
+    standard_name="days_with_air_temperature_below_threshold",
+    long_name="Number of days where the daily mean temperature is below threshold {thresh}",
+    description="{freq} number of days where the daily mean temperature is below {thresh}.",
+    abstract="Number of days where the daily mean temperature is below a given threshold.",
+    cell_methods="time: sum over days",
+    compute=indices.cold_days,
+)
+
+cold_days_frequency = TempWithIndexing(
+    title="Cold days frequency",
+    identifier="cold_days_frequency",
+    units="%",
+    long_name="Frequency of frost days where daily mean temperature is below threshold {thresh}",
+    description="{freq} frequency of days where the daily mean temperature is below {thresh}.",
+    abstract="Frequency of days where the daily mean temperature is below a given threshold.",
+    compute=indices.cold_days_frequency,
+)
