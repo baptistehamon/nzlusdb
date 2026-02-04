@@ -6,9 +6,10 @@ from collections.abc import Callable
 
 import numpy as np
 import xarray as xr
-from xclim.core.calendar import get_calendar, select_time
+import xclim.indices as xci
+from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import Quantified, convert_units_to, declare_units
-from xclim.indices.generic import domain_count, to_agg_units
+from xclim.indices.generic import domain_count, threshold_count, to_agg_units
 
 
 @declare_units(tasmax="[temperature]")
@@ -269,3 +270,95 @@ def cracking_survival(
     out = (out**weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
     return out
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_days_frequency(
+    tasmax: xr.DataArray,
+    bounds: tuple[xr.DataArray, xr.DataArray],
+    thresh: Quantified = "25 degC",
+    freq: str = "YS",
+):
+    """
+    Frequency of hot days over a period.
+
+    Parameters
+    ----------
+    tasmax : xr.DataArray
+        Daily maximum temperature.
+    thresh : Quantified
+        Temperature threshold to define a hot day.
+    freq : str, optional
+        Resampling frequency. Default is "YS".
+    bounds : tuple[xr.DataArray, xr.DataArray]
+        Start and end day of year bounds to compute the frequency over.
+
+    Returns
+    -------
+    xr.DataArray
+        Frequency of hot days over the specified period, in percentage.
+    """
+    hd = xci.hot_days(tasmax, thresh=thresh, freq=freq)
+    period_length = doy_to_days_since(bounds[1]).fillna(365) - doy_to_days_since(bounds[0]).fillna(0) + 1
+    return (hd / period_length * 100).clip(min=0, max=100).assign_attrs(units="%")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_days(
+    tas: xr.DataArray,
+    thresh: Quantified = "10 degC",
+    freq: str = "YS",
+) -> xr.DataArray:
+    r"""
+    Cold days index.
+
+    Number of days where daily mean temperatures are below a threshold temperature.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Cooling temperature.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xr.DataArray, [time]
+        Cold days index.
+    """
+    frz = convert_units_to(thresh, tas)
+    out = threshold_count(tas, "<", frz, freq)
+    return to_agg_units(out, tas, "count", deffreq="D")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_days_frequency(
+    tas: xr.DataArray,
+    bounds: tuple[xr.DataArray, xr.DataArray],
+    thresh: Quantified = "0 degC",
+    freq: str = "YS",
+):
+    """
+    Frequency of cold days over a period.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Daily mean temperature.
+    thresh : Quantified
+        Temperature threshold to define a frost day.
+    freq : str, optional
+        Resampling frequency. Default is "YS".
+    bounds : tuple[xr.DataArray, xr.DataArray]
+        Start and end day of year bounds to compute the frequency over.
+
+    Returns
+    -------
+    xr.DataArray
+        Frequency of frost days over the specified period, in percentage.
+    """
+    cd = cold_days(tas, thresh=thresh, freq=freq)
+    period_length = doy_to_days_since(bounds[1]).fillna(365) - doy_to_days_since(bounds[0]).fillna(0) + 1
+    return (cd / period_length * 100).clip(min=0, max=100).assign_attrs(units="%")
