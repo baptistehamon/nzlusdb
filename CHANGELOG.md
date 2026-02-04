@@ -21,13 +21,14 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
     - Pinot Noir ([GH#35](https://github.com/baptistehamon/nzlusdb/issues/35), [PR#37](https://github.com/baptistehamon/nzlusdb/pull/37))
     - Sauvignon Blanc ([GH#35](https://github.com/baptistehamon/nzlusdb/issues/35), [PR#37](https://github.com/baptistehamon/nzlusdb/pull/37))
   - Early and late wheat ([GH#38](https://github.com/baptistehamon/nzlusdb/issues/38), [PR#42](https://github.com/baptistehamon/nzlusdb/pull/42))
+  - Early and late maize ([GH#48](https://github.com/baptistehamon/nzlusdb/issues/48), [PR#51](https://github.com/baptistehamon/nzlusdb/pull/51)).
 
 ### Internal Changes
 - A preprocessing step has been added enabling to preprocess criteria indicators before running the LSA ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9)).
 - The Command Line Interface (CLI) has been improved ([GH9#](https://github.com/baptistehamon/nzlusdb/issues/9)).
 - The README file has been updated ([GH10#](https://github.com/baptistehamon/nzlusdb/issues/10), [PR#15](https://github.com/baptistehamon/nzlusdb/pull/15)).
 - The home page of the website has been updated ([GH10#](https://github.com/baptistehamon/nzlusdb/issues/10), [PR#15](https://github.com/baptistehamon/nzlusdb/pull/15)).
-- The `day_full_bloom`, `frost_survival` and `sunburn_survival` indices and indicators, and  have been added to support the computation apple climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
+- The `day_full_bloom`, `frost_survival` and `sunburn_survival` indices and indicators have been added to support the computation apple climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
 - The `downweight` and `downweight_season` functions have been added to support the computation of some climate indicators ([PR#18](https://github.com/baptistehamon/nzlusdb/pull/18)).
 - The colorbar for suitability changes has been updated to avoid confusion ([GH#17](https://github.com/baptistehamon/nzlusdb/issues/17), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
 - The definition of the standardization function of `SuitabilityCriteria` has been updated reflecting `lsapy` v0.3.0 changes ([GH#20](https://github.com/baptistehamon/nzlusdb/issues/20), [PR#21](https://github.com/baptistehamon/nzlusdb/pull/21))
@@ -41,6 +42,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The `decode_timedelta` of `xr.open_dataarray` in `nzlusdb.core.landuse.LandUse._load_indicator` has been set to `False` ([PR#42](https://github.com/baptistehamon/nzlusdb/pull/42)).
 - The weight of maturity date criteria for wheat has been changed to 0.25 ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
 - The computation of flowering date for Pinot Noir and Sauvignon Blanc has been added ([PR#50](https://github.com/baptistehamon/nzlusdb/pull/50)).
+- The `hot_days_frequency`, `cold_days`, and `cold_days_frequency` indices and indicators have been added to support the computation of maize climate indicators. ([PR#51](https://github.com/baptistehamon/nzlusdb/pull/51)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
