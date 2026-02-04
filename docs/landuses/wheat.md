@@ -1,5 +1,5 @@
 ---
-title: wheat
+title: Wheat
 ---
 
 ## Historical and Projected Suitability
