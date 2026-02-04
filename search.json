@@ -65,21 +65,21 @@
   {
     "objectID": "landuses/wheat.html",
     "href": "landuses/wheat.html",
-    "title": "wheat",
+    "title": "Wheat",
     "section": "",
     "text": "Suitability ValuesSuitability Changes\n\n\n\n\n\n\n\n\n\n\n\n\n\nSuitability ValuesSuitability Changes"
   },
   {
     "objectID": "landuses/wheat.html#historical-and-projected-suitability",
     "href": "landuses/wheat.html#historical-and-projected-suitability",
-    "title": "wheat",
+    "title": "Wheat",
     "section": "",
     "text": "Suitability ValuesSuitability Changes\n\n\n\n\n\n\n\n\n\n\n\n\n\nSuitability ValuesSuitability Changes"
   },
   {
     "objectID": "landuses/wheat.html#suitability-criteria",
     "href": "landuses/wheat.html#suitability-criteria",
-    "title": "wheat",
+    "title": "Wheat",
     "section": "Suitability Criteria",
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of wheat:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nClimate\nAnnual Rainfall Excess: total annual precipitation\n\n\nClimate\nNumber of days below -8°C between crop emergence and ear 1cm\n\n\nClimate\nNumber of days below -5°C between ear 1cm and flag leaf\n\n\nClimate\nNumber of days above 30°C between anthesis +/- 30 days\n\n\nClimate\nDate of Maturity"
   },
@@ -105,25 +105,46 @@
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Kiwifruit:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nMean annual temperature between May 1 and Jul 31\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30\n\n\nClimate\nFrost survival during growing period (Aug 13 to Jun 30)\n\n\nClimate\nMinimum annual temperature"
   },
   {
-    "objectID": "landuses/pinotnoir.html",
-    "href": "landuses/pinotnoir.html",
-    "title": "Pinot noir",
+    "objectID": "landuses/maizelate.html",
+    "href": "landuses/maizelate.html",
+    "title": "Late ripening maize",
     "section": "",
     "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/pinotnoir.html#historical-and-projected-suitability",
-    "href": "landuses/pinotnoir.html#historical-and-projected-suitability",
-    "title": "Pinot noir",
+    "objectID": "landuses/maizelate.html#historical-and-projected-suitability",
+    "href": "landuses/maizelate.html#historical-and-projected-suitability",
+    "title": "Late ripening maize",
     "section": "",
     "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/pinotnoir.html#suitability-criteria",
-    "href": "landuses/pinotnoir.html#suitability-criteria",
-    "title": "Pinot noir",
+    "objectID": "landuses/maizelate.html#suitability-criteria",
+    "href": "landuses/maizelate.html#suitability-criteria",
+    "title": "Late ripening maize",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Pinot noir:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Late ripening maize:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nClimate\nAnnual Rainfall Excess: total annual precipitation\n\n\nClimate\nNumber of days below -6°C between emergence and beginning of stem elongation\n\n\nClimate\nFrequency of days above 35°C between anthesis +/- 30 days\n\n\nClimate\nFrequency of days with mean daily temperature below 10°C between flowering and maturity\n\n\nClimate\nDate of Maturity"
+  },
+  {
+    "objectID": "landuses/maizeearly.html",
+    "href": "landuses/maizeearly.html",
+    "title": "Early ripening maize",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/maizeearly.html#historical-and-projected-suitability",
+    "href": "landuses/maizeearly.html#historical-and-projected-suitability",
+    "title": "Early ripening maize",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/maizeearly.html#suitability-criteria",
+    "href": "landuses/maizeearly.html#suitability-criteria",
+    "title": "Early ripening maize",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Early ripening maize:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nClimate\nAnnual Rainfall Excess: total annual precipitation\n\n\nClimate\nNumber of days below -6°C between emergence and beginning of stem elongation\n\n\nClimate\nFrequency of days above 35°C between anthesis +/- 30 days\n\n\nClimate\nFrequency of days with mean daily temperature below 10°C between flowering and maturity\n\n\nClimate\nDate of Maturity"
   },
   {
     "objectID": "landuses/avocado.html",
@@ -147,25 +168,46 @@
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Avocado:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nAnnual frost survival\n\n\nClimate\nMean annual temperature"
   },
   {
-    "objectID": "landuses/citrus.html",
-    "href": "landuses/citrus.html",
-    "title": "Citrus",
+    "objectID": "landuses/maize.html",
+    "href": "landuses/maize.html",
+    "title": "Maize",
     "section": "",
-    "text": "Suitability ValuesSuitability Changes"
+    "text": "Suitability ValuesSuitability Changes\n\n\n\n\n\n\n\n\n\n\n\n\n\nSuitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/citrus.html#historical-and-projected-suitability",
-    "href": "landuses/citrus.html#historical-and-projected-suitability",
-    "title": "Citrus",
+    "objectID": "landuses/maize.html#historical-and-projected-suitability",
+    "href": "landuses/maize.html#historical-and-projected-suitability",
+    "title": "Maize",
     "section": "",
-    "text": "Suitability ValuesSuitability Changes"
+    "text": "Suitability ValuesSuitability Changes\n\n\n\n\n\n\n\n\n\n\n\n\n\nSuitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/citrus.html#suitability-criteria",
-    "href": "landuses/citrus.html#suitability-criteria",
-    "title": "Citrus",
+    "objectID": "landuses/maize.html#suitability-criteria",
+    "href": "landuses/maize.html#suitability-criteria",
+    "title": "Maize",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Citrus:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nRainfall excess: annual total precipitation (mm)\n\n\nClimate\nMean daily minimum temperature between Aug 15 and Oct 15 (°C)\n\n\nClimate\nMean daily temperature between Sep 15 and Nov 15 (°C)\n\n\nClimate\nMean daily maximum temperature between Jan 1 and Feb 15 (°C)\n\n\nClimate\nNumber of years with at least one hot week (3 days over 35C in a 7-day period) between Dec 1 and Feb 28 (over 10 years)"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of maize:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nClimate\nAnnual Rainfall Excess: total annual precipitation\n\n\nClimate\nNumber of days below -6°C between emergence and beginning of stem elongation\n\n\nClimate\nFrequency of days above 35°C between anthesis +/- 30 days\n\n\nClimate\nFrequency of days with mean daily temperature below 10°C between flowering and maturity\n\n\nClimate\nDate of Maturity"
+  },
+  {
+    "objectID": "landuses/cherry.html",
+    "href": "landuses/cherry.html",
+    "title": "Cherry",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/cherry.html#historical-and-projected-suitability",
+    "href": "landuses/cherry.html#historical-and-projected-suitability",
+    "title": "Cherry",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/cherry.html#suitability-criteria",
+    "href": "landuses/cherry.html#suitability-criteria",
+    "title": "Cherry",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Cherry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nGrowing degree days between day of budbreak and Apr 30\n\n\nClimate\nFrost and cold indicator as the product of frost survival and days from budbreak to 31 Dec"
   },
   {
     "objectID": "landuses/grapevines.html",
@@ -189,25 +231,25 @@
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of grapevines:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
   },
   {
-    "objectID": "landuses/cherry.html",
-    "href": "landuses/cherry.html",
-    "title": "Cherry",
+    "objectID": "landuses/citrus.html",
+    "href": "landuses/citrus.html",
+    "title": "Citrus",
     "section": "",
     "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/cherry.html#historical-and-projected-suitability",
-    "href": "landuses/cherry.html#historical-and-projected-suitability",
-    "title": "Cherry",
+    "objectID": "landuses/citrus.html#historical-and-projected-suitability",
+    "href": "landuses/citrus.html#historical-and-projected-suitability",
+    "title": "Citrus",
     "section": "",
     "text": "Suitability ValuesSuitability Changes"
   },
   {
-    "objectID": "landuses/cherry.html#suitability-criteria",
-    "href": "landuses/cherry.html#suitability-criteria",
-    "title": "Cherry",
+    "objectID": "landuses/citrus.html#suitability-criteria",
+    "href": "landuses/citrus.html#suitability-criteria",
+    "title": "Citrus",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Cherry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nGrowing degree days between day of budbreak and Apr 30\n\n\nClimate\nFrost and cold indicator as the product of frost survival and days from budbreak to 31 Dec"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Citrus:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nTopsoil Gravel Content\n\n\nsoil/Terrain\nSalinity\n\n\nsoil/Terrain\nSoil Potential Plant Available Water (mm)\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nRainfall excess: annual total precipitation (mm)\n\n\nClimate\nMean daily minimum temperature between Aug 15 and Oct 15 (°C)\n\n\nClimate\nMean daily temperature between Sep 15 and Nov 15 (°C)\n\n\nClimate\nMean daily maximum temperature between Jan 1 and Feb 15 (°C)\n\n\nClimate\nNumber of years with at least one hot week (3 days over 35C in a 7-day period) between Dec 1 and Feb 28 (over 10 years)"
   },
   {
     "objectID": "landuses/landuse.html",
@@ -250,6 +292,27 @@
     "title": "Sauvignon blanc",
     "section": "Suitability Criteria",
     "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Sauvignon blanc:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
+  },
+  {
+    "objectID": "landuses/pinotnoir.html",
+    "href": "landuses/pinotnoir.html",
+    "title": "Pinot noir",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/pinotnoir.html#historical-and-projected-suitability",
+    "href": "landuses/pinotnoir.html#historical-and-projected-suitability",
+    "title": "Pinot noir",
+    "section": "",
+    "text": "Suitability ValuesSuitability Changes"
+  },
+  {
+    "objectID": "landuses/pinotnoir.html#suitability-criteria",
+    "href": "landuses/pinotnoir.html#suitability-criteria",
+    "title": "Pinot noir",
+    "section": "Suitability Criteria",
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Pinot noir:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nClimate\nChilling hours between Jun 1 and Aug 31\n\n\nClimate\nFrost survival from budbreak to veraison\n\n\nClimate\nHeat survival from veraison to ripeness\n\n\nClimate\nBotrytis risk: total precipitation between Mar 1 and Apr 30\n\n\nClimate\nDate of Ripeness"
   },
   {
     "objectID": "landuses/apple.html",

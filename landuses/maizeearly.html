@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Pinot noir – NZ Land Use Suitability Database</title>
+<title>Early ripening maize – NZ Land Use Suitability Database</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -171,7 +171,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Pinot noir</h1>
+<h1 class="title">Early ripening maize</h1>
 </div>
 
 
@@ -194,17 +194,17 @@ ul.task-list li input[type="checkbox"] {
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Suitability Values</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Suitability Changes</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<p><img src="../_static/summary_figs/pinotnoir_suitability_SSP245-SSP585_5km_v1.0.png" class="img-fluid"></p>
+<p><img src="../_static/summary_figs/maizeearly_suitability_SSP245-SSP585_5km_v1.0.png" class="img-fluid"></p>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<p><img src="../_static/summary_figs/pinotnoir_suitability_change_SSP245-SSP585_5km_v1.0.png" class="img-fluid"></p>
+<p><img src="../_static/summary_figs/maizeearly_suitability_change_SSP245-SSP585_5km_v1.0.png" class="img-fluid"></p>
 </div>
 </div>
 </div>
 </section>
 <section id="suitability-criteria" class="level2">
 <h2 class="anchored" data-anchor-id="suitability-criteria">Suitability Criteria</h2>
-<p>The following criteria were used to model the suitability of Pinot noir:</p>
+<p>The following criteria were used to model the suitability of Early ripening maize:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -227,31 +227,39 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td style="text-align: center;">soil/Terrain</td>
+<td style="text-align: left;">Topsoil Gravel Content</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">soil/Terrain</td>
+<td style="text-align: left;">Salinity</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">soil/Terrain</td>
 <td style="text-align: left;">Soil Drainage Class</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">soil/Terrain</td>
-<td style="text-align: left;">Land Use Capability Class</td>
+<td style="text-align: left;">Soil Potential Plant Available Water (mm)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">Climate</td>
-<td style="text-align: left;">Chilling hours between Jun 1 and Aug 31</td>
+<td style="text-align: left;">Annual Rainfall Excess: total annual precipitation</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">Climate</td>
-<td style="text-align: left;">Frost survival from budbreak to veraison</td>
+<td style="text-align: left;">Number of days below -6°C between emergence and beginning of stem elongation</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">Climate</td>
-<td style="text-align: left;">Heat survival from veraison to ripeness</td>
+<td style="text-align: left;">Frequency of days above 35°C between anthesis +/- 30 days</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">Climate</td>
-<td style="text-align: left;">Botrytis risk: total precipitation between Mar 1 and Apr 30</td>
+<td style="text-align: left;">Frequency of days with mean daily temperature below 10°C between flowering and maturity</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">Climate</td>
-<td style="text-align: left;">Date of Ripeness</td>
+<td style="text-align: left;">Date of Maturity</td>
 </tr>
 </tbody>
 </table>
