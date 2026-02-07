@@ -55,7 +55,7 @@ def compute(resolution="5km"):
     for res in resolution:
         climDS = climateDS[f"nzlusdb_{res}"]
 
-        for scen in ["ssp245", "ssp370", "ssp585"]:  # climDS.scenario:
+        for scen in climDS.scenario:
             tperiod = open_climdata_timeserie(
                 climDS, scen, ["pr", "tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
             )
@@ -65,10 +65,10 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm/day")
+                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm")
                 write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Min Tempareture
+            # Mean Min Temperature
             fname = f"tnm_0815-1015_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
@@ -76,7 +76,7 @@ def compute(resolution="5km"):
                 tnm = tn_mean(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUL")
                 write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Annual Tempareture
+            # Mean Annual Temperature
             fname = f"tgm_0915-1115_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
@@ -84,7 +84,7 @@ def compute(resolution="5km"):
                 tgm = tg_mean(climDS, "tas", period=tperiod, units="degC")
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
-            # Mean Max Tempareture
+            # Mean Max Temperature
             fname = f"txm_0101-0215_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
@@ -99,13 +99,15 @@ def compute(resolution="5km"):
             else:
                 yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL")
                 # work around to handle historical and projection transition for rolling sum
-                if scen != "historical":
-                    histfile = f"years-7days-3txge35_1201-0228_10yr_annual_historical_{climDS.res}.nc"
-                    hist = xr.open_dataarray(INDICATORPATH / histfile)
+                if scen == "historical":
+                    yhw.to_netcdf(INDICATORPATH / "tmp_hot-week.nc")
+                else:
+                    hist = xr.open_dataarray(INDICATORPATH / "tmp_hot-week.nc")
                     hist = hist.isel(time=slice(-9, None))
                     projtime = yhw.time.values
                     yhw = xr.concat([hist, yhw], dim="time")
                 yhw = yhw.chunk({"time": -1}).rolling(time=10).sum()  # 10-yr rolling sum
+
                 if scen != "historical":
                     yhw = yhw.sel(time=projtime)
                 write_netcdf(yhw, INDICATORPATH / fname, progressbar=True, verbose=True)

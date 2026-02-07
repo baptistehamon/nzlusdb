@@ -6,8 +6,20 @@ import sys
 import nzlusdb
 from nzlusdb.core.landuse import LandUse
 
-nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
+nzlusdb.db.register(LandUse(name="apple", version="1.0"))
+nzlusdb.db.register(LandUse(name="avocado", version="1.0"))
+nzlusdb.db.register(LandUse(name="blueberry", version="1.0"))
+nzlusdb.db.register(LandUse(name="cherry", version="1.0"))
 nzlusdb.db.register(LandUse(name="citrus", version="1.0"))
+nzlusdb.db.register(LandUse(name="hops", version="1.0"))
+nzlusdb.db.register(LandUse(name="kiwifruit", version="1.0"))
+nzlusdb.db.register(LandUse(name="maizeearly", long_name="Early ripening maize", version="1.0"))
+nzlusdb.db.register(LandUse(name="maizelate", long_name="Late ripening maize", version="1.0"))
+nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
+nzlusdb.db.register(LandUse(name="pinotnoir", long_name="Pinot noir", version="1.0"))
+nzlusdb.db.register(LandUse(name="sauvignonblanc", long_name="Sauvignon blanc", version="1.0"))
+nzlusdb.db.register(LandUse(name="wheatearly", long_name="Early ripening wheat", version="1.0"))
+nzlusdb.db.register(LandUse(name="wheatlate", long_name="Late ripening wheat", version="1.0"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run NZLUSDB workflow for a given land use")

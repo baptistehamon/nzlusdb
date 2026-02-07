@@ -267,7 +267,10 @@ def select_hist_proj(
     hist_end = (hist_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     proj_dates = pd.date_range(start=proj_startdate, end=end_date, freq=freq)[[0, -1]]
     proj_start = hist_dates[1].strftime("%Y-%m-%d")
-    proj_end = (proj_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    if freq == "YS":
+        proj_end = (proj_dates[1] + pd.DateOffset(years=1) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        proj_end = (proj_dates[1] - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
     if period == "historical":
         return data.sel(time=slice(hist_start, hist_end))
@@ -309,13 +312,18 @@ def climdata(func):
         freq="YS-JUL",
         units=None,
         offset=None,
+        convert_calendar=True,
         **kwargs,
     ):
         data = select_hist_proj(
             climDS.data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq
         )
         data = data.chunk(climDS.chunks)
-        res: xr.DataArray = func(data, **kwargs).convert_calendar("standard")
+        res = func(data, **kwargs)
+        if not isinstance(res, xr.DataArray):
+            return res
+        if convert_calendar:
+            res = res.convert_calendar("standard")
         if offset:
             res = res.assign_coords(time=(pd.to_datetime(res.time) + pd.DateOffset(**offset)))
         if units:

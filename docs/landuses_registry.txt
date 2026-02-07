@@ -1,2 +1,14 @@
 manuka: Manuka
 citrus: Citrus
+apple: Apple
+hops: Hops
+blueberry: Blueberry
+avocado: Avocado
+kiwifruit: Kiwifruit
+cherry: Cherry
+pinotnoir: Pinot noir
+sauvignonblanc: Sauvignon blanc
+wheatearly: Early ripening wheat
+wheatlate: Late ripening wheat
+maizeearly: Early ripening maize
+maizelate: Late ripening maize

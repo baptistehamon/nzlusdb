@@ -12,12 +12,6 @@ format:
 
 website:
   title: NZ Land Use Suitability Database
-  announcement:
-    icon: tools
-    dismissable: false
-    content: "**Coming Soon!** - The website is under construction. Thank you for your patience."
-    type: primary
-    position: below-navbar
   page-navigation: true
   navbar:
     # search: false
@@ -27,10 +21,28 @@ website:
         href: index.md
       - text: Land Uses
         menu:
+          - text: Apple
+            href: landuses/apple.md
+          - text: Avocado
+            href: landuses/avocado.md
+          - text: Blueberry
+            href: landuses/blueberry.md
+          - text: Cherry
+            href: landuses/cherry.md
           - text: Citrus
             href: landuses/citrus.md
+          - text: Grapevines
+            href: landuses/grapevines.md
+          - text: Hops
+            href: landuses/hops.md
+          - text: Kiwifruit
+            href: landuses/kiwifruit.md
+          - text: Maize
+            href: landuses/maize.md
           - text: Manuka
             href: landuses/manuka.md
+          - text: Wheat
+            href: landuses/wheat.md
     tools:
       - icon: github
         text: Source Code

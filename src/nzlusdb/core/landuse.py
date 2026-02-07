@@ -229,6 +229,7 @@ class LandUse:
             hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
+            timeline_label="Suitability",
         )
         fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
@@ -243,6 +244,7 @@ class LandUse:
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
             legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
             robustness=True,
+            timeline_label="Changes",
         )
         fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
@@ -263,8 +265,10 @@ class LandUse:
         data = data.where(agmask == 1)
 
         mapping = {
-            "scenario": {time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values)},
-            "period": {time: period for time, period in zip(data["time"].values, data["period"].values)},
+            "scenario": {
+                time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values, strict=True)
+            },
+            "period": {time: period for time, period in zip(data["time"].values, data["period"].values, strict=True)},
         }
 
         cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
@@ -513,7 +517,11 @@ class LandUse:
             for key, ops in preprocess.items():
                 if key in sc:
                     for op, params in ops.items():
-                        sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
+                        if op == "func":
+                            func, f_params = params
+                            sc[key].indicator = func(sc[key].indicator, **f_params)
+                        else:
+                            sc[key].indicator = getattr(xr.DataArray, op)(sc[key].indicator, **params)
                 else:
                     raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
@@ -540,7 +548,7 @@ class LandUse:
     @staticmethod
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
         """Load an indicator from a NetCDF file."""
-        ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file)
+        ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file, decode_timedelta=False)
         if variable:
             return ds[variable]
         elif len(ds.data_vars) == 1:
