@@ -40,6 +40,7 @@ jobs:
           publish-dir: './docs/_build'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
+          enable-github-deployment: false
           alias: pr-preview-${{ github.event.number }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
