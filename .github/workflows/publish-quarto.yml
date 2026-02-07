@@ -9,6 +9,7 @@ jobs:
   quarto-build-deploy:
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       contents: write
     steps:
       - name: Check out repository
