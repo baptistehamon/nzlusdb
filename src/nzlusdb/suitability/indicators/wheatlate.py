@@ -50,6 +50,41 @@ def _select_pheno_climdata(climds, tperiod):
     return _rename_latlon(data.chunk(climds.chunks))
 
 
+def _fill_missing_stages(stage, climds, fill_value=90):
+    """Fill missing phenological stages with a specified value where climate data exists."""
+    return xr.where(
+        stage.notnull(),
+        stage,
+        _rename_latlon(xr.where(climds.data["tas"].isel(time=0).notnull(), fill_value, np.nan)),
+        keep_attrs=True,
+    )
+
+
+def _5km_pheno(data, compute_func, *args, **kwargs):
+    """Compute phenological stage for 5km data by looping over years to avoid memory issues."""
+    years = np.unique(data.time.dt.year.values)
+    out = []
+    drop_last = False
+    for y in years[::5]:
+        if drop_last:
+            continue
+        elif (y == years[::5][-2] and years[-1] - years[::5][-1] < 3) or (y == years[::5][-1] and years[-1] - y < 4):  # noqa: PLR2004
+            data_yr = data.sel(time=slice(f"{y}-01-01", f"{years[-1]}-12-31"))
+            drop_last = True
+        else:
+            data_yr = data.sel(time=slice(f"{y}-01-01", f"{y + 5}-12-31"))
+        stage = compute_func(data_yr, *args, **kwargs)
+        fname = INDICATORPATH / f"tmp_{compute_func.__name__}_{y}_5km.nc"
+        write_netcdf(stage, fname, progressbar=True, verbose=False)
+        out.append(fname)
+
+    fp = out
+    out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
+    for f in fp:
+        f.unlink()
+    return out
+
+
 def emergence(climds, tperiod, res):
     """Day of crop emergence."""
 
@@ -70,24 +105,7 @@ def emergence(climds, tperiod, res):
         return _compute_emergence(data)
 
     if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)[:-1]
-        out = []
-        for y in years[::5]:
-            if y == years[::5][-1] and years[-1] - y < 4:  # noqa: PLR2004
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-            else:
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-            stage = _compute_emergence(data_yr)
-            fname = INDICATORPATH / f"tmp_emergence_{y}_5km.nc"
-            write_netcdf(stage, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
-        for f in fp:
-            f.unlink()
-        return out
+        return _5km_pheno(data, _compute_emergence)
 
 
 def ear_1cm(climds, tperiod, s1, res):
@@ -111,26 +129,7 @@ def ear_1cm(climds, tperiod, s1, res):
         return _compute_ear_1cm(data, s1)
 
     if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)[:-1]
-        out = []
-        for y in years[::5]:
-            if y == years[::5][-1] and years[-1] - y < 4:  # noqa: PLR2004
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-                s1_yr = s1.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-            else:
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-                s1_yr = s1.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-            stage = _compute_ear_1cm(data_yr, s1_yr)
-            fname = INDICATORPATH / f"tmp_ear-1cm_{y}_5km.nc"
-            write_netcdf(stage, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
-        for f in fp:
-            f.unlink()
-        return out
+        return _5km_pheno(data, _compute_ear_1cm, s1)
 
 
 def flag_leaf(climds, tperiod, s2, res):
@@ -154,26 +153,7 @@ def flag_leaf(climds, tperiod, s2, res):
         return _compute_flag_leaf(data, s2)
 
     if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)[:-1]
-        out = []
-        for y in years[::5]:
-            if y == years[::5][-1] and years[-1] - y < 4:  # noqa: PLR2004
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-                s2_yr = s2.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-            else:
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-                s2_yr = s2.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-            stage = _compute_flag_leaf(data_yr, s2_yr)
-            fname = INDICATORPATH / f"tmp_flag-leaf_{y}_5km.nc"
-            write_netcdf(stage, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
-        for f in fp:
-            f.unlink()
-        return out
+        return _5km_pheno(data, _compute_flag_leaf, s2)
 
 
 def anthesis(climds, tperiod, s3, res):
@@ -197,26 +177,7 @@ def anthesis(climds, tperiod, s3, res):
         return _compute_anthesis(data, s3)
 
     if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)[:-1]
-        out = []
-        for y in years[::5]:
-            if y == years[::5][-1] and years[-1] - y < 4:  # noqa: PLR2004
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-                s3_yr = s3.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-            else:
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-                s3_yr = s3.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-            stage = _compute_anthesis(data_yr, s3_yr)
-            fname = INDICATORPATH / f"tmp_anthesis_{y}_5km.nc"
-            write_netcdf(stage, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
-        for f in fp:
-            f.unlink()
-        return out
+        return _5km_pheno(data, _compute_anthesis, s3)
 
 
 def maturity(climds, tperiod, s4, res):
@@ -240,24 +201,7 @@ def maturity(climds, tperiod, s4, res):
         return _compute_maturity(data)
 
     if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)[:-1]
-        out = []
-        for y in years[::5]:
-            if y == years[::5][-1] and years[-1] - y < 4:  # noqa: PLR2004
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{years[-1]}-03-31"))
-            else:
-                data_yr = data.sel(time=slice(f"{y}-04-01", f"{y + 5}-03-31"))
-            stage = _compute_maturity(data_yr)
-            fname = INDICATORPATH / f"tmp_maturity_{y}_5km.nc"
-            write_netcdf(stage, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["dayofyear"]
-        for f in fp:
-            f.unlink()
-        return out
+        return _5km_pheno(data, _compute_maturity)
 
 
 # Define indicators
@@ -406,12 +350,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 write_netcdf(s5, INDICATORPATH / fname, progressbar=True, verbose=True)
                 s5 = xr.open_dataarray(INDICATORPATH / fname)
                 # Fill missing values with 90 (end of March) where climate data exists
-                s5 = xr.where(
-                    s5.notnull(),
-                    s5,
-                    _rename_latlon(xr.where(climDS.data["tas"].isel(time=0).notnull(), 90, np.nan)),
-                    keep_attrs=True,
-                )
+                s5 = _fill_missing_stages(s5, climDS, fill_value=90)
                 write_netcdf(s5, INDICATORPATH / fname, progressbar=True, verbose=True)
             s5 = xr.open_dataarray(INDICATORPATH / fname)
 
