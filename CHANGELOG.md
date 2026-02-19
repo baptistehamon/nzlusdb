@@ -53,3 +53,4 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - Fix typo issue in grapevine documentation ([PR#43](https://github.com/baptistehamon/nzlusdb/pull/43)).
 - The fruit cracking criteria for cherry has been removed considering unbias corrected relative humidity data ([GH#44](https://github.com/baptistehamon/nzlusdb/issues/44), [PR#45](https://github.com/baptistehamon/nzlusdb/pull/45)).
 - Fix error in wheat phenological stages computation due to correction in [pynar package](https://forge.inrae.fr/agroclim/Indicators/OutilsPourIndicateurs/fonctionspython/pynar/-/merge_requests/17) and wheat suitability has been recomputed ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
+- Fix issue in maize and wheat phenological stages computation at 1km resolution ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
