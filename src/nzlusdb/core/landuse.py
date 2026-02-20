@@ -430,6 +430,12 @@ class LandUse:
             long_name=f"{self.long_name} Suitability",
             criteria=self._load_criteria_indicators(scenario=scenario),
         )
+        # bypass run_criteria to interpolate indicators
+        for c in lsa.criteria.values():
+            if not c.is_computed:
+                c.compute(inplace=True)
+        lsa.criteria = self._interpolate_indicator(lsa.criteria)
+
         return lsa.run(**kwargs)
 
     def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
@@ -510,7 +516,6 @@ class LandUse:
                 val.indicator = self._load_indicator(file, variable)
             else:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
-        sc = self._interpolate_indicator(sc)
 
         preprocess = self._criteria_indicators.get("preprocess")
         if preprocess:
@@ -549,6 +554,9 @@ class LandUse:
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
         """Load an indicator from a NetCDF file."""
         ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file, decode_timedelta=False)
+        if "latitude" in ds.coords:  # rename dims for 1km indicator
+            ds = ds.rename({"latitude": "lat", "longitude": "lon"})
+
         if variable:
             return ds[variable]
         elif len(ds.data_vars) == 1:
@@ -558,7 +566,7 @@ class LandUse:
 
     @staticmethod
     def _interpolate_indicator(sc):
-        """Interpolate indicators to climate resolution if needed."""
+        """Interpolate climate indicators to soil resolution if needed."""
         category = list(set([val.category for val in sc.values()]))
         if len(category) != 1:
             for val in sc.values():
