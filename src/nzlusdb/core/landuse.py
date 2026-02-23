@@ -598,23 +598,6 @@ class LandUse:
         else:
             raise ValueError(f"Multiple variables found in {file}. Please specify a variable.")
 
-    @staticmethod
-    def _interpolate_indicator(sc):
-        """Interpolate climate indicators to soil resolution if needed."""
-        category = list(set([val.category for val in sc.values()]))
-        if len(category) != 1:
-            for val in sc.values():
-                if val.category == "climate":
-                    continue
-                else:
-                    target = val.indicator
-                    break
-
-            for val in sc.values():
-                if val.category == "climate":
-                    val.indicator = val.indicator.interp_like(target, method="nearest")
-        return sc
-
     def _criteria_table(self) -> str:
         _criteria = {criteria.attrs.get("long_name"): criteria.category for _, criteria in self._criteria.items()}
         table = "| Category | Criteria |\n"
