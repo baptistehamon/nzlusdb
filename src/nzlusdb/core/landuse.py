@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
+from lsapy.aggregate import aggregate
 from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
@@ -101,7 +102,7 @@ class LandUse:
 
         for res in resolution:
             self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], agg_methods="wgmean")
+            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"])
             data = self.open_suitability()
             ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
                 {
@@ -423,20 +424,53 @@ class LandUse:
             f.write(md)
 
     def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
-        """Internal method to run LSA for a single scenario."""
+        """Internal method to run LSA for a single scenario and model."""
+
+        def _compute_criteria(sc):
+            out = xr.Dataset()
+            for c in sc.values():
+                out[c.name] = c.compute()
+            return out
+
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
             long_name=f"{self.long_name} Suitability",
             criteria=self._load_criteria_indicators(scenario=scenario),
         )
-        # bypass run_criteria to interpolate indicators
-        for c in lsa.criteria.values():
-            if not c.is_computed:
-                c.compute(inplace=True)
-        lsa.criteria = self._interpolate_indicator(lsa.criteria)
+        # bypass lsa.run() for criteria and categories allowing to interpolate climate
+        # indicators at the end optimizing the computation time
+        # soil criteria
+        sc_soil = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "soilTerrain"})
+        soil = aggregate(
+            sc_soil,
+            method="wgmean",
+            weights=[c.weight for c in lsa.criteria.values() if c.category == "soilTerrain"],
+        )
 
-        return lsa.run(**kwargs)
+        # # climate criteria
+        sc_clim = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "climate"})
+        clim = aggregate(
+            sc_clim, method="wgmean", weights=[c.weight for c in lsa.criteria.values() if c.category == "climate"]
+        )
+
+        lsa.data = xr.Dataset()
+        for v in sc_soil.data_vars:
+            lsa.data[v] = sc_soil[v]
+        for v in sc_clim.data_vars:
+            lsa.data[v] = sc_clim[v].interp_like(soil, method="nearest")
+        lsa.data["climate"] = clim.interp_like(soil, method="nearest")
+        lsa.data["soilTerrain"] = soil
+
+        lsa.data = lsa._aggregate(
+            lsa.data,
+            agg_on={"suitability": ["climate", "soilTerrain"]},
+            methods="wgmean",
+            keep_vars=True,
+            kwargs={"weights": [lsa.weights_by_category[c] for c in ["climate", "soilTerrain"]]},
+        )
+        lsa.data.attrs = {"land_use": lsa.land_use, "criteria": lsa._criteria_list, **lsa.attrs}
+        return lsa.data
 
     def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
         """
