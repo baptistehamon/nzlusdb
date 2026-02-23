@@ -52,7 +52,7 @@ class LandUse:
         self.resolution = resolution
         self.version = version
         self._get_criteria_info()
-        self.path = nzlusdb.db.path / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
         self._db_attrs = nzlusdb.db.attrs
         if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
             self._db_attrs["version"] = f"v{nzlusdb.release}"
@@ -78,6 +78,7 @@ class LandUse:
         if value not in ["1km", "5km"]:
             raise ValueError("Resolution must be '1km' or '5km'.")
         self._resolution = value
+        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
 
     def run_workflow(self, resolution: list[str] | str | None = None):
         """
@@ -118,7 +119,7 @@ class LandUse:
             self.stats_summary()
             self.add_to_doc(overwrite=True)
 
-    def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
+    def run_lsa(self, scenario: str | list[str], model=None, **kwargs) -> None:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
 
@@ -126,24 +127,38 @@ class LandUse:
         ----------
         scenario : str or list of str
             Scenario(s) to use (e.g., 'historical', 'ssp126', 'ssp585').
+        model : str, optional
+            Climate model to use for the analysis. If None, uses all available models. Default is None.
         **kwargs : dict
             Additional keyword arguments to pass to `LandSuitabilityAnalysis.run()`.
-
-        Returns
-        -------
-        xr.Dataset
-            Computed land suitability dataset.
         """
+
+        def _run(scenario, model=None, **kwargs):
+            out = self._run_lsa(scenario=scenario, model=model, **kwargs)
+            out.attrs.update({**self._db_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
+            out["suitability"].attrs.update({"long_name": "Suitability"})
+            return out
+
         if isinstance(scenario, str):
             scenario = [scenario]
 
         for scen in scenario:
-            out = self._run_lsa(scenario=scen, **kwargs)
-            out.attrs.update({**self._db_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
-            out["suitability"].attrs.update({"long_name": "Suitability"})
             self.path.mkdir(parents=True, exist_ok=True)
-            fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
-            write_netcdf(out, fp, progressbar=True, verbose=True)
+            if self.resolution == "5km":
+                out = _run(scen, **kwargs)
+                fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+                write_netcdf(out, fp, progressbar=True, verbose=True)
+            else:
+                for m in climateDS[f"nzlusdb_{self.resolution}"].model:
+                    out = _run(scen, model=m, **kwargs)
+                    soil_vars = [v for v in out.data_vars if "time" not in out[v].dims]
+                    if m == climateDS[f"nzlusdb_{self.resolution}"].model[0] and scen == "historical":
+                        fp = self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
+                        write_netcdf(out[soil_vars], fp, progressbar=True, verbose=True)
+                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    write_netcdf(
+                        out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
+                    )
 
     def open_suitability(self) -> xr.Dataset:
         """
@@ -423,7 +438,7 @@ class LandUse:
         with open(fp / f"{self.name}.md", "w", encoding="utf-8") as f:
             f.write(md)
 
-    def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
+    def _run_lsa(self, scenario: str = "historical", model=None, **kwargs) -> xr.Dataset:
         """Internal method to run LSA for a single scenario and model."""
 
         def _compute_criteria(sc):
@@ -436,7 +451,7 @@ class LandUse:
             land_use=self.name,
             short_name=f"{self.name}_suitability",
             long_name=f"{self.long_name} Suitability",
-            criteria=self._load_criteria_indicators(scenario=scenario),
+            criteria=self._load_criteria_indicators(scenario=scenario, model=model),
         )
         # bypass lsa.run() for criteria and categories allowing to interpolate climate
         # indicators at the end optimizing the computation time
@@ -526,7 +541,7 @@ class LandUse:
         else:
             raise ValueError(f"Criteria indicators '{crop_criteria_indicators}' not found in criteria module.")
 
-    def _load_criteria_indicators(self, scenario) -> dict:
+    def _load_criteria_indicators(self, scenario, model=None) -> dict:
         """Load criteria indicators based on scenario and resolution."""
         clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
         sc = self.criteria
@@ -548,6 +563,8 @@ class LandUse:
                     raise ValueError(f"Unknown category '{val.category}' for criteria '{key}'.")
 
                 val.indicator = self._load_indicator(file, variable)
+                if model and val.category == "climate":
+                    val.indicator = val.indicator.sel(realization=model)
             else:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
 
