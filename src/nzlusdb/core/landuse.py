@@ -80,7 +80,7 @@ class LandUse:
         self._resolution = value
         self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
 
-    def run_workflow(self, resolution: list[str] | str | None = None):
+    def run_workflow(self, resolution: list[str] | str | None = None, rerun_lsa=False):
         """
         Run the full land suitability analysis (LSA) workflow.
 
@@ -94,6 +94,14 @@ class LandUse:
             Resolution(s) to use for the analysis ('1km' or '5km'). If None, uses the instance's resolution attribute.
             Default is None.
         """
+
+        def _mmm_robustness(kwargs):
+            ds = self.open_suitability(**kwargs if kwargs else {})
+            return self.period_mmm_change_robustness(ds, delta_method="absolute")
+
+        def _set_index(ds):
+            return ds.set_index(time=["scenario", "period"])
+
         if resolution is None:
             if self.resolution is None:
                 raise ValueError("Resolution must be set before running workflow.")
@@ -103,9 +111,31 @@ class LandUse:
 
         for res in resolution:
             self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"])
-            data = self.open_suitability()
-            ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
+            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
+            if self.resolution == "5km":
+                ds = _mmm_robustness()
+            if self.resolution == "1km":
+                fp = []
+                for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
+                    out = _mmm_robustness(kwargs={"scenario": s})
+                    if s == "ssp126":
+                        histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
+                        write_netcdf(out.isel(time=0), self.path / histfname, progressbar=True, verbose=True)
+                    out = out.drop_isel(time=0)
+                    fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
+                    fp.append(self.path / fname)
+                    write_netcdf(out, self.path / fname, progressbar=True, verbose=True)
+                ds = xr.concat(
+                    [
+                        xr.open_dataset(self.path / histfname).assign_coords(
+                            {"scenario": "historical", "period": "1980-2009"}
+                        ),
+                        xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
+                    ],
+                    dim="time",
+                )
+
+            ds = ds.assign_attrs(
                 {
                     **self._db_attrs,
                     **{
@@ -119,7 +149,7 @@ class LandUse:
             self.stats_summary()
             self.add_to_doc(overwrite=True)
 
-    def run_lsa(self, scenario: str | list[str], model=None, **kwargs) -> None:
+    def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
 
@@ -145,22 +175,29 @@ class LandUse:
         for scen in scenario:
             self.path.mkdir(parents=True, exist_ok=True)
             if self.resolution == "5km":
-                out = _run(scen, **kwargs)
                 fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+                if not rerun and fp.exists():
+                    continue
+                out = _run(scen, **kwargs)
                 write_netcdf(out, fp, progressbar=True, verbose=True)
             else:
                 for m in climateDS[f"nzlusdb_{self.resolution}"].model:
+                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    if not rerun and fp.exists():
+                        continue
                     out = _run(scen, model=m, **kwargs)
                     soil_vars = [v for v in out.data_vars if "time" not in out[v].dims]
                     if m == climateDS[f"nzlusdb_{self.resolution}"].model[0] and scen == "historical":
-                        fp = self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
-                        write_netcdf(out[soil_vars], fp, progressbar=True, verbose=True)
+                        fp_hist = (
+                            self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
+                        )
+                        write_netcdf(out[soil_vars], fp_hist, progressbar=True, verbose=True)
                     fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
                     write_netcdf(
                         out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
                     )
 
-    def open_suitability(self) -> xr.Dataset:
+    def open_suitability(self, scenario: str | None = None) -> xr.Dataset:
         """
         Open suitability dataset for given resolution.
 
@@ -172,15 +209,27 @@ class LandUse:
         files = list(self.path.glob("*.nc"))
 
         hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
-        proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
+        if self.resolution == "5km":
+            proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
+            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
+            proj = []
+            for scen in proj_scenarios:
+                file = [f for f in files if scen in f.name][0]
+                ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
+                proj.append(ds)
+            return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
-        hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
-        proj = []
-        for scen in proj_scenarios:
-            file = [f for f in files if scen in f.name][0]
-            ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
-            proj.append(ds)
-        return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
+        else:
+
+            def _preprocess(ds: xr.Dataset) -> xr.Dataset:
+                return ds.expand_dims("realization")
+
+            fp = [f for f in files if any(f"suitability_{s}" in f.name for s in [hist_scenario, scenario])]
+            out = xr.open_mfdataset(fp, chunks={"lat": 350, "lon": 675}, combine="by_coords", preprocess=_preprocess)[
+                "suitability"
+            ]
+            out = out.assign_coords(scenario=scenario).expand_dims("scenario")
+            return out.chunk(time=-1, realization=-1)
 
     def open_mmm_data(self, variable: str = "suitability") -> xr.Dataset:
         """
