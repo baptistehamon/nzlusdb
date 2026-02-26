@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
+from lsapy.aggregate import aggregate
 from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
@@ -51,7 +52,7 @@ class LandUse:
         self.resolution = resolution
         self.version = version
         self._get_criteria_info()
-        self.path = nzlusdb.db.path / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
         self._db_attrs = nzlusdb.db.attrs
         if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
             self._db_attrs["version"] = f"v{nzlusdb.release}"
@@ -77,8 +78,9 @@ class LandUse:
         if value not in ["1km", "5km"]:
             raise ValueError("Resolution must be '1km' or '5km'.")
         self._resolution = value
+        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
 
-    def run_workflow(self, resolution: list[str] | str | None = None):
+    def run_workflow(self, resolution: list[str] | str | None = None, rerun_lsa=False):
         """
         Run the full land suitability analysis (LSA) workflow.
 
@@ -92,6 +94,14 @@ class LandUse:
             Resolution(s) to use for the analysis ('1km' or '5km'). If None, uses the instance's resolution attribute.
             Default is None.
         """
+
+        def _mmm_robustness(kwargs):
+            ds = self.open_suitability(**kwargs if kwargs else {})
+            return self.period_mmm_change_robustness(ds, delta_method="absolute")
+
+        def _set_index(ds):
+            return ds.set_index(time=["scenario", "period"])
+
         if resolution is None:
             if self.resolution is None:
                 raise ValueError("Resolution must be set before running workflow.")
@@ -101,9 +111,31 @@ class LandUse:
 
         for res in resolution:
             self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], agg_methods="wgmean")
-            data = self.open_suitability()
-            ds = self.period_mmm_change_robustness(data, delta_method="absolute").assign_attrs(
+            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
+            if self.resolution == "5km":
+                ds = _mmm_robustness()
+            if self.resolution == "1km":
+                fp = []
+                for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
+                    out = _mmm_robustness(kwargs={"scenario": s})
+                    if s == "ssp126":
+                        histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
+                        write_netcdf(out.isel(time=0), self.path / histfname, progressbar=True, verbose=True)
+                    out = out.drop_isel(time=0)
+                    fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
+                    fp.append(self.path / fname)
+                    write_netcdf(out, self.path / fname, progressbar=True, verbose=True)
+                ds = xr.concat(
+                    [
+                        xr.open_dataset(self.path / histfname).assign_coords(
+                            {"scenario": "historical", "period": "1980-2009"}
+                        ),
+                        xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
+                    ],
+                    dim="time",
+                )
+
+            ds = ds.assign_attrs(
                 {
                     **self._db_attrs,
                     **{
@@ -117,7 +149,7 @@ class LandUse:
             self.stats_summary()
             self.add_to_doc(overwrite=True)
 
-    def run_lsa(self, scenario: str | list[str], **kwargs) -> xr.Dataset:
+    def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
         Run land suitability analysis (LSA) for given scenario and resolution.
 
@@ -125,26 +157,47 @@ class LandUse:
         ----------
         scenario : str or list of str
             Scenario(s) to use (e.g., 'historical', 'ssp126', 'ssp585').
+        model : str, optional
+            Climate model to use for the analysis. If None, uses all available models. Default is None.
         **kwargs : dict
             Additional keyword arguments to pass to `LandSuitabilityAnalysis.run()`.
-
-        Returns
-        -------
-        xr.Dataset
-            Computed land suitability dataset.
         """
+
+        def _run(scenario, model=None, **kwargs):
+            out = self._run_lsa(scenario=scenario, model=model, **kwargs)
+            out.attrs.update({**self._db_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
+            out["suitability"].attrs.update({"long_name": "Suitability"})
+            return out
+
         if isinstance(scenario, str):
             scenario = [scenario]
 
         for scen in scenario:
-            out = self._run_lsa(scenario=scen, **kwargs)
-            out.attrs.update({**self._db_attrs, **{"source": climateDS[f"nzlusdb_{self.resolution}"].name}})
-            out["suitability"].attrs.update({"long_name": "Suitability"})
             self.path.mkdir(parents=True, exist_ok=True)
-            fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
-            write_netcdf(out, fp, progressbar=True, verbose=True)
+            if self.resolution == "5km":
+                fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+                if not rerun and fp.exists():
+                    continue
+                out = _run(scen, **kwargs)
+                write_netcdf(out, fp, progressbar=True, verbose=True)
+            else:
+                for m in climateDS[f"nzlusdb_{self.resolution}"].model:
+                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    if not rerun and fp.exists():
+                        continue
+                    out = _run(scen, model=m, **kwargs)
+                    soil_vars = [v for v in out.data_vars if "time" not in out[v].dims]
+                    if m == climateDS[f"nzlusdb_{self.resolution}"].model[0] and scen == "historical":
+                        fp_hist = (
+                            self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
+                        )
+                        write_netcdf(out[soil_vars], fp_hist, progressbar=True, verbose=True)
+                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    write_netcdf(
+                        out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
+                    )
 
-    def open_suitability(self) -> xr.Dataset:
+    def open_suitability(self, scenario: str | None = None) -> xr.Dataset:
         """
         Open suitability dataset for given resolution.
 
@@ -156,15 +209,27 @@ class LandUse:
         files = list(self.path.glob("*.nc"))
 
         hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
-        proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
+        if self.resolution == "5km":
+            proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
+            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
+            proj = []
+            for scen in proj_scenarios:
+                file = [f for f in files if scen in f.name][0]
+                ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
+                proj.append(ds)
+            return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
-        hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
-        proj = []
-        for scen in proj_scenarios:
-            file = [f for f in files if scen in f.name][0]
-            ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
-            proj.append(ds)
-        return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
+        else:
+
+            def _preprocess(ds: xr.Dataset) -> xr.Dataset:
+                return ds.expand_dims("realization")
+
+            fp = [f for f in files if any(f"suitability_{s}" in f.name for s in [hist_scenario, scenario])]
+            out = xr.open_mfdataset(fp, chunks={"lat": 350, "lon": 675}, combine="by_coords", preprocess=_preprocess)[
+                "suitability"
+            ]
+            out = out.assign_coords(scenario=scenario).expand_dims("scenario")
+            return out.chunk(time=-1, realization=-1)
 
     def open_mmm_data(self, variable: str = "suitability") -> xr.Dataset:
         """
@@ -422,15 +487,54 @@ class LandUse:
         with open(fp / f"{self.name}.md", "w", encoding="utf-8") as f:
             f.write(md)
 
-    def _run_lsa(self, scenario: str = "historical", **kwargs) -> xr.Dataset:
-        """Internal method to run LSA for a single scenario."""
+    def _run_lsa(self, scenario: str = "historical", model=None, **kwargs) -> xr.Dataset:
+        """Internal method to run LSA for a single scenario and model."""
+
+        def _compute_criteria(sc):
+            out = xr.Dataset()
+            for c in sc.values():
+                out[c.name] = c.compute()
+            return out
+
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
             long_name=f"{self.long_name} Suitability",
-            criteria=self._load_criteria_indicators(scenario=scenario),
+            criteria=self._load_criteria_indicators(scenario=scenario, model=model),
         )
-        return lsa.run(**kwargs)
+        # bypass lsa.run() for criteria and categories allowing to interpolate climate
+        # indicators at the end optimizing the computation time
+        # soil criteria
+        sc_soil = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "soilTerrain"})
+        soil = aggregate(
+            sc_soil,
+            method="wgmean",
+            weights=[c.weight for c in lsa.criteria.values() if c.category == "soilTerrain"],
+        )
+
+        # # climate criteria
+        sc_clim = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "climate"})
+        clim = aggregate(
+            sc_clim, method="wgmean", weights=[c.weight for c in lsa.criteria.values() if c.category == "climate"]
+        )
+
+        lsa.data = xr.Dataset()
+        for v in sc_soil.data_vars:
+            lsa.data[v] = sc_soil[v]
+        for v in sc_clim.data_vars:
+            lsa.data[v] = sc_clim[v].interp_like(soil, method="nearest")
+        lsa.data["climate"] = clim.interp_like(soil, method="nearest")
+        lsa.data["soilTerrain"] = soil
+
+        lsa.data = lsa._aggregate(
+            lsa.data,
+            agg_on={"suitability": ["climate", "soilTerrain"]},
+            methods="wgmean",
+            keep_vars=True,
+            kwargs={"weights": [lsa.weights_by_category[c] for c in ["climate", "soilTerrain"]]},
+        )
+        lsa.data.attrs = {"land_use": lsa.land_use, "criteria": lsa._criteria_list, **lsa.attrs}
+        return lsa.data
 
     def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
         """
@@ -486,7 +590,7 @@ class LandUse:
         else:
             raise ValueError(f"Criteria indicators '{crop_criteria_indicators}' not found in criteria module.")
 
-    def _load_criteria_indicators(self, scenario) -> dict:
+    def _load_criteria_indicators(self, scenario, model=None) -> dict:
         """Load criteria indicators based on scenario and resolution."""
         clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
         sc = self.criteria
@@ -508,9 +612,10 @@ class LandUse:
                     raise ValueError(f"Unknown category '{val.category}' for criteria '{key}'.")
 
                 val.indicator = self._load_indicator(file, variable)
+                if model and val.category == "climate":
+                    val.indicator = val.indicator.sel(realization=model)
             else:
                 raise ValueError(f"Indicator for criteria '{key}' not found in criteria indicators.")
-        sc = self._interpolate_indicator(sc)
 
         preprocess = self._criteria_indicators.get("preprocess")
         if preprocess:
@@ -549,29 +654,15 @@ class LandUse:
     def _load_indicator(file: str, variable: str | None = None) -> xr.DataArray:
         """Load an indicator from a NetCDF file."""
         ds = xr.open_dataset(nzlusdb.db.path / "indicators" / file, decode_timedelta=False)
+        if "latitude" in ds.coords:  # rename dims for 1km indicator
+            ds = ds.rename({"latitude": "lat", "longitude": "lon"})
+
         if variable:
             return ds[variable]
         elif len(ds.data_vars) == 1:
             return list(ds.data_vars.values())[0]
         else:
             raise ValueError(f"Multiple variables found in {file}. Please specify a variable.")
-
-    @staticmethod
-    def _interpolate_indicator(sc):
-        """Interpolate indicators to climate resolution if needed."""
-        category = list(set([val.category for val in sc.values()]))
-        if len(category) != 1:
-            for val in sc.values():
-                if val.category == "climate":
-                    continue
-                else:
-                    target = val.indicator
-                    break
-
-            for val in sc.values():
-                if val.category == "climate":
-                    val.indicator = val.indicator.interp_like(target, method="nearest")
-        return sc
 
     def _criteria_table(self) -> str:
         _criteria = {criteria.attrs.get("long_name"): criteria.category for _, criteria in self._criteria.items()}

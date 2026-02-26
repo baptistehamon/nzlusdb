@@ -49,12 +49,10 @@ if __name__ == "__main__":
         help="Climate scenario (for LSA)",
     )
     parser.add_argument(
-        "-lsa-m",
-        "--lsa-method",
-        nargs="?",
-        default="mean",
-        choices=["mean", "wmean", "gmean", "wgmean", "median", "limfactor"],
-        help="LSA aggregation method",
+        "--rerun-lsa",
+        action="store_true",
+        default=False,
+        help="Whether to rerun LSA even if output files already exist (only applies to LSA runs)",
     )
     parser.add_argument(
         "-o",
@@ -77,7 +75,7 @@ if __name__ == "__main__":
 
     if args.run == "workflow":
         print(f"Running workflow for land use: {args.landuse} at resolution(s): {', '.join(args.resolution)}")
-        nzlusdb.db[args.landuse].run_workflow(resolution=args.resolution)
+        nzlusdb.db[args.landuse].run_workflow(resolution=args.resolution, rerun_lsa=args.rerun_lsa)
         sys.exit(0)
 
     if args.run in ["lsa", "stats", "figs"]:
@@ -87,7 +85,7 @@ if __name__ == "__main__":
             nzlusdb.db[args.landuse].resolution = r
             if args.run == "lsa":
                 print(f"Running LSA for land use: {args.landuse} at resolution: {r}")
-                nzlusdb.db[args.landuse].run_lsa(scenario=args.scenario, agg_methods=args.lsa_method)
+                nzlusdb.db[args.landuse].run_lsa(scenario=args.scenario, rerun=args.rerun_lsa)
             if args.run == "stats":
                 print(f"Generating stats for land use: {args.landuse} at resolution: {r}")
                 nzlusdb.db[args.landuse].stats_summary()

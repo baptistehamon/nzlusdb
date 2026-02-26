@@ -43,6 +43,13 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The weight of maturity date criteria for wheat has been changed to 0.25 ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
 - The computation of flowering date for Pinot Noir and Sauvignon Blanc has been added ([PR#50](https://github.com/baptistehamon/nzlusdb/pull/50)).
 - The `hot_days_frequency`, `cold_days`, and `cold_days_frequency` indices and indicators have been added to support the computation of maize climate indicators. ([PR#51](https://github.com/baptistehamon/nzlusdb/pull/51)).
+- The workflow has been improved to support suitability computation at 1km resolution ([PR#53](https://github.com/baptistehamon/nzlusdb/pull/53)):
+  - The interpolation of climate indicators has been moved after the computation of criteria suitability to optimize the computation time.
+  - The `run_lsa` and underlying `_run_lsa` functions have been updated to support computation at 1km resolution and to avoid memory issues.
+  - The `open_suitability` function has been updated to support loading and computing suitability at 1km resolution.
+  - The `run_workflow` function has been updated to support computing MMM and robustness metrics at 1km resolution.
+  - An options rerun the LSA with the `rerun` argument has been added and set to `False` by default.
+  - The `--rerun-lsa` and `--lsa-method` have been, respectively, added and removed from the CLI considering the updated workflow.
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
