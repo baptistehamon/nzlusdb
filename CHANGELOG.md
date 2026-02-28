@@ -50,6 +50,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   - The `run_workflow` function has been updated to support computing MMM and robustness metrics at 1km resolution.
   - An options rerun the LSA with the `rerun` argument has been added and set to `False` by default.
   - The `--rerun-lsa` and `--lsa-method` have been, respectively, added and removed from the CLI considering the updated workflow.
+- The grapevines climate criteria weights have been updated ([PR#54](https://github.com/baptistehamon/nzlusdb/pull/54)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
