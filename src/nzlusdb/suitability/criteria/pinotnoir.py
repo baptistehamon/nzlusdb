@@ -51,21 +51,21 @@ pinotnoir_criteria = {
     "frost_survival": SuitabilityCriteria(
         name="frost_survival",
         long_name="Frost survival from budbreak to veraison",
-        weight=1.25,
+        weight=2,
         category="climate",
         is_computed=True,
     ),
     "heat_survival": SuitabilityCriteria(
         name="heat_survival",
         long_name="Heat survival from veraison to ripeness",
-        weight=1.25,
+        weight=2,
         category="climate",
         is_computed=True,
     ),
     "botrytis_risk": SuitabilityCriteria(
         name="botrytis_risk",
         long_name="Botrytis risk: total precipitation between Mar 1 and Apr 30",
-        weight=3,
+        weight=2,
         category="climate",
         func=lstd.vetharaniam2022_eq5,
         fparams={"a": 0.9311, "b": 160.0},
@@ -73,7 +73,7 @@ pinotnoir_criteria = {
     "ripeness_date": SuitabilityCriteria(
         name="ripeness_date",
         long_name="Date of Ripeness",
-        weight=2,
+        weight=0.25,
         category="climate",
         func=lstd.boolean,
         fparams={"op": "<=", "thresh": 135},

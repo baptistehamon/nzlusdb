@@ -95,7 +95,7 @@ class LandUse:
             Default is None.
         """
 
-        def _mmm_robustness(kwargs):
+        def _mmm_robustness(kwargs=None):
             ds = self.open_suitability(**kwargs if kwargs else {})
             return self.period_mmm_change_robustness(ds, delta_method="absolute")
 
