@@ -8,11 +8,11 @@ title: Blueberry
 
 ### Suitability Values
 
-![](../_static/summary_figs/blueberry_suitability_SSP245-SSP585_5km_v1.0.png)
+![](../_static/summary_figs/blueberry_suitability_SSP245-SSP585_1km_v1.0.png)
 
 ### Suitability Changes
 
-![](../_static/summary_figs/blueberry_suitability_change_SSP245-SSP585_5km_v1.0.png)
+![](../_static/summary_figs/blueberry_suitability_change_SSP245-SSP585_1km_v1.0.png)
 
 :::
 
@@ -28,6 +28,6 @@ The following criteria were used to model the suitability of Blueberry:
 | soil/Terrain | Land Use Capability Class |
 | soil/Terrain | Soil pH |
 | Climate | Chilling hours between May 1 and Aug 31 |
-| Climate | Frost survival flowering period (from Sept 1 to Oct 31) |
+| Climate | Frost survival during flowering period (from Sept 1 to Oct 31) |
 | Climate | Growing degree days between Oct 1 and Apr 30 |
 : {tbl-colwidths="[25,75]"}
