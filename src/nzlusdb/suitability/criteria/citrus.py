@@ -52,7 +52,7 @@ citrus_criteria = {
         weight=1,
         category="soilTerrain",
         func=lstd.discrete,
-        fparams={"rules": {0: 1, 1: 1, 2: 0.8, 3: 0.6, 4: 0.4, 5: 0.2, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}},
+        fparams={"rules": {0: 0, 1: 0.1, 2: 0.6, 3: 0.9, 4: 1, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}},
     ),
     "ph": SuitabilityCriteria(
         name="ph",
