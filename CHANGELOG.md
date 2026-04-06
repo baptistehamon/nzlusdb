@@ -62,3 +62,5 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
 - The fruit cracking criteria for cherry has been removed considering unbias corrected relative humidity data ([GH#44](https://github.com/baptistehamon/nzlusdb/issues/44), [PR#45](https://github.com/baptistehamon/nzlusdb/pull/45)).
 - Fix error in wheat phenological stages computation due to correction in [pynar package](https://forge.inrae.fr/agroclim/Indicators/OutilsPourIndicateurs/fonctionspython/pynar/-/merge_requests/17) and wheat suitability has been recomputed ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
 - Fix issue in maize and wheat phenological stages computation at 1km resolution ([PR#49](https://github.com/baptistehamon/nzlusdb/pull/49)).
+- Fix drainage criteria suitability value for hops and citrus ([GH#55](https://github.com/baptistehamon/nzlusdb/issues/55), [PR#56](https://github.com/baptistehamon/nzlusdb/pull/56)).
+- Update the computation of hot weeks climate indicators for hops and citrus to support high resolution ([PR#58](https://github.com/baptistehamon/nzlusdb/pull/58)).

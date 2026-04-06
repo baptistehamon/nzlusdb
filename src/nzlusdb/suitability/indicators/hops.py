@@ -73,14 +73,32 @@ def tx_mean(data):
 @climdata
 def year_with_hot_week(data, res):
     """Number of years with at least one hot week (3 days over 35C in a 7-day period) between Mar 1 and Apr 20."""
+
+    def _year_with_hot_week(data):
+        hd = atmos.hot_days(data, thresh="35 degC", freq="7D", date_bounds=("03-01", "04-20"))
+        out = compare(hd, ">=", 3).assign_attrs(units="")
+        out = count_occurrences(out, threshold="0", op=">", freq="YS-JUL")
+        out = count_occurrences(out, threshold="1 week", op=">=", freq="YS-JUL")
+        out = out.rename("year_with_hot_week")
+        return out.where(data.isel(time=0).notnull())
+
+    if res == "25km":
+        return _year_with_hot_week(data)
+
     if res == "5km":
-        data = data.chunk({"realization": 3})
-    hd = atmos.hot_days(data, thresh="35 degC", freq="7D", date_bounds=("03-01", "04-20"))
-    out = compare(hd, ">=", 3).assign_attrs(units="")
-    out = count_occurrences(out, threshold="0", op=">", freq="YS-JUL")
-    out = count_occurrences(out, threshold="1 week", op=">=", freq="YS-JUL")
-    out = out.rename("year_with_hot_week")
-    return out.where(data.isel(time=0).notnull())
+        out = []
+        for m in data.realization.values:
+            _data = data.sel(realization=m).expand_dims("realization")
+            yhw = _year_with_hot_week(_data)
+            fname = INDICATORPATH / f"tmp_hot-week-{m}.nc"
+            write_netcdf(yhw, fname, progressbar=True, verbose=True)
+            out.append(fname)
+
+        fp = out
+        out = xr.open_mfdataset(fp, combine="by_coords").load()["year_with_hot_week"]
+        for f in fp:
+            f.unlink()
+        return out
 
 
 def compute(resolution="5km"):  # noqa: PLR0915
