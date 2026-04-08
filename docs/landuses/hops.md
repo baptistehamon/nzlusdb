@@ -8,11 +8,11 @@ title: Hops
 
 ### Suitability Values
 
-![](../_static/summary_figs/hops_suitability_SSP245-SSP585_5km_v1.0.png)
+![](../_static/summary_figs/hops_suitability_SSP245-SSP585_1km_v1.0.png)
 
 ### Suitability Changes
 
-![](../_static/summary_figs/hops_suitability_change_SSP245-SSP585_5km_v1.0.png)
+![](../_static/summary_figs/hops_suitability_change_SSP245-SSP585_1km_v1.0.png)
 
 :::
 
