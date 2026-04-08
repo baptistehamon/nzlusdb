@@ -51,6 +51,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   - An options rerun the LSA with the `rerun` argument has been added and set to `False` by default.
   - The `--rerun-lsa` and `--lsa-method` have been, respectively, added and removed from the CLI considering the updated workflow.
 - The grapevines climate criteria weights have been updated ([PR#54](https://github.com/baptistehamon/nzlusdb/pull/54)).
+- The documentation for the 1km resolution suitability has been added ([PR#59](https://github.com/baptistehamon/nzlusdb/pull/59)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
