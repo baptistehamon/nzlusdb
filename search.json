@@ -431,6 +431,6 @@
     "href": "landuses/blueberry.html#suitability-criteria",
     "title": "Blueberry",
     "section": "Suitability Criteria",
-    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Blueberry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nChilling hours between May 1 and Aug 31\n\n\nClimate\nFrost survival flowering period (from Sept 1 to Oct 31)\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30"
+    "text": "Suitability Criteria\nThe following criteria were used to model the suitability of Blueberry:\n\n\n\n\n\n\n\nCategory\nCriteria\n\n\n\n\nsoil/Terrain\nPotential Rooting Depth\n\n\nsoil/Terrain\nSlope\n\n\nsoil/Terrain\nSoil Drainage Class\n\n\nsoil/Terrain\nLand Use Capability Class\n\n\nsoil/Terrain\nSoil pH\n\n\nClimate\nChilling hours between May 1 and Aug 31\n\n\nClimate\nFrost survival during flowering period (from Sept 1 to Oct 31)\n\n\nClimate\nGrowing degree days between Oct 1 and Apr 30"
   }
 ]
