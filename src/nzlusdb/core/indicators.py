@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from xclim.indicators.atmos._precip import DailyPrecipNoResample
 from xclim.indicators.atmos._temperature import Temp, TempHourlyWithIndexing, TempWithIndexing
 
 from nzlusdb.core import indices
@@ -115,4 +116,14 @@ cold_days_frequency = TempWithIndexing(
     description="{freq} frequency of days where the daily mean temperature is below {thresh}.",
     abstract="Frequency of days where the daily mean temperature is below a given threshold.",
     compute=indices.cold_days_frequency,
+)
+
+daily_effective_precipitation = DailyPrecipNoResample(
+    title="Daily effective precipitation",
+    identifier="daily_effective_precipitation",
+    units="mm/day",
+    long_name="Daily effective precipitation",
+    description="Daily effective precipitation (Oumarou et al, 2019 method).",
+    abstract="Daily effective precipitation following the method cited in Oumarou et al. (2019).",
+    compute=indices.daily_effective_precipitation,
 )
