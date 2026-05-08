@@ -398,3 +398,40 @@ def daily_effective_precipitation(pr: xr.DataArray) -> xr.DataArray:
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     return xr.where(pr < 8.2, pr * (4.17 - 0.2 * pr) / 4.17, 4.17 + 0.1 * pr).assign_attrs(units="mm/day")  # noqa: PLR2004
+
+
+@declare_units(
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+)
+def minimum_relative_humidity(
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
+) -> xr.DataArray:
+    """
+    Minimum relative humidity.
+
+    Approximation of minimum relative humidity when dewpoint temperature is not available, computed as a
+    function of daily minimum and maximum temperatures following Eq. 64 in Allen et al. (1998).
+
+    Parameters
+    ----------
+    tasmin : xr.DataArray
+        Daily minimum temperature.
+    tasmax : xr.DataArray
+        Daily maximum temperature.
+
+    Returns
+    -------
+    xr.DataArray, [%]
+        Minimum relative humidity.
+
+    References
+    ----------
+    Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop Evapotranspiration: Guidelines for
+    computing crop water requirements (No. 56; FAO Irrigation and Drainage Paper).
+    """
+    es_min = xci.saturation_vapor_pressure(tasmin)
+    es_max = xci.saturation_vapor_pressure(tasmax)
+    rh_min = 100 * es_min / es_max
+    return rh_min.clip(min=0, max=100).assign_attrs(units="%")
