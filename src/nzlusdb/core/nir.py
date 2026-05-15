@@ -9,6 +9,8 @@ from xclim.core.calendar import (
     get_calendar,
 )
 
+from nzlusdb.suitability.indicators import INDICATORPATH
+
 
 def doys_from_string(
     doy_str: str,
@@ -230,3 +232,19 @@ class KcCurve:
         self.days["start_mid"] = self.days.start_dev + self.stage_lengths["dev"]
         self.days["start_end"] = self.days.start_mid + self.stage_lengths["mid"]
         self.days["end"] = self.days.start_end + self.stage_lengths["end"]
+
+
+def load_nir_inputs(variable, scenario="historical", resolution="5km"):
+    """Load NIR input variables from netCDF files."""
+    if variable == "windspd":
+        variable = "wind_speed_2m"
+    fname = f"{variable}_daily_{scenario}_{resolution}.nc"
+    da = xr.open_dataarray(INDICATORPATH / fname)
+
+    # climate data resolution
+    if resolution == "25km":
+        _chunks = {"realization": 1, "lat": 23, "time": xr.groupers.TimeResampler("YS-JUL")}
+    if resolution == "5km":
+        _chunks = {"realization": 1, "time": xr.groupers.TimeResampler("YS-JUL")}
+        da = da.rename({"latitude": "lat", "longitude": "lon"})
+    return da.chunk(_chunks)
