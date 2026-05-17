@@ -14,6 +14,7 @@ from xclim import ensembles as xens
 import nzlusdb
 from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
+from nzlusdb.core.nir import load_nir_inputs
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
@@ -591,14 +592,6 @@ class LandUse:
         else:
             raise ValueError(f"Criteria indicators '{crop_criteria_indicators}' not found in criteria module.")
 
-    def _get_kc_parameters(self) -> None:
-        """Get Kc parameters from nir module."""
-        crop_params = f"{self.name}_Kc_params"
-        if hasattr(nirmod, crop_params):
-            self.Kc_params = getattr(nirmod, crop_params)
-        else:
-            raise ValueError(f"Kc parameters '{crop_params}' not found in nir module.")
-
     def _load_criteria_indicators(self, scenario, model=None) -> dict:
         """Load criteria indicators based on scenario and resolution."""
         clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
@@ -639,6 +632,24 @@ class LandUse:
                 else:
                     raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
+
+    def _get_kc_parameters(self) -> None:
+        """Get Kc parameters from nir module."""
+        crop_params = f"{self.name}_Kc_params"
+        if hasattr(nirmod, crop_params):
+            self.Kc_params = getattr(nirmod, crop_params)
+        else:
+            raise ValueError(f"Kc parameters '{crop_params}' not found in nir module.")
+
+    def _load_nir_inputs(
+        self, scenario: str = "historical"
+    ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray]:
+        """Load NIR input variables based on scenario and resolution."""
+        etp = load_nir_inputs("etp", scenario=scenario, resolution=self.resolution)
+        peff = load_nir_inputs("peff", scenario=scenario, resolution=self.resolution)
+        rhmin = load_nir_inputs("hursmin", scenario=scenario, resolution=self.resolution)
+        windspd = load_nir_inputs("windspd", scenario=scenario, resolution=self.resolution)
+        return etp, peff, rhmin, windspd
 
     def _agriculture_mask(self) -> xr.DataArray:
         """Create a mask for agricultural land use areas."""
