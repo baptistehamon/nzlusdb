@@ -12,6 +12,7 @@ from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
 import nzlusdb
+from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
@@ -512,7 +513,7 @@ class LandUse:
             weights=[c.weight for c in lsa.criteria.values() if c.category == "soilTerrain"],
         )
 
-        # # climate criteria
+        # climate criteria
         sc_clim = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "climate"})
         clim = aggregate(
             sc_clim, method="wgmean", weights=[c.weight for c in lsa.criteria.values() if c.category == "climate"]
@@ -589,6 +590,14 @@ class LandUse:
             self._criteria_indicators = getattr(criteria, crop_criteria_indicators)
         else:
             raise ValueError(f"Criteria indicators '{crop_criteria_indicators}' not found in criteria module.")
+
+    def _get_kc_parameters(self) -> None:
+        """Get Kc parameters from nir module."""
+        crop_params = f"{self.name}_Kc_params"
+        if hasattr(nirmod, crop_params):
+            self.Kc_params = getattr(nirmod, crop_params)
+        else:
+            raise ValueError(f"Kc parameters '{crop_params}' not found in nir module.")
 
     def _load_criteria_indicators(self, scenario, model=None) -> dict:
         """Load criteria indicators based on scenario and resolution."""
