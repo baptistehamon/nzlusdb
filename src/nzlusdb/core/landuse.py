@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +56,7 @@ class LandUse:
         self.resolution = resolution
         self.version = version
         self._get_criteria_info()
-        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / self.name
         self._db_attrs = nzlusdb.db.attrs
         if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
             self._db_attrs["version"] = f"v{nzlusdb.release}"
@@ -80,7 +82,7 @@ class LandUse:
         if value not in ["1km", "5km"]:
             raise ValueError("Resolution must be '1km' or '5km'.")
         self._resolution = value
-        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / self.name
 
     def run_workflow(self, resolution: list[str] | str | None = None, rerun_lsa=False):
         """
@@ -104,6 +106,8 @@ class LandUse:
         def _set_index(ds):
             return ds.set_index(time=["scenario", "period"])
 
+        path = self.path / "suitability"
+
         if resolution is None:
             if self.resolution is None:
                 raise ValueError("Resolution must be set before running workflow.")
@@ -122,14 +126,14 @@ class LandUse:
                     out = _mmm_robustness(kwargs={"scenario": s})
                     if s == "ssp126":
                         histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
-                        write_netcdf(out.isel(time=0), self.path / histfname, progressbar=True, verbose=True)
+                        write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
                     out = out.drop_isel(time=0)
                     fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
-                    fp.append(self.path / fname)
-                    write_netcdf(out, self.path / fname, progressbar=True, verbose=True)
+                    fp.append(path / fname)
+                    write_netcdf(out, path / fname, progressbar=True, verbose=True)
                 ds = xr.concat(
                     [
-                        xr.open_dataset(self.path / histfname).assign_coords(
+                        xr.open_dataset(path / histfname).assign_coords(
                             {"scenario": "historical", "period": "1980-2009"}
                         ),
                         xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
@@ -146,7 +150,7 @@ class LandUse:
                     },
                 }
             )
-            self.write_output(ds, variable="suitability")
+            self.write_output(ds, variable="suitability", path=self.path / "suitability")
             self.summary_figs()
             self.stats_summary()
             self.add_to_doc(overwrite=True)
@@ -174,27 +178,27 @@ class LandUse:
         if isinstance(scenario, str):
             scenario = [scenario]
 
+        path = self.path / "suitability"
+
         for scen in scenario:
-            self.path.mkdir(parents=True, exist_ok=True)
+            path.mkdir(parents=True, exist_ok=True)
             if self.resolution == "5km":
-                fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+                fp = path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
                 if not rerun and fp.exists():
                     continue
-                out = _run(scen, **kwargs)
+                out = _run(scen, model, **kwargs)
                 write_netcdf(out, fp, progressbar=True, verbose=True)
             else:
                 for m in climateDS[f"nzlusdb_{self.resolution}"].model:
-                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    fp = path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
                     if not rerun and fp.exists():
                         continue
                     out = _run(scen, model=m, **kwargs)
                     soil_vars = [v for v in out.data_vars if "time" not in out[v].dims]
                     if m == climateDS[f"nzlusdb_{self.resolution}"].model[0] and scen == "historical":
-                        fp_hist = (
-                            self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
-                        )
+                        fp_hist = path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
                         write_netcdf(out[soil_vars], fp_hist, progressbar=True, verbose=True)
-                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    fp = path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
                     write_netcdf(
                         out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
                     )
@@ -208,7 +212,7 @@ class LandUse:
         xr.Dataset
             Suitability dataset.
         """
-        files = list(self.path.glob("*.nc"))
+        files = list((self.path / "suitability").glob("*.nc"))
 
         hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
         if self.resolution == "5km":
@@ -233,12 +237,14 @@ class LandUse:
             out = out.assign_coords(scenario=scenario).expand_dims("scenario")
             return out.chunk(time=-1, realization=-1)
 
-    def open_mmm_data(self, variable: str = "suitability") -> xr.Dataset:
+    def open_mmm_data(self, path: Path, variable: str = "suitability") -> xr.Dataset:
         """
         Open multi-model mean change and robustness dataset for given variable and resolution.
 
         Parameters
         ----------
+        path : Path
+            Directory path where the multi-model mean change and robustness dataset is stored.
         variable : str
             Name of the variable data corresponds to (default is 'suitability').
 
@@ -248,9 +254,9 @@ class LandUse:
             Multi-model mean change and robustness dataset.
         """
         file = f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
-        return xr.open_dataset(self.path / file)
+        return xr.open_dataset(path / file)
 
-    def write_output(self, data: xr.Dataset, variable: str) -> None:
+    def write_output(self, data: xr.Dataset, variable: str, path: Path) -> None:
         """
         Write data to NetCDF and GeoTIFF files.
 
@@ -263,17 +269,19 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
+        path : Path
+            Directory path to save the output files.
 
         Returns
         -------
         None
             Writes NetCDF and GeoTIFF files to the appropriate directories.
         """
-        fp = self.path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
+        fp = path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
         data = data.set_index(time=["scenario", "period"])
-        self._write_output_as_raster(data, variable)
+        self._write_output_as_raster(data, variable, path)
 
     def summary_figs(self) -> None:
         """
@@ -284,7 +292,7 @@ class LandUse:
         period is 1980-2009 and the projected periods are 2010-2039, 2040-2069 and 2070-2099 for the
         SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
         """
-        data = self.open_mmm_data()
+        data = self.open_mmm_data(self.path / "suitability")
         data = data.set_index(time=["scenario", "period"])
 
         fp = nzlusdb.db.pathdoc / "_static/summary_figs"
@@ -328,7 +336,8 @@ class LandUse:
         agmask = self._agriculture_mask()
         regions = gpd.read_file(r"R:\DATA\GIS-NZ\statsnz-regional-council-2022-clipped-generalised").to_crs(epsg=4326)
 
-        data = self.open_mmm_data()
+        path = self.path / "suitability"
+        data = self.open_mmm_data(path)
         data = data.where(agmask == 1)
 
         mapping = {
@@ -364,11 +373,11 @@ class LandUse:
         )
         reg_stats = _add_coords(reg_stats, mapping)
         nz_stats.to_csv(
-            self.path / f"{self.name}_national_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_national_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
         reg_stats.to_csv(
-            self.path / f"{self.name}_regional_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_regional_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
 
@@ -583,7 +592,7 @@ class LandUse:
         nir_yr = nir.resample(time="YS-JUL").sum(min_count=1)
         return ((cwr, cwr_ssn, cwr_yr), (nir, nir_ssn, nir_yr))
 
-    def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
+    def _write_output_as_raster(self, data: xr.Dataset, variable: str, path: Path) -> None:
         """
         Write output data as GeoTIFF files.
 
@@ -596,6 +605,8 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
+        path : Path
+            Directory path to save the GeoTIFF files.
 
         Returns
         -------
@@ -608,7 +619,7 @@ class LandUse:
             "robustness_categories": f"{variable}-robustness-categories",
             "robustness_coefficient": f"{variable}-robustness-coefficient",
         }
-        path = self.path / "tiff"
+        path /= "tiff"
         path.mkdir(parents=True, exist_ok=True)
 
         for time in data.time.values:
