@@ -77,7 +77,7 @@ class KcCurve:
     start_date : DayOfYearStr
         The day of year corresponding to the start of the growing season.
     stage_values : dict[str, float]
-        The Kc values for each stage of the growing season. Keys must be "init", "dev", "mid" and "end".
+        The Kc values for each stage of the growing season. Keys must be "init", "mid" and "end".
     stage_lengths : dict[str, int]
         The length in days of each stage of the growing season. Keys must be "init", "dev", "mid" and "end".
     height : float | int
@@ -123,8 +123,8 @@ class KcCurve:
 
     @stage_values.setter
     def stage_values(self, value):
-        if not all(k in value for k in ["init", "dev", "mid", "end"]):
-            raise ValueError("stage_values must contain keys 'init', 'dev', 'mid' and 'end'")
+        if not all(k in value for k in ["init", "mid", "end"]):
+            raise ValueError("stage_values must contain keys 'init', 'mid' and 'end'")
         self._stage_values = value
 
     @property
