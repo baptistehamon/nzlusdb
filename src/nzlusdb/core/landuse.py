@@ -14,7 +14,7 @@ from xclim import ensembles as xens
 import nzlusdb
 from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
-from nzlusdb.core.nir import load_nir_inputs
+from nzlusdb.core.nir import KcCurve, load_nir_inputs
 from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
@@ -537,6 +537,51 @@ class LandUse:
         )
         lsa.data.attrs = {"land_use": lsa.land_use, "criteria": lsa._criteria_list, **lsa.attrs}
         return lsa.data
+
+    def _compute_cwr_nir(self, scenario: str = "historical", model=None) -> xr.DataArray:
+        """Internal method to compute CWR and NIR for a single scenario and model."""
+        self._get_kc_parameters()
+        etp, peff, rhmin, windspd = self._load_nir_inputs(scenario=scenario)
+        if model is not None:
+            etp = etp.sel(realization=model)
+            peff = peff.sel(realization=model)
+            rhmin = rhmin.sel(realization=model)
+            windspd = windspd.sel(realization=model)
+
+        kc = KcCurve(**self.Kc_params, time=peff.time)
+        kc.adjust(windspd=windspd, rhmin=rhmin)
+        kc = kc.curve(like=peff)
+
+        # CWR
+        cwr = (etp * kc).rename("crop_water_requirement")
+        cwr = cwr.resample(time="MS").sum(min_count=1)
+        cwr.attrs = {
+            "long_name": f"{self.long_name} Crop Water Requirement",
+            "short_name": f"{self.name}_crop_water_requirement",
+            "units": "mm",
+            "description": "Crop water requirement computed as the product of reference evapotranspiration (ETP) "
+            "and crop coefficient (Kc) using Allen et al. (1998) method.",
+            **self._db_attrs,
+            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}",
+        }
+        cwr_ssn = cwr.resample(time="QS-DEC").sum(min_count=1)
+        cwr_yr = cwr.resample(time="YS-JUL").sum(min_count=1)
+
+        # NIR
+        nir = (peff - cwr).clip(min=0).rename("net_irrigation_requirement")
+        nir = nir.resample(time="MS").sum(min_count=1)
+        nir.attrs = {
+            "long_name": f"{self.long_name} Net Irrigation Requirement",
+            "short_name": f"{self.name}_net_irrigation_requirement",
+            "units": "mm",
+            "description": "Net irrigation requirement computed as the difference between effective precipitation "
+            "(Peff) and crop water requirement (CWR).",
+            **self._db_attrs,
+            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}",
+        }
+        nir_ssn = nir.resample(time="QS-DEC").sum(min_count=1)
+        nir_yr = nir.resample(time="YS-JUL").sum(min_count=1)
+        return ((cwr, cwr_ssn, cwr_yr), (nir, nir_ssn, nir_yr))
 
     def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
         """
