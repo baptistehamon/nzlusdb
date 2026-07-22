@@ -80,10 +80,13 @@ def open_nzlusdb_data(crop: str):
     return data
 
 
-for crop in CROPS.keys():
+for crop, crop_type in CROPS.items():
     nzlusdb = open_nzlusdb_data(crop)
     data = open_supermarket_data(crop)
-    data = data.interp_like(nzlusdb).clip(min=0).round()
+    data = data.interp_like(nzlusdb).clip(min=0)
+    if crop_type == 2:  # noqa: PLR2004
+        # need to round the Data to get the category
+        data = data.round()
     data = xr.merge([data.rename("DataSupermarket"), nzlusdb.rename("NZLUSDB")])
     df = data.to_dataframe().reset_index(drop=True).dropna()
     outpath = Path(__file__).parent / "data"
