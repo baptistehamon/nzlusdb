@@ -237,18 +237,18 @@ class LandUse:
             out = out.assign_coords(scenario=scenario).expand_dims("scenario")
             return out.chunk(time=-1, realization=-1)
 
-    def compute_cwr_nir(self, scenario: str | list[str] = "historical", model=None, recompute=False) -> None:
+    def compute_nir(self, scenario: str | list[str] = "historical", model=None, recompute=False) -> None:
         """
-        Compute crop water requirement (CWR) and net irrigation requirement (NIR) for given scenario(s) and model.
+        Compute net irrigation requirement (NIR) for given scenario(s) and model.
 
         Parameters
         ----------
         scenario : str or list of str, optional
-            Scenario(s) to compute CWR and NIR for (e.g., 'historical', 'ssp126', 'ssp585'). Default is 'historical'.
+            Scenario(s) to compute NIR for (e.g., 'historical', 'ssp126', 'ssp585'). Default is 'historical'.
         model : str, optional
             Climate model to use for the computation. If None, uses all available models. Default is None.
         recompute : bool, optional
-            Whether to recompute CWR and NIR even if output files already exist. Default is False.
+            Whether to recompute NIR even if output files already exist. Default is False.
         """
 
         def _resample_season_year(da: xr.DataArray) -> tuple[xr.DataArray, xr.DataArray]:
@@ -263,36 +263,20 @@ class LandUse:
 
         for scen in scenario:
             path.mkdir(parents=True, exist_ok=True)
-            fp = {
-                "cwr": path / f"{self.name}_crop-water-requirement_monthly_{scen}_{self.resolution}_v{self.version}.nc",
-                "nir": path
-                / f"{self.name}_net-irrigation-requirement_monthly_{scen}_{self.resolution}_v{self.version}.nc",
-            }
-            if not recompute and all(fp[k].exists() for k in fp):
-                continue
-            else:
-                cwr_nir = self._compute_cwr_nir(scen, model)
-                for fname, da in zip(fp.keys(), cwr_nir, strict=True):
-                    write_netcdf(da, fp[fname], progressbar=True, verbose=True)
-            cwr = xr.open_dataarray(fp["cwr"])
-            nir = xr.open_dataarray(fp["nir"])
+            fp = f"{self.name}_net-irrigation-requirement_monthly_{scen}_{self.resolution}_v{self.version}.nc"
+            if recompute or not (path / fp).exists():
+                nir = self._compute_monthly_nir(scen, model)
+                write_netcdf(nir, path / fp, progressbar=True, verbose=True)
+            nir = xr.open_dataarray(path / fp)
 
             fp = {
-                "cwr_ssn": path
-                / f"{self.name}_crop-water-requirement_seasonal_{scen}_{self.resolution}_v{self.version}.nc",
-                "cwr_yr": path
-                / f"{self.name}_crop-water-requirement_annual_{scen}_{self.resolution}_v{self.version}.nc",
-                "nir_ssn": path
-                / f"{self.name}_net-irrigation-requirement_seasonal_{scen}_{self.resolution}_v{self.version}.nc",
-                "nir_yr": path
-                / f"{self.name}_net-irrigation-requirement_annual_{scen}_{self.resolution}_v{self.version}.nc",
+                freq: path / fp.replace("monthly", {"ssn": "seasonal", "yr": "annual"}[freq]) for freq in ["ssn", "yr"]
             }
 
-            cwr_nir = _resample_season_year(cwr) + _resample_season_year(nir)
-            for fname, da in zip(fp.keys(), cwr_nir, strict=True):
-                if not recompute and fp[fname].exists():
-                    continue
-                write_netcdf(da, fp[fname], progressbar=True, verbose=True)
+            nir_ssn, nir_yr = _resample_season_year(nir)
+            for freq, da in zip(["ssn", "yr"], [nir_ssn, nir_yr], strict=True):
+                if recompute or not fp[freq].exists():
+                    write_netcdf(da, fp[freq], progressbar=True, verbose=True)
 
     def open_mmm_data(self, path: Path, variable: str = "suitability") -> xr.Dataset:
         """
@@ -604,8 +588,8 @@ class LandUse:
         lsa.data.attrs = {"land_use": lsa.land_use, "criteria": lsa._criteria_list, **lsa.attrs}
         return lsa.data
 
-    def _compute_cwr_nir(self, scenario: str = "historical", model=None) -> xr.DataArray:
-        """Internal method to compute CWR and NIR for a single scenario and model."""
+    def _compute_monthly_nir(self, scenario: str = "historical", model=None) -> xr.DataArray:
+        """Internal method to compute monthly NIR for a single scenario and model."""
         self._get_kc_parameters()
         etp, peff, rhmin, windspd = self._load_nir_inputs(scenario=scenario)
         if model is not None:
@@ -618,24 +602,9 @@ class LandUse:
         kc.adjust(windspd=windspd, rhmin=rhmin)
         kc = kc.curve(like=peff)
 
-        cwr = (etp * kc).rename("crop_water_requirement")
+        cwr = etp * kc
         nir = (peff - cwr).clip(min=0).rename("net_irrigation_requirement")
 
-        # CWR
-        cwr = cwr.resample(time="MS").sum(min_count=1)
-        cwr.attrs = {
-            "long_name": f"{self.long_name} Crop Water Requirement",
-            "short_name": f"{self.name}_crop_water_requirement",
-            "units": "mm",
-            "description": "Crop water requirement computed as the product of reference evapotranspiration (ETP) "
-            "and crop coefficient (Kc) using Allen et al. (1998) method.",
-            **self._db_attrs,
-            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}",
-        }
-        # cwr_ssn = cwr.resample(time="QS-DEC").sum(min_count=1)
-        # cwr_yr = cwr.resample(time="YS-JUL").sum(min_count=1)
-
-        # NIR
         nir = nir.resample(time="MS").sum(min_count=1)
         nir.attrs = {
             "long_name": f"{self.long_name} Net Irrigation Requirement",
@@ -646,10 +615,7 @@ class LandUse:
             **self._db_attrs,
             "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}",
         }
-        return (cwr, nir)
-        # nir_ssn = nir.resample(time="QS-DEC").sum(min_count=1)
-        # nir_yr = nir.resample(time="YS-JUL").sum(min_count=1)
-        # return ((cwr, cwr_ssn, cwr_yr), (nir, nir_ssn, nir_yr))
+        return nir
 
     def _write_output_as_raster(self, data: xr.Dataset, variable: str, path: Path) -> None:
         """
