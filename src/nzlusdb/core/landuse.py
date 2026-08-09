@@ -116,7 +116,7 @@ class LandUse:
         """
 
         def _mmm_robustness(kwargs=None):
-            ds = self.open_suitability(**kwargs if kwargs else {})
+            ds = self.open_data(**kwargs if kwargs else {})
             return self.period_mmm_change_robustness(ds, delta_method="absolute")
 
         def _set_index(ds):
@@ -137,11 +137,11 @@ class LandUse:
                 self.resolution = res
                 self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
                 if self.resolution == "5km":
-                    ds = _mmm_robustness()
+                    ds = _mmm_robustness(variable="suitability")
                 if self.resolution == "1km":
                     fp = []
                     for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
-                        out = _mmm_robustness(kwargs={"scenario": s})
+                        out = _mmm_robustness(variable="suitability", kwargs={"scenario": s})
                         if s == "ssp126":
                             histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
                             write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
@@ -226,25 +226,41 @@ class LandUse:
                         out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
                     )
 
-    def open_suitability(self, scenario: str | None = None) -> xr.Dataset:
+    def open_data(self, variable: str, scenario: str | None = None, nir_freq: str | None = None) -> xr.Dataset:
         """
-        Open suitability dataset for given resolution.
+        Open suitability or NIR dataset for given resolution.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable to open ('suitability' or 'nir').
+        scenario : str, optional
+            Projected scenario to open ('ssp126', 'ssp245', 'ssp370', 'ssp585').
+            Required if variable is 'suitability' and resolution is '1km'.
+        nir_freq : str, optional
+            Frequency of NIR data to open ('monthly', 'seasonal', 'annual'). Required if variable is 'nir'.
 
         Returns
         -------
         xr.Dataset
-            Suitability dataset.
+            Suitability or NIR dataset.
         """
-        files = list((self.path / "suitability").glob("*.nc"))
+        files = list((self.path / variable).glob("*.nc"))
+        if variable == "nir":
+            variable = "net_irrigation_requirement"
+            if nir_freq is None or nir_freq not in ["monthly", "seasonal", "annual"]:
+                raise ValueError("nir_freq must be one of 'monthly', 'seasonal', or 'annual' when variable is 'nir'.")
+            else:
+                files = [f for f in files if nir_freq in f.name]
 
         hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
         if self.resolution == "5km":
             proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
-            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
+            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])[variable]
             proj = []
             for scen in proj_scenarios:
                 file = [f for f in files if scen in f.name][0]
-                ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
+                ds = xr.open_dataset(file)[variable].assign_coords(scenario=scen).expand_dims("scenario")
                 proj.append(ds)
             return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
@@ -253,7 +269,7 @@ class LandUse:
             def _preprocess(ds: xr.Dataset) -> xr.Dataset:
                 return ds.expand_dims("realization")
 
-            fp = [f for f in files if any(f"suitability_{s}" in f.name for s in [hist_scenario, scenario])]
+            fp = [f for f in files if any(f"{variable}_{s}" in f.name for s in [hist_scenario, scenario])]
             out = xr.open_mfdataset(fp, chunks={"lat": 350, "lon": 675}, combine="by_coords", preprocess=_preprocess)[
                 "suitability"
             ]
