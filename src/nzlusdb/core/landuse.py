@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 import geopandas as gpd
@@ -84,7 +85,14 @@ class LandUse:
         self._resolution = value
         self.path = nzlusdb.db.path / self.resolution / self.name
 
-    def run_workflow(self, resolution: list[str] | str | None = None, rerun_lsa=False):
+    def run_workflow(
+        self,
+        resolution: list[str] | str | None = None,
+        lsa: bool = True,
+        rerun_lsa=False,
+        nir: bool = True,
+        rerun_nir=False,
+    ):
         """
         Run the full land suitability analysis (LSA) workflow.
 
@@ -97,6 +105,14 @@ class LandUse:
         resolution : list of str, str, or None
             Resolution(s) to use for the analysis ('1km' or '5km'). If None, uses the instance's resolution attribute.
             Default is None.
+        lsa : bool, optional
+            Whether to run the LSA workflow. Default is True.
+        rerun_lsa : bool, optional
+            Whether to rerun the LSA even if output files already exist. Default is False.
+        nir : bool, optional
+            Whether to run the NIR workflow. Default is True.
+        rerun_nir : bool, optional
+            Whether to rerun the NIR even if output files already exist. Default is False.
         """
 
         def _mmm_robustness(kwargs=None):
@@ -115,45 +131,52 @@ class LandUse:
         elif isinstance(resolution, str):
             resolution = [resolution]
 
-        for res in resolution:
-            self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
-            if self.resolution == "5km":
-                ds = _mmm_robustness()
-            if self.resolution == "1km":
-                fp = []
-                for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
-                    out = _mmm_robustness(kwargs={"scenario": s})
-                    if s == "ssp126":
-                        histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
-                        write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
-                    out = out.drop_isel(time=0)
-                    fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
-                    fp.append(path / fname)
-                    write_netcdf(out, path / fname, progressbar=True, verbose=True)
-                ds = xr.concat(
-                    [
-                        xr.open_dataset(path / histfname).assign_coords(
-                            {"scenario": "historical", "period": "1980-2009"}
-                        ),
-                        xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
-                    ],
-                    dim="time",
-                )
+        if lsa:
+            # Run LSA for each resolution
+            for res in resolution:
+                self.resolution = res
+                self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
+                if self.resolution == "5km":
+                    ds = _mmm_robustness()
+                if self.resolution == "1km":
+                    fp = []
+                    for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
+                        out = _mmm_robustness(kwargs={"scenario": s})
+                        if s == "ssp126":
+                            histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
+                            write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
+                        out = out.drop_isel(time=0)
+                        fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
+                        fp.append(path / fname)
+                        write_netcdf(out, path / fname, progressbar=True, verbose=True)
+                    ds = xr.concat(
+                        [
+                            xr.open_dataset(path / histfname).assign_coords(
+                                {"scenario": "historical", "period": "1980-2009"}
+                            ),
+                            xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
+                        ],
+                        dim="time",
+                    )
 
-            ds = ds.assign_attrs(
-                {
-                    **self._db_attrs,
-                    **{
-                        "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
-                        + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
-                    },
-                }
-            )
-            self.write_output(ds, variable="suitability", path=self.path / "suitability")
-            self.summary_figs()
-            self.stats_summary()
-            self.add_to_doc(overwrite=True)
+                ds = ds.assign_attrs(
+                    {
+                        **self._db_attrs,
+                        **{
+                            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
+                            + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
+                        },
+                    }
+                )
+                self.write_output(ds, variable="suitability", path=self.path / "suitability")
+                self.summary_figs()
+                self.stats_summary()
+                self.add_to_doc(overwrite=True)
+
+        if nir:
+            for res in resolution:
+                self.resolution = res
+                self.compute_nir(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], recompute=rerun_nir)
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
@@ -599,6 +622,7 @@ class LandUse:
             windspd = windspd.sel(realization=model)
 
         kc = KcCurve(**self.Kc_params, time=peff.time)
+        # return kc.stage_values["end"]
         kc.adjust(windspd=windspd, rhmin=rhmin)
         kc = kc.curve(like=peff)
 
@@ -718,7 +742,7 @@ class LandUse:
         """Get Kc parameters from nir module."""
         crop_params = f"{self.name}_Kc_params"
         if hasattr(nirmod, crop_params):
-            self.Kc_params = getattr(nirmod, crop_params)
+            self.Kc_params = copy.deepcopy(getattr(nirmod, crop_params))
         else:
             raise ValueError(f"Kc parameters '{crop_params}' not found in nir module.")
 
