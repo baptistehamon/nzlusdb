@@ -290,8 +290,13 @@ class LandUse:
             Whether to recompute NIR even if output files already exist. Default is False.
         """
 
-        def _resample_season_year(da: xr.DataArray) -> tuple[xr.DataArray, xr.DataArray]:
-            da_ssn = da.resample(time="QS-DEC").sum(min_count=1)
+        def _resample_season_year(da: xr.DataArray, historical: bool) -> tuple[xr.DataArray, xr.DataArray]:
+            # Ensure full seasons for historical and projected scenarios
+            if historical:
+                sel_ssn = {"time": slice(2, -1)}
+            else:
+                sel_ssn = {"time": slice(None, -1)}
+            da_ssn = da.isel(**sel_ssn).resample(time="QS-DEC").sum(min_count=1)
             da_yr = da.resample(time="YS-JUL").sum(min_count=1)
             return (da_ssn, da_yr)
 
@@ -312,7 +317,20 @@ class LandUse:
                 freq: path / fp.replace("monthly", {"ssn": "seasonal", "yr": "annual"}[freq]) for freq in ["ssn", "yr"]
             }
 
-            nir_ssn, nir_yr = _resample_season_year(nir)
+            # Add last month of historical to get full season for projected scenarios
+            if scen != "historical":
+                hist_fp = (
+                    path
+                    / f"{self.name}_net-irrigation-requirement_monthly_historical_{self.resolution}_v{self.version}.nc"
+                )
+                if recompute or not hist_fp.exists():
+                    nir_hist = self._compute_monthly_nir("historical", model)
+                    write_netcdf(nir_hist, hist_fp, progressbar=True, verbose=True)
+                else:
+                    nir_hist = xr.open_dataarray(hist_fp).isel(time=-1)
+                nir = xr.concat([nir_hist, nir], dim="time")
+
+            nir_ssn, nir_yr = _resample_season_year(nir, historical=scen == "historical")
             for freq, da in zip(["ssn", "yr"], [nir_ssn, nir_yr], strict=True):
                 if recompute or not fp[freq].exists():
                     write_netcdf(da, fp[freq], progressbar=True, verbose=True)
