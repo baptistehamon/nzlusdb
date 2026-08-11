@@ -292,12 +292,10 @@ class LandUse:
 
         def _resample_season_year(da: xr.DataArray, historical: bool) -> tuple[xr.DataArray, xr.DataArray]:
             # Ensure full seasons for historical and projected scenarios
-            if historical:
-                sel_ssn = {"time": slice(2, -1)}
-            else:
-                sel_ssn = {"time": slice(None, -1)}
+            sel_ssn = {"time": slice(2, -1)} if historical else {"time": slice(None, -1)}
+            sel_yr = {"time": slice(1, None)} if not historical else {}
             da_ssn = da.isel(**sel_ssn).resample(time="QS-DEC").sum(min_count=1)
-            da_yr = da.resample(time="YS-JUL").sum(min_count=1)
+            da_yr = da.isel(**sel_yr).resample(time="YS-JUL").sum(min_count=1)
             return (da_ssn, da_yr)
 
         if isinstance(scenario, str):
@@ -327,8 +325,8 @@ class LandUse:
                     nir_hist = self._compute_monthly_nir("historical", model)
                     write_netcdf(nir_hist, hist_fp, progressbar=True, verbose=True)
                 else:
-                    nir_hist = xr.open_dataarray(hist_fp).isel(time=-1)
-                nir = xr.concat([nir_hist, nir], dim="time")
+                    nir_hist = xr.open_dataarray(hist_fp)
+                nir = xr.concat([nir_hist.isel(time=-1), nir], dim="time")
 
             nir_ssn, nir_yr = _resample_season_year(nir, historical=scen == "historical")
             for freq, da in zip(["ssn", "yr"], [nir_ssn, nir_yr], strict=True):
