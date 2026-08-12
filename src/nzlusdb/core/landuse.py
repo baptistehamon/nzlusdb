@@ -135,7 +135,9 @@ class LandUse:
                     freq_name = "month"
                 elif kwargs.get("nir_freq") == "seasonal":
                     freq_name = "season"
-                da = da.assign_coords({freq_name: getattr(da.time.dt, freq_name)})
+                da = da.assign_coords(
+                    {freq_name: da.time.dt.strftime("%b") if freq_name == "month" else da.time.dt.season}
+                )
                 freq_values = np.unique(da[freq_name].values)
                 out = []
                 for val in freq_values:
