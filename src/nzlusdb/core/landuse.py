@@ -119,8 +119,9 @@ class LandUse:
             if resolution is None:
                 if self.resolution is None:
                     raise ValueError("Resolution must be set before running workflow.")
-                elif isinstance(resolution, str):
-                    resolution = [resolution]
+                resolution = [self.resolution]
+            elif isinstance(resolution, str):
+                resolution = [resolution]
             return resolution
 
         def _mmm_robustness(**kwargs):
