@@ -659,7 +659,7 @@ class LandUse:
         kc = kc.curve(like=peff)
 
         cwr = etp * kc
-        nir = (peff - cwr).clip(min=0).rename("net_irrigation_requirement")
+        nir = (cwr - peff).clip(min=0).rename("net_irrigation_requirement")
 
         nir = nir.resample(time="MS").sum(min_count=1)
         nir.attrs = {
