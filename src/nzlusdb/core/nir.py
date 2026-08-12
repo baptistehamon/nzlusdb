@@ -243,7 +243,7 @@ def load_nir_inputs(variable, scenario="historical", resolution="5km"):
 
     # climate data resolution
     if resolution == "25km":
-        _chunks = {"realization": 1, "lat": 23, "time": xr.groupers.TimeResampler("YS-JUL")}
+        _chunks = {"realization": 1, "lat": 23, "lon": 18}
     if resolution == "5km":
         _chunks = {"realization": 1, "time": xr.groupers.TimeResampler("YS-JUL")}
         da = da.rename({"latitude": "lat", "longitude": "lon"})
