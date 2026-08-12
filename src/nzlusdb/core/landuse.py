@@ -718,7 +718,13 @@ class LandUse:
         }
         return nir
 
-    def _write_output_as_raster(self, data: xr.Dataset, variable: str, path: Path) -> None:
+    def _write_output_as_raster(
+        self,
+        data: xr.Dataset,
+        variable: str,
+        path: Path,
+        var_suffix: str | None = None,
+    ) -> None:
         """
         Write output data as GeoTIFF files.
 
@@ -733,24 +739,27 @@ class LandUse:
             Name of the variable data corresponds to.
         path : Path
             Directory path to save the GeoTIFF files.
+        var_suffix : str, optional
+            Suffix to append to the variable name in the output file names. Default is None.
 
         Returns
         -------
         None
             Writes GeoTIFF files to the appropriate directory.
         """
+        var_name = variable + (f"_{var_suffix}" if var_suffix else "")
         vars_dict = {
-            variable: variable,
-            "change": f"{variable}-change",
-            "robustness_categories": f"{variable}-robustness-categories",
-            "robustness_coefficient": f"{variable}-robustness-coefficient",
+            variable: f"{var_name}",
+            "change": f"{var_name}-change",
+            "robustness_categories": f"{var_name}-robustness-categories",
+            "robustness_coefficient": f"{var_name}-robustness-coefficient",
         }
         path /= "tiff"
         path.mkdir(parents=True, exist_ok=True)
 
         for time in data.time.values:
             for var in [variable, "change", "robustness_categories", "robustness_coefficient"]:
-                if time == ("historical", "1980-2009") and var in [
+                if all([i in time for i in ["historical", "1980-2009"]]) and var in [
                     "change",
                     "robustness_categories",
                     "robustness_coefficient",
@@ -758,7 +767,7 @@ class LandUse:
                     continue
                 da = data[var].sel(time=time)
                 da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat").rio.write_crs("EPSG:4326")
-                fp = path / f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{self.resolution}_v{self.version}.tif"
+                fp = path / f"{self.name}_{vars_dict[var]}_{'_'.join(time)}_{self.resolution}_v{self.version}.tif"
                 da.rio.to_raster(fp)
 
     def _get_criteria_info(self) -> None:
