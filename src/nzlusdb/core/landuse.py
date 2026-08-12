@@ -221,7 +221,7 @@ class LandUse:
                     else:
                         ds = _1km_mmm_robustness(self.path / "nir", variable="nir", nir_freq=freq)
                     ds = _assign_attrs(ds)
-                    self.write_output(ds, variable=f"net-irrigation-requirement_{freq}", path=self.path / "nir")
+                    self.write_output(ds, "net_irrigation_requirement", self.path / "nir", var_suffix=freq)
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
@@ -397,7 +397,7 @@ class LandUse:
         file = f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         return xr.open_dataset(path / file)
 
-    def write_output(self, data: xr.Dataset, variable: str, path: Path) -> None:
+    def write_output(self, data: xr.Dataset, variable: str, path: Path, **kwargs) -> None:
         """
         Write data to NetCDF and GeoTIFF files.
 
@@ -412,6 +412,8 @@ class LandUse:
             Name of the variable data corresponds to.
         path : Path
             Directory path to save the output files.
+        **kwargs : dict
+            Additional keyword arguments to pass to `_write_output_as_raster`.
 
         Returns
         -------
@@ -421,8 +423,8 @@ class LandUse:
         fp = path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
-        data = data.set_index(time=["scenario", "period"])
-        self._write_output_as_raster(data, variable, path)
+        data = data.set_index(time=list(data.time.coords))
+        self._write_output_as_raster(data, variable, path, **kwargs)
 
     def summary_figs(self) -> None:
         """
@@ -747,7 +749,7 @@ class LandUse:
         None
             Writes GeoTIFF files to the appropriate directory.
         """
-        var_name = variable + (f"_{var_suffix}" if var_suffix else "")
+        var_name = variable.replace("_", "-") + (f"_{var_suffix}" if var_suffix else "")
         vars_dict = {
             variable: f"{var_name}",
             "change": f"{var_name}-change",
