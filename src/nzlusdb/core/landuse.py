@@ -85,7 +85,7 @@ class LandUse:
         self._resolution = value
         self.path = nzlusdb.db.path / self.resolution / self.name
 
-    def run_workflow(
+    def run_workflow(  # noqa: C901, PLR0915
         self,
         resolution: list[str] | str | None = None,
         lsa: bool = True,
@@ -115,21 +115,82 @@ class LandUse:
             Whether to rerun the NIR even if output files already exist. Default is False.
         """
 
-        def _mmm_robustness(kwargs=None):
-            ds = self.open_data(**kwargs if kwargs else {})
-            return self.period_mmm_change_robustness(ds, delta_method="absolute")
+        def _check_resolution(resolution):
+            if resolution is None:
+                if self.resolution is None:
+                    raise ValueError("Resolution must be set before running workflow.")
+                elif isinstance(resolution, str):
+                    resolution = [resolution]
+            return resolution
+
+        def _mmm_robustness(**kwargs):
+            da = self.open_data(**kwargs)
+            if not kwargs.get("variable") == "nir" or kwargs.get("nir_freq") not in ["monthly", "seasonal"]:
+                return self.period_mmm_change_robustness(da)
+            else:
+                # For NIR, we need to compute the multi-model mean change and robustness
+                # for each month or season separately
+                if kwargs.get("nir_freq") == "monthly":
+                    freq_name = "month"
+                elif kwargs.get("nir_freq") == "seasonal":
+                    freq_name = "season"
+                da = da.assign_coords({freq_name: getattr(da.time.dt, freq_name)})
+                freq_values = np.unique(da[freq_name].values)
+                out = []
+                for val in freq_values:
+                    ds = self.period_mmm_change_robustness(da.where(da[freq_name] == val, drop=True))
+                    out.append(ds.expand_dims({freq_name: [val]}))
+                out = xr.concat(out, dim=freq_name)
+                return xr.concat(
+                    [
+                        out.isel(time=0)
+                        .expand_dims(["scenario", "period"])
+                        .stack(time=["scenario", "period", freq_name]),
+                        out.drop_isel(time=0)
+                        .set_index(time=["scenario", "period"])
+                        .unstack("time")
+                        .stack(time=["scenario", "period", freq_name]),
+                    ],
+                    dim="time",
+                ).reset_index("time")
 
         def _set_index(ds):
             return ds.set_index(time=["scenario", "period"])
 
-        path = self.path / "suitability"
+        def _1km_mmm_robustness(path, **kwargs):
+            fp = []
+            for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
+                out = _mmm_robustness(scenario=s, **kwargs)
+                freq_name = kwargs.get("nir_freq") or ""
+                if freq_name:
+                    freq_name = "_" + freq_name
+                if s == "ssp126":
+                    histfname = f"{self.name}_tmp_mmm-change-robustness{freq_name}_historical.nc"
+                    write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
+                out = out.drop_isel(time=0)
+                fname = f"{self.name}_tmp_mmm-change-robustness{freq_name}_{s}.nc"
+                fp.append(path / fname)
+                write_netcdf(out, path / fname, progressbar=True, verbose=True)
+            return xr.concat(
+                [
+                    xr.open_dataset(path / histfname).assign_coords({"scenario": "historical", "period": "1980-2009"}),
+                    xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
+                ],
+                dim="time",
+            )
 
-        if resolution is None:
-            if self.resolution is None:
-                raise ValueError("Resolution must be set before running workflow.")
-            resolution = [self.resolution]
-        elif isinstance(resolution, str):
-            resolution = [resolution]
+        def _assign_attrs(ds):
+            return ds.assign_attrs(
+                {
+                    **self._db_attrs,
+                    **{
+                        "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
+                        + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
+                    },
+                }
+            )
+
+        resolution = _check_resolution(resolution)
 
         if lsa:
             # Run LSA for each resolution
@@ -139,35 +200,9 @@ class LandUse:
                 if self.resolution == "5km":
                     ds = _mmm_robustness(variable="suitability")
                 if self.resolution == "1km":
-                    fp = []
-                    for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
-                        out = _mmm_robustness(variable="suitability", kwargs={"scenario": s})
-                        if s == "ssp126":
-                            histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
-                            write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
-                        out = out.drop_isel(time=0)
-                        fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
-                        fp.append(path / fname)
-                        write_netcdf(out, path / fname, progressbar=True, verbose=True)
-                    ds = xr.concat(
-                        [
-                            xr.open_dataset(path / histfname).assign_coords(
-                                {"scenario": "historical", "period": "1980-2009"}
-                            ),
-                            xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
-                        ],
-                        dim="time",
-                    )
+                    ds = _1km_mmm_robustness(self.path / "suitability", variable="suitability")
 
-                ds = ds.assign_attrs(
-                    {
-                        **self._db_attrs,
-                        **{
-                            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}: "
-                            + f"{', '.join(climateDS[f'nzlusdb_{self.resolution}'].model)}"
-                        },
-                    }
-                )
+                ds = _assign_attrs(ds)
                 self.write_output(ds, variable="suitability", path=self.path / "suitability")
                 self.summary_figs()
                 self.stats_summary()
@@ -177,6 +212,13 @@ class LandUse:
             for res in resolution:
                 self.resolution = res
                 self.compute_nir(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], recompute=rerun_nir)
+                for freq in ["monthly", "seasonal", "annual"]:
+                    if self.resolution == "5km":
+                        ds = _mmm_robustness(variable="nir", nir_freq=freq)
+                    else:
+                        ds = _1km_mmm_robustness(self.path / "nir", variable="nir", nir_freq=freq)
+                    ds = _assign_attrs(ds)
+                    self.write_output(ds, variable=f"net-irrigation-requirement_{freq}", path=self.path / "nir")
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
@@ -321,7 +363,7 @@ class LandUse:
                     path
                     / f"{self.name}_net-irrigation-requirement_monthly_historical_{self.resolution}_v{self.version}.nc"
                 )
-                if recompute or not hist_fp.exists():
+                if not hist_fp.exists():
                     nir_hist = self._compute_monthly_nir("historical", model)
                     write_netcdf(nir_hist, hist_fp, progressbar=True, verbose=True)
                 else:
