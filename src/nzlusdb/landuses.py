@@ -34,7 +34,7 @@ if __name__ == "__main__":
         "-r",
         "--run",
         default="workflow",
-        choices=["workflow", "lsa", "stats", "figs", "doc"],
+        choices=["workflow", "lsa", "nir", "stats", "figs", "doc"],
         help="Method to run",
     )
     parser.add_argument(
@@ -49,10 +49,28 @@ if __name__ == "__main__":
         help="Climate scenario (for LSA)",
     )
     parser.add_argument(
+        "--run-lsa",
+        action="store_true",
+        default=False,
+        help="Whether to run LSA in workflow mode (default: False).",
+    )
+    parser.add_argument(
         "--rerun-lsa",
         action="store_true",
         default=False,
-        help="Whether to rerun LSA even if output files already exist (only applies to LSA runs)",
+        help="Whether to rerun LSA even if LSA output files already exist.",
+    )
+    parser.add_argument(
+        "--run-nir",
+        action="store_true",
+        default=False,
+        help="Whether to run NIR computation in workflow mode (default: False).",
+    )
+    parser.add_argument(
+        "--rerun-nir",
+        action="store_true",
+        default=False,
+        help="Whether to rerun NIR computation even if NIR output files already exist.",
     )
     parser.add_argument(
         "-o",
@@ -75,10 +93,16 @@ if __name__ == "__main__":
 
     if args.run == "workflow":
         print(f"Running workflow for land use: {args.landuse} at resolution(s): {', '.join(args.resolution)}")
-        nzlusdb.db[args.landuse].run_workflow(resolution=args.resolution, rerun_lsa=args.rerun_lsa)
+        nzlusdb.db[args.landuse].run_workflow(
+            resolution=args.resolution,
+            lsa=args.run_lsa,
+            rerun_lsa=args.rerun_lsa,
+            nir=args.run_nir,
+            rerun_nir=args.rerun_nir,
+        )
         sys.exit(0)
 
-    if args.run in ["lsa", "stats", "figs"]:
+    if args.run in ["lsa", "nir", "stats", "figs"]:
         if isinstance(args.resolution, str):
             res = [args.resolution]
         for r in args.resolution:
@@ -86,6 +110,9 @@ if __name__ == "__main__":
             if args.run == "lsa":
                 print(f"Running LSA for land use: {args.landuse} at resolution: {r}")
                 nzlusdb.db[args.landuse].run_lsa(scenario=args.scenario, rerun=args.rerun_lsa)
+            if args.run == "nir":
+                print(f"Running NIR computation for land use: {args.landuse} at resolution: {r}")
+                nzlusdb.db[args.landuse].compute_nir(scenario=args.scenario, recompute=args.rerun_nir)
             if args.run == "stats":
                 print(f"Generating stats for land use: {args.landuse} at resolution: {r}")
                 nzlusdb.db[args.landuse].stats_summary()
