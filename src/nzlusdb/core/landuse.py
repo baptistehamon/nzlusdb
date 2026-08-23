@@ -18,7 +18,7 @@ import nzlusdb
 from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.nir import KcCurve, load_nir_inputs
-from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
+from nzlusdb.core.plot import bndnorm_suitability, bndnorm_suitability_change, summary_figure
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
 
@@ -447,8 +447,8 @@ class LandUse:
         summary_figure(
             data,
             f"Historical and Projected Suitability for {self.long_name}",
-            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
-            proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
+            hist_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
+            proj_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
             timeline_label="Suitability",
         )
@@ -460,8 +460,8 @@ class LandUse:
             data,
             f"Historical Suitability and Projected Changes for {self.long_name}",
             proj_var="change",
-            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
-            proj_kw={"norm": change_boundnorm, "cmap": "PiYG"},
+            hist_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
+            proj_kw={"norm": bndnorm_suitability_change, "cmap": "PiYG"},
             scenario_labels=("SSP2-4.5", "SSP5-8.5"),
             legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
             robustness=True,

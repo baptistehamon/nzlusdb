@@ -12,8 +12,10 @@ __all__ = [
     "plt_timeline",
     "summary_figure",
     "cmap_boundnorm",
-    "suitability_boundnorm",
-    "change_boundnorm",
+    "bndnorm_suitability",
+    "bndnorm_suitability_change",
+    "bndnorm_nir",
+    "bndnorm_nir_change",
 ]
 
 
@@ -410,5 +412,7 @@ def cmap_boundnorm(bounds: list, cmap: str, **kwargs):
     return mpl.colors.BoundaryNorm(bounds, mpl.colormaps[cmap].N, **kwargs)
 
 
-suitability_boundnorm = cmap_boundnorm(bounds=np.arange(0, 1.1, 0.1), cmap="cividis")
-change_boundnorm = cmap_boundnorm(bounds=np.arange(-0.55, 0.6, 0.1), cmap="PiYG", extend="both")
+bndnorm_suitability = cmap_boundnorm(bounds=np.arange(0, 1.1, 0.1), cmap="cividis")
+bndnorm_suitability_change = cmap_boundnorm(bounds=np.arange(-0.55, 0.6, 0.1), cmap="PiYG", extend="both")
+bndnorm_nir = cmap_boundnorm(bounds=np.arange(0, 801, 100), cmap="Blues", extend="max")
+bndnorm_nir_change = cmap_boundnorm(bounds=np.arange(-100, 101, 25), cmap="BrBG", extend="both")
