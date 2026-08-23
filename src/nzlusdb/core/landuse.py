@@ -420,7 +420,10 @@ class LandUse:
         None
             Writes NetCDF and GeoTIFF files to the appropriate directories.
         """
-        fp = path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
+        varname = variable.replace("_", "-")
+        if kwargs.get("var_suffix"):
+            varname += f"-{kwargs['var_suffix']}"
+        fp = path / f"{self.name}_{varname}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
         data = data.set_index(time=list(data.time.coords))
