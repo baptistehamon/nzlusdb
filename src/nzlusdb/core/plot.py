@@ -298,7 +298,21 @@ def summary_figure(  # noqa: PLR0915
         Default is "Suitability".
     """
 
-    def _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels: dict | None = None, robustness: bool = False):
+    def _legend(
+        nlgd,
+        hist_var,
+        proj_var,
+        hist_kw,
+        proj_kw,
+        labels: dict | None = None,
+        robustness: bool = False,
+        adjust_ticks=False,
+    ):
+        def _adjust_ticks(cbar, bounds):
+            # Adjust colorbar ticks for suitability change maps
+            cbar.ax.tick_params(length=0, which="minor")
+            cbar.ax.set_xticks(bounds)
+
         if labels is None:
             hist_var = hist_var.capitalize()
             proj_var = proj_var.capitalize()
@@ -318,9 +332,8 @@ def summary_figure(  # noqa: PLR0915
                 cbar = fig.colorbar(
                     mpl.cm.ScalarMappable(**proj_kw), cax=axd["K"], orientation="horizontal", label=proj_var
                 )
-                # Adjust colorbar ticks for change maps
-                cbar.ax.tick_params(length=0, which="minor")
-                cbar.ax.set_xticks(np.arange(-0.4, 0.6, 0.2))
+                if adjust_ticks:
+                    _adjust_ticks(cbar=cbar, bounds=np.arange(-0.4, 0.6, 0.2))
             else:
                 robustness_categories_lgd(
                     axd["K"], loc="lower center", frameon=False, ncol=2, bbox_to_anchor=(0.5, -1.5)
@@ -331,9 +344,8 @@ def summary_figure(  # noqa: PLR0915
             cbar = fig.colorbar(
                 mpl.cm.ScalarMappable(**proj_kw), cax=cax_cbar, orientation="horizontal", label=proj_var
             )
-            # Adjust colorbar ticks for change maps
-            cbar.ax.tick_params(length=0, which="minor")
-            cbar.ax.set_xticks(np.arange(-0.4, 0.6, 0.2))
+            if adjust_ticks:
+                _adjust_ticks(cbar=cbar, bounds=np.arange(-0.4, 0.6, 0.2))
             cax_left = divider.append_axes("left", size="50%", pad=0.05)
             cax_left.axis("off")
             cax_robustness = divider.append_axes("right", size="100%", pad=0.05)
@@ -388,7 +400,16 @@ def summary_figure(  # noqa: PLR0915
         robustness=robustness,
     )
 
-    _legend(nlgd, hist_var, proj_var, hist_kw, proj_kw, labels=legend_labels, robustness=robustness)
+    _legend(
+        nlgd,
+        hist_var,
+        proj_var,
+        hist_kw,
+        proj_kw,
+        labels=legend_labels,
+        robustness=robustness,
+        adjust_ticks=hist_var == "suitability",
+    )
 
 
 def cmap_boundnorm(bounds: list, cmap: str, **kwargs):

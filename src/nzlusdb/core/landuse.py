@@ -18,7 +18,13 @@ import nzlusdb
 from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
 from nzlusdb.core.nir import KcCurve, load_nir_inputs
-from nzlusdb.core.plot import bndnorm_suitability, bndnorm_suitability_change, summary_figure
+from nzlusdb.core.plot import (
+    bndnorm_nir,
+    bndnorm_nir_change,
+    bndnorm_suitability,
+    bndnorm_suitability_change,
+    summary_figure,
+)
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
 
@@ -429,7 +435,7 @@ class LandUse:
         data = data.set_index(time=list(data.time.coords))
         self._write_output_as_raster(data, variable, path, **kwargs)
 
-    def summary_figs(self) -> None:
+    def summary_figs(self, variable: str, path: Path) -> None:
         """
         Generate and save summary figures.
 
@@ -437,37 +443,71 @@ class LandUse:
         historical suitability and projected changes with robustness. In each figure, the historical
         period is 1980-2009 and the projected periods are 2010-2039, 2040-2069 and 2070-2099 for the
         SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable data corresponds to.
+        path : Path
+            Directory path where data is stored.
         """
-        data = self.open_mmm_data(self.path / "suitability")
+        data = self.open_mmm_data(path, variable=variable)
         data = data.set_index(time=["scenario", "period"])
 
         fp = nzlusdb.db.pathdoc / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
 
-        summary_figure(
-            data,
-            f"Historical and Projected Suitability for {self.long_name}",
-            hist_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
-            proj_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
-            scenario_labels=("SSP2-4.5", "SSP5-8.5"),
-            timeline_label="Suitability",
-        )
-        fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        common_kwargs = {"scenario_labels": ("SSP2-4.5", "SSP5-8.5")}
+        if variable == "suitability":
+            base_kwargs = {
+                **common_kwargs,
+                "suptitle": f"Historical and Projected Suitability for {self.long_name}",
+                "hist_kw": {"norm": bndnorm_suitability, "cmap": "cividis"},
+                "proj_kw": {"norm": bndnorm_suitability, "cmap": "cividis"},
+                "timeline_label": "Suitability",
+            }
+            change_kwargs = {
+                **base_kwargs,
+                "suptitle": f"Historical Suitability and Projected Changes for {self.long_name}",
+                "proj_var": "change",
+                "proj_kw": {"norm": bndnorm_suitability_change, "cmap": "PiYG"},
+                "legend_labels": {"suitability": "Suitability", "change": "Change in Suitability"},
+                "robustness": True,
+                "timeline_label": "Changes",
+            }
+        elif variable == "net-irrigation-requirement-annual":
+            base_kwargs = {
+                **common_kwargs,
+                "suptitle": f"Historical and Projected Annual Net Irrigation Requirement for {self.long_name}",
+                "hist_var": "net_irrigation_requirement",
+                "proj_var": "net_irrigation_requirement",
+                "hist_kw": {"norm": bndnorm_nir, "cmap": "Blues"},
+                "proj_kw": {"norm": bndnorm_nir, "cmap": "Blues"},
+                "legend_labels": {"net_irrigation_requirement": "Net Irrigation Requirement (mm)"},
+                "timeline_label": "Net Irrigation Requirement",
+            }
+            change_kwargs = {
+                **base_kwargs,
+                "suptitle": f"Historical Annual Net Irrigation Requirement and Projected Changes for {self.long_name}",
+                "proj_var": "change",
+                "proj_kw": {"norm": bndnorm_nir_change, "cmap": "BrBG"},
+                "legend_labels": {
+                    "net_irrigation_requirement": "Net Irrigation Requirement (mm)",
+                    "change": "Change in Net Irrigation Requirement (mm)",
+                },
+                "robustness": True,
+                "timeline_label": "Changes",
+            }
+        else:
+            raise ValueError(f"Variable '{variable}' is not supported for summary figures.")
+
+        summary_figure(data, **base_kwargs)
+        fname = f"{self.name}_{variable}_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
-        summary_figure(
-            data,
-            f"Historical Suitability and Projected Changes for {self.long_name}",
-            proj_var="change",
-            hist_kw={"norm": bndnorm_suitability, "cmap": "cividis"},
-            proj_kw={"norm": bndnorm_suitability_change, "cmap": "PiYG"},
-            scenario_labels=("SSP2-4.5", "SSP5-8.5"),
-            legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
-            robustness=True,
-            timeline_label="Changes",
-        )
-        fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        summary_figure(data, **change_kwargs)
+        fname = f"{self.name}_{variable}_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
