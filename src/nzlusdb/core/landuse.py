@@ -214,7 +214,7 @@ class LandUse:
                 ds = _assign_attrs(ds)
                 self.write_output(ds, variable="suitability", path=self.path / "suitability")
                 self.summary_figs("suitability", self.path / "suitability")
-                self.stats_summary()
+                self.stats_summary(" suitability", self.path / "suitability")
                 self.add_to_doc(overwrite=True)
 
         if nir:
@@ -228,6 +228,7 @@ class LandUse:
                         ds = _1km_mmm_robustness(self.path / "nir", variable="nir", nir_freq=freq)
                     ds = _assign_attrs(ds)
                     self.write_output(ds, "net_irrigation_requirement", self.path / "nir", var_suffix=freq)
+                    self.stats_summary(f"net-irrigation-requirement-{freq}", self.path / "nir")
             self.summary_figs("net-irrigation-requirement-annual", self.path / "nir")
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
@@ -512,59 +513,61 @@ class LandUse:
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
-    def stats_summary(self) -> None:
-        """Generate and save national and regional suitability statistics summary."""
+    def stats_summary(self, variable: str, path: Path) -> None:
+        """
+        Generate and save national and regional suitability statistics summary.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable data corresponds to.
+        path : Path
+            Directory path where data is stored.
+        """
 
         def _add_coords(df, mapping):
-            df.insert(1, "period", df["time"].map(mapping["period"]))
-            df.insert(2, "scenario", df["time"].map(mapping["scenario"]))
+            for i, c in enumerate(mapping):
+                df.insert(i + 1, c, df["time"].map(mapping[c]))
             return df.drop(columns=["time"])
 
         agmask = self._agriculture_mask()
         regions = gpd.read_file(r"R:\DATA\GIS-NZ\statsnz-regional-council-2022-clipped-generalised").to_crs(epsg=4326)
 
-        path = self.path / "suitability"
-        data = self.open_mmm_data(path)
+        data = self.open_mmm_data(path, variable=variable)
         data = data.where(agmask == 1)
 
-        mapping = {
-            "scenario": {
-                time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values, strict=True)
-            },
-            "period": {time: period for time, period in zip(data["time"].values, data["period"].values, strict=True)},
+        mapping = {c: dict(zip(data["time"].values, data[c].values, strict=True)) for c in data.time.coords}
+
+        if variable == "suitability":
+            cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
+            kwargs = {
+                "on_vars": ["suitability"],
+                "on_dims": ["time"],
+                "dropna": True,
+                "bins": np.linspace(0, 1, 11),
+                "cell_area": cell_area,
+                "all_bins": True,
+            }
+        elif "net-irrigation-requirement" in variable:
+            kwargs = {"on_vars": ["net_irrigation_requirement"], "on_dims": ["time"], "dropna": True}
+        reg_kwargs = {
+            "areas": regions,
+            "name": "region",
+            "mask_kwargs": {"names": "REGC2022_1"},
         }
 
-        cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
-
-        args = {
-            "on_vars": ["suitability"],
-            "on_dims": ["time"],
-            "dropna": True,
-            "bins": np.linspace(0, 1, 11),
-            "cell_area": cell_area,
-            "all_bins": True,
-        }
-
-        nz_stats = stats_summary(
-            data,
-            **args,
-        )
+        nz_stats = stats_summary(data, **kwargs)
         nz_stats = _add_coords(nz_stats, mapping)
 
-        reg_stats = spatial_stats_summary(
-            data,
-            areas=regions,
-            name="region",
-            mask_kwargs={"names": "REGC2022_1"},
-            **args,
-        )
+        reg_stats = spatial_stats_summary(data, **kwargs, **reg_kwargs)
         reg_stats = _add_coords(reg_stats, mapping)
+
         nz_stats.to_csv(
-            path / f"{self.name}_national_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_national_{variable}_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
         reg_stats.to_csv(
-            path / f"{self.name}_regional_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_regional_{variable}_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
 
