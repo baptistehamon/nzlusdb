@@ -213,7 +213,7 @@ class LandUse:
 
                 ds = _assign_attrs(ds)
                 self.write_output(ds, variable="suitability", path=self.path / "suitability")
-                self.summary_figs()
+                self.summary_figs("suitability", self.path / "suitability")
                 self.stats_summary()
                 self.add_to_doc(overwrite=True)
 
@@ -228,6 +228,7 @@ class LandUse:
                         ds = _1km_mmm_robustness(self.path / "nir", variable="nir", nir_freq=freq)
                     ds = _assign_attrs(ds)
                     self.write_output(ds, "net_irrigation_requirement", self.path / "nir", var_suffix=freq)
+            self.summary_figs("net-irrigation-requirement-annual", self.path / "nir")
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
