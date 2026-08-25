@@ -875,7 +875,7 @@ class LandUse:
 
     def _get_kc_parameters(self) -> None:
         """Get Kc parameters from nir module."""
-        crop_params = f"{self.name}_Kc_params"
+        crop_params = f"{self.name}_kc_params"
         if hasattr(nirmod, crop_params):
             self.Kc_params = copy.deepcopy(getattr(nirmod, crop_params))
         else:
