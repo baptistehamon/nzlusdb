@@ -18,6 +18,8 @@ nzlusdb.db.register(LandUse(name="maizelate", long_name="Late ripening maize", v
 nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
 nzlusdb.db.register(LandUse(name="pinotnoir", long_name="Pinot noir", version="1.0"))
 nzlusdb.db.register(LandUse(name="sauvignonblanc", long_name="Sauvignon blanc", version="1.0"))
+# Grapevines used only for NIR as same parameters as Pinot noir and Sauvignon blanc
+nzlusdb.db.register(LandUse(name="grapevines", version="1.0"))
 nzlusdb.db.register(LandUse(name="wheatearly", long_name="Early ripening wheat", version="1.0"))
 nzlusdb.db.register(LandUse(name="wheatlate", long_name="Late ripening wheat", version="1.0"))
 
