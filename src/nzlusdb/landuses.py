@@ -15,6 +15,8 @@ nzlusdb.db.register(LandUse(name="hops", version="1.0"))
 nzlusdb.db.register(LandUse(name="kiwifruit", version="1.0"))
 nzlusdb.db.register(LandUse(name="maizeearly", long_name="Early ripening maize", version="1.0"))
 nzlusdb.db.register(LandUse(name="maizelate", long_name="Late ripening maize", version="1.0"))
+# Maize used only for NIR as same parameters as Early ripening maize and Late ripening maize
+nzlusdb.db.register(LandUse(name="maize", version="1.0"))
 nzlusdb.db.register(LandUse(name="manuka", version="1.0"))
 nzlusdb.db.register(LandUse(name="pinotnoir", long_name="Pinot noir", version="1.0"))
 nzlusdb.db.register(LandUse(name="sauvignonblanc", long_name="Sauvignon blanc", version="1.0"))
