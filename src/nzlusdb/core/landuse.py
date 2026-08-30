@@ -62,7 +62,6 @@ class LandUse:
         self.long_name = long_name if long_name else name.capitalize()
         self.resolution = resolution
         self.version = version
-        self._get_criteria_info()
         self.path = nzlusdb.db.path / self.resolution / self.name
         self._db_attrs = nzlusdb.db.attrs
         if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
@@ -696,6 +695,8 @@ class LandUse:
             for c in sc.values():
                 out[c.name] = c.compute()
             return out
+
+        self._get_criteria_info()
 
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
