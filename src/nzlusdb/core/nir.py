@@ -100,11 +100,13 @@ class KcCurve:
         stage_lengths: dict[str, int],
         height: float | int,
         time: xr.DataArray,
+        freq: str | None = None,
     ):
         self.start_date = start_date
         self.stage_values = stage_values
         self.stage_lengths = stage_lengths
         self.height = height
+        self.freq = freq or "YS-JUL"
         self._populate_days(time)
 
     @property
@@ -151,6 +153,19 @@ class KcCurve:
             raise UserWarning("height value seems very high, please check the units")
         self._height = value
 
+    @property
+    def freq(self):
+        """The time frequency of the growing season corresponding to the start of the month of the `start_date`."""
+        return self._freq
+
+    @freq.setter
+    def freq(self, value):
+        if value not in [
+            f"YS-{m}" for m in ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+        ]:
+            raise ValueError("`freq` must be a annual frequency anchored start of a month (e.g., `YS-JAN`, `YS-JUL`).")
+        self._freq = value
+
     def curve(self, like) -> xr.DataArray:
         """Build the Kc curve as an `xr.DataArray` with the same coordinates as `like`."""
         kc = xr.full_like(like, fill_value=np.nan, dtype=float).rename("crop_coefficient")
@@ -160,7 +175,7 @@ class KcCurve:
             kc,
         )
 
-        for base_time, indexes in like.time.resample(time="YS-JUL").groups.items():
+        for base_time, indexes in like.time.resample(time=self.freq).groups.items():
             grp_time = like.time[indexes]
             grp_kcmid = self.stage_values["mid"]
             if isinstance(grp_kcmid, xr.DataArray):
@@ -211,8 +226,8 @@ class KcCurve:
         """Adjust the Kc value of a given stage based on climatic conditions."""
         if stage not in ["mid", "end"]:
             return self.stage_values[stage]
-        rhmin_stage = self._stage_mean(rhmin, stage, freq="YS-JUL")
-        windspd_stage = self._stage_mean(windspd, stage, freq="YS-JUL")
+        rhmin_stage = self._stage_mean(rhmin, stage, freq=self.freq)
+        windspd_stage = self._stage_mean(windspd, stage, freq=self.freq)
         return climate_kc_adjustement(self.stage_values[stage], windspd_stage, rhmin_stage, self.height)
 
     def _stage_mean(self, da: xr.DataArray, stage: str, freq: str) -> xr.DataArray:
