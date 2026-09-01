@@ -24,6 +24,8 @@ nzlusdb.db.register(LandUse(name="sauvignonblanc", long_name="Sauvignon blanc", 
 nzlusdb.db.register(LandUse(name="grapevines", version="1.0"))
 nzlusdb.db.register(LandUse(name="wheatearly", long_name="Early ripening wheat", version="1.0"))
 nzlusdb.db.register(LandUse(name="wheatlate", long_name="Late ripening wheat", version="1.0"))
+# Wheat used only for NIR as same parameters as Early ripening wheat and Late ripening wheat
+nzlusdb.db.register(LandUse(name="wheat", version="1.0"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run NZLUSDB workflow for a given land use")
