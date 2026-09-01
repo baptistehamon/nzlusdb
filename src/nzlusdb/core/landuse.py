@@ -8,6 +8,7 @@ from pathlib import Path
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
 from lsapy.aggregate import aggregate
@@ -27,6 +28,8 @@ from nzlusdb.core.plot import (
 )
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
+
+_MONTH_ABBREVIATIONS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 
 class LandUse:
@@ -342,12 +345,30 @@ class LandUse:
             Whether to recompute NIR even if output files already exist. Default is False.
         """
 
-        def _resample_season_year(da: xr.DataArray, historical: bool) -> tuple[xr.DataArray, xr.DataArray]:
+        def _get_freq_offset() -> int:
+            freq = self.Kc_params.get("freq")
+            if freq:
+                month_idx = _MONTH_ABBREVIATIONS.index(freq.split("-")[1]) + 1
+                return month_idx - 7  # base YS-JUL
+            else:  # default YS-JUL
+                return 0
+
+        def _resample_season_year(da: xr.DataArray, historical: bool, offset: int) -> tuple[xr.DataArray, xr.DataArray]:
             # Ensure full seasons for historical and projected scenarios
-            sel_ssn = {"time": slice(2, -1)} if historical else {"time": slice(None, -1)}
-            sel_yr = {"time": slice(1, None)} if not historical else {}
-            da_ssn = da.isel(**sel_ssn).resample(time="QS-DEC").sum(min_count=1)
-            da_yr = da.isel(**sel_yr).resample(time="YS-JUL").sum(min_count=1)
+            ssn_offset = -1  # base QS-JUN vs YS-JUL
+            if historical:
+                sel_ssn = {"time": slice(3 + ssn_offset, ssn_offset)}
+                sel_yr = {"time": slice(12 + offset, offset) if offset < 0 else slice(None, None)}
+            else:
+                sel_ssn = {
+                    "time": slice(ssn_offset - offset, ssn_offset) if offset < ssn_offset else slice(None, ssn_offset)
+                }
+                sel_yr = {"time": slice(-ssn_offset, None) if offset > ssn_offset else slice(None, offset)}
+            da_ssn = da.isel(**sel_ssn).resample(time="QS-JUN").sum(min_count=1)
+            freq = self.Kc_params.get("freq") or "YS-JUL"
+            da_yr = da.isel(**sel_yr).resample(time=freq).sum(min_count=1)
+            if offset < 0:  # put back to YS-JUL
+                da_yr = da_yr.assign_coords(time=(pd.to_datetime(da_yr.time) + pd.DateOffset(months=-offset)))
             return (da_ssn, da_yr)
 
         if isinstance(scenario, str):
@@ -367,7 +388,8 @@ class LandUse:
                 freq: path / fp.replace("monthly", {"ssn": "seasonal", "yr": "annual"}[freq]) for freq in ["ssn", "yr"]
             }
 
-            # Add last month of historical to get full season for projected scenarios
+            # Add missing month to get full season for projected scenarios
+            offset = _get_freq_offset()
             if scen != "historical":
                 hist_fp = (
                     path
@@ -376,11 +398,10 @@ class LandUse:
                 if not hist_fp.exists():
                     nir_hist = self._compute_monthly_nir("historical", model)
                     write_netcdf(nir_hist, hist_fp, progressbar=True, verbose=True)
-                else:
-                    nir_hist = xr.open_dataarray(hist_fp)
-                nir = xr.concat([nir_hist.isel(time=-1), nir], dim="time")
+                nir_hist = xr.open_dataarray(hist_fp)
+                nir = xr.concat([nir_hist.isel(time=offset), nir], dim="time")
 
-            nir_ssn, nir_yr = _resample_season_year(nir, historical=scen == "historical")
+            nir_ssn, nir_yr = _resample_season_year(nir, historical=scen == "historical", offset=offset)
             for freq, da in zip(["ssn", "yr"], [nir_ssn, nir_yr], strict=True):
                 if recompute or not fp[freq].exists():
                     write_netcdf(da, fp[freq], progressbar=True, verbose=True)
