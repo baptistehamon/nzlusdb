@@ -362,3 +362,76 @@ def cold_days_frequency(
     cd = cold_days(tas, thresh=thresh, freq=freq)
     period_length = doy_to_days_since(bounds[1]).fillna(365) - doy_to_days_since(bounds[0]).fillna(0) + 1
     return (cd / period_length * 100).clip(min=0, max=100).assign_attrs(units="%")
+
+
+@declare_units(pr="[precipitation]")
+def daily_effective_precipitation(pr: xr.DataArray) -> xr.DataArray:
+    """
+    Daily effective precipitation.
+
+    A simple estimate of effective precipitation based on USDA soil conservation method as cited in Smith (1992).
+    # Smith, M. (1992). CROPWAT: A computer program for irrigation planning and management. FAO.
+
+    Parameters
+    ----------
+    pr : xr.DataArray
+        Daily precipitation.
+
+    Returns
+    -------
+    xr.DataArray
+        Daily effective precipitation.
+
+    References
+    ----------
+    Oumarou Abdoulaye, A., Lu, H., Zhu, Y., Alhaj Hamoud, Y., & Sheteiwy, M. (2019).
+    The Global Trend of the Net Irrigation Water Requirement of Maize from 1960 to 2050.
+    Climate, 7(10), Article 10. https://doi.org/10.3390/cli7100124
+    """
+    # Original formula for monthly effective precipitation:
+    # peff = ptot * (125 - 0.2 * ptot) / 125 for ptot < 250mm and
+    # peff = 125 + 0.1 * ptot for ptot > 250mm
+
+    # Modified formula for daily effective precipitation cited in Oumarou et al. (2019):
+    # peff = pr * (4.17 - 0.2 * pr) / 4.17 for pr < 8.2mm and
+    # peff = 4.17 + 0.1 * pr for pr >= 8.3mm
+
+    pr = convert_units_to(pr, "mm/day", context="hydro")
+    return xr.where(pr < 8.2, pr * (4.17 - 0.2 * pr) / 4.17, 4.17 + 0.1 * pr).assign_attrs(units="mm/day")  # noqa: PLR2004
+
+
+@declare_units(
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+)
+def minimum_relative_humidity(
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
+) -> xr.DataArray:
+    """
+    Minimum relative humidity.
+
+    Approximation of minimum relative humidity when dewpoint temperature is not available, computed as a
+    function of daily minimum and maximum temperatures following Eq. 64 in Allen et al. (1998).
+
+    Parameters
+    ----------
+    tasmin : xr.DataArray
+        Daily minimum temperature.
+    tasmax : xr.DataArray
+        Daily maximum temperature.
+
+    Returns
+    -------
+    xr.DataArray, [%]
+        Minimum relative humidity.
+
+    References
+    ----------
+    Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop Evapotranspiration: Guidelines for
+    computing crop water requirements (No. 56; FAO Irrigation and Drainage Paper).
+    """
+    es_min = xci.saturation_vapor_pressure(tasmin)
+    es_max = xci.saturation_vapor_pressure(tasmax)
+    rh_min = 100 * es_min / es_max
+    return rh_min.clip(min=0, max=100).assign_attrs(units="%")

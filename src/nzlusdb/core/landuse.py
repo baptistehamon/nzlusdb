@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import copy
+from pathlib import Path
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 from lsapy import LandSuitabilityAnalysis
 from lsapy.aggregate import aggregate
@@ -12,10 +16,20 @@ from lsapy.stats import spatial_stats_summary, stats_summary
 from xclim import ensembles as xens
 
 import nzlusdb
+from nzlusdb import nir as nirmod
 from nzlusdb.core.climdataset import climateDS
-from nzlusdb.core.plot import change_boundnorm, suitability_boundnorm, summary_figure
+from nzlusdb.core.nir import KcCurve, load_nir_inputs
+from nzlusdb.core.plot import (
+    bndnorm_nir,
+    bndnorm_nir_change,
+    bndnorm_suitability,
+    bndnorm_suitability_change,
+    summary_figure,
+)
 from nzlusdb.suitability import criteria
 from nzlusdb.utils import write_netcdf
+
+_MONTH_ABBREVIATIONS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 
 class LandUse:
@@ -51,8 +65,7 @@ class LandUse:
         self.long_name = long_name if long_name else name.capitalize()
         self.resolution = resolution
         self.version = version
-        self._get_criteria_info()
-        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / self.name
         self._db_attrs = nzlusdb.db.attrs
         if self._db_attrs.get("version", None) != f"v{nzlusdb.release}":
             self._db_attrs["version"] = f"v{nzlusdb.release}"
@@ -78,9 +91,16 @@ class LandUse:
         if value not in ["1km", "5km"]:
             raise ValueError("Resolution must be '1km' or '5km'.")
         self._resolution = value
-        self.path = nzlusdb.db.path / self.resolution / "suitability" / self.name
+        self.path = nzlusdb.db.path / self.resolution / self.name
 
-    def run_workflow(self, resolution: list[str] | str | None = None, rerun_lsa=False):
+    def run_workflow(  # noqa: C901, PLR0915
+        self,
+        resolution: list[str] | str | None = None,
+        lsa: bool = True,
+        rerun_lsa=False,
+        nir: bool = True,
+        rerun_nir=False,
+    ):
         """
         Run the full land suitability analysis (LSA) workflow.
 
@@ -93,49 +113,85 @@ class LandUse:
         resolution : list of str, str, or None
             Resolution(s) to use for the analysis ('1km' or '5km'). If None, uses the instance's resolution attribute.
             Default is None.
+        lsa : bool, optional
+            Whether to run the LSA workflow. Default is True.
+        rerun_lsa : bool, optional
+            Whether to rerun the LSA even if output files already exist. Default is False.
+        nir : bool, optional
+            Whether to run the NIR workflow. Default is True.
+        rerun_nir : bool, optional
+            Whether to rerun the NIR even if output files already exist. Default is False.
         """
 
-        def _mmm_robustness(kwargs=None):
-            ds = self.open_suitability(**kwargs if kwargs else {})
-            return self.period_mmm_change_robustness(ds, delta_method="absolute")
+        def _check_resolution(resolution):
+            if resolution is None:
+                if self.resolution is None:
+                    raise ValueError("Resolution must be set before running workflow.")
+                resolution = [self.resolution]
+            elif isinstance(resolution, str):
+                resolution = [resolution]
+            return resolution
+
+        def _mmm_robustness(**kwargs):
+            da = self.open_data(**kwargs)
+            if not kwargs.get("variable") == "nir" or kwargs.get("nir_freq") not in ["monthly", "seasonal"]:
+                return self.period_mmm_change_robustness(da)
+            else:
+                # For NIR, we need to compute the multi-model mean change and robustness
+                # for each month or season separately
+                if kwargs.get("nir_freq") == "monthly":
+                    freq_name = "month"
+                elif kwargs.get("nir_freq") == "seasonal":
+                    freq_name = "season"
+                da = da.assign_coords(
+                    {freq_name: da.time.dt.strftime("%b") if freq_name == "month" else da.time.dt.season}
+                )
+                freq_values = np.unique(da[freq_name].values)
+                out = []
+                for val in freq_values:
+                    ds = self.period_mmm_change_robustness(da.where(da[freq_name] == val, drop=True))
+                    out.append(ds.expand_dims({freq_name: [val]}))
+                out = xr.concat(out, dim=freq_name)
+                return xr.concat(
+                    [
+                        out.isel(time=0)
+                        .expand_dims(["scenario", "period"])
+                        .stack(time=["scenario", "period", freq_name]),
+                        out.drop_isel(time=0)
+                        .set_index(time=["scenario", "period"])
+                        .unstack("time")
+                        .stack(time=["scenario", "period", freq_name]),
+                    ],
+                    dim="time",
+                ).reset_index("time")
 
         def _set_index(ds):
             return ds.set_index(time=["scenario", "period"])
 
-        if resolution is None:
-            if self.resolution is None:
-                raise ValueError("Resolution must be set before running workflow.")
-            resolution = [self.resolution]
-        elif isinstance(resolution, str):
-            resolution = [resolution]
+        def _1km_mmm_robustness(path, **kwargs):
+            fp = []
+            for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
+                out = _mmm_robustness(scenario=s, **kwargs)
+                freq_name = kwargs.get("nir_freq") or ""
+                if freq_name:
+                    freq_name = "_" + freq_name
+                if s == "ssp126":
+                    histfname = f"{self.name}_tmp_mmm-change-robustness{freq_name}_historical.nc"
+                    write_netcdf(out.isel(time=0), path / histfname, progressbar=True, verbose=True)
+                out = out.drop_isel(time=0)
+                fname = f"{self.name}_tmp_mmm-change-robustness{freq_name}_{s}.nc"
+                fp.append(path / fname)
+                write_netcdf(out, path / fname, progressbar=True, verbose=True)
+            return xr.concat(
+                [
+                    xr.open_dataset(path / histfname).assign_coords({"scenario": "historical", "period": "1980-2009"}),
+                    xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
+                ],
+                dim="time",
+            )
 
-        for res in resolution:
-            self.resolution = res
-            self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
-            if self.resolution == "5km":
-                ds = _mmm_robustness()
-            if self.resolution == "1km":
-                fp = []
-                for s in ["ssp126", "ssp245", "ssp370", "ssp585"]:
-                    out = _mmm_robustness(kwargs={"scenario": s})
-                    if s == "ssp126":
-                        histfname = f"{self.name}_tmp_mmm-change-robustness_historical.nc"
-                        write_netcdf(out.isel(time=0), self.path / histfname, progressbar=True, verbose=True)
-                    out = out.drop_isel(time=0)
-                    fname = f"{self.name}_tmp_mmm-change-robustness_{s}.nc"
-                    fp.append(self.path / fname)
-                    write_netcdf(out, self.path / fname, progressbar=True, verbose=True)
-                ds = xr.concat(
-                    [
-                        xr.open_dataset(self.path / histfname).assign_coords(
-                            {"scenario": "historical", "period": "1980-2009"}
-                        ),
-                        xr.open_mfdataset(fp, combine="by_coords", preprocess=_set_index).reset_index("time"),
-                    ],
-                    dim="time",
-                )
-
-            ds = ds.assign_attrs(
+        def _assign_attrs(ds):
+            return ds.assign_attrs(
                 {
                     **self._db_attrs,
                     **{
@@ -144,10 +200,38 @@ class LandUse:
                     },
                 }
             )
-            self.write_output(ds, variable="suitability")
-            self.summary_figs()
-            self.stats_summary()
-            self.add_to_doc(overwrite=True)
+
+        resolution = _check_resolution(resolution)
+
+        if lsa:
+            # Run LSA for each resolution
+            for res in resolution:
+                self.resolution = res
+                self.run_lsa(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], rerun=rerun_lsa)
+                if self.resolution == "5km":
+                    ds = _mmm_robustness(variable="suitability")
+                if self.resolution == "1km":
+                    ds = _1km_mmm_robustness(self.path / "suitability", variable="suitability")
+
+                ds = _assign_attrs(ds)
+                self.write_output(ds, variable="suitability", path=self.path / "suitability")
+                self.summary_figs("suitability", self.path / "suitability")
+                self.stats_summary(" suitability", self.path / "suitability")
+                self.add_to_doc(overwrite=True)
+
+        if nir:
+            for res in resolution:
+                self.resolution = res
+                self.compute_nir(scenario=["historical", "ssp126", "ssp245", "ssp370", "ssp585"], recompute=rerun_nir)
+                for freq in ["monthly", "seasonal", "annual"]:
+                    if self.resolution == "5km":
+                        ds = _mmm_robustness(variable="nir", nir_freq=freq)
+                    else:
+                        ds = _1km_mmm_robustness(self.path / "nir", variable="nir", nir_freq=freq)
+                    ds = _assign_attrs(ds)
+                    self.write_output(ds, "net_irrigation_requirement", self.path / "nir", var_suffix=freq)
+                    self.stats_summary(f"net-irrigation-requirement-{freq}", self.path / "nir")
+            self.summary_figs("net-irrigation-requirement-annual", self.path / "nir")
 
     def run_lsa(self, scenario: str | list[str], model=None, rerun=False, **kwargs) -> None:
         """
@@ -172,50 +256,66 @@ class LandUse:
         if isinstance(scenario, str):
             scenario = [scenario]
 
+        path = self.path / "suitability"
+
         for scen in scenario:
-            self.path.mkdir(parents=True, exist_ok=True)
+            path.mkdir(parents=True, exist_ok=True)
             if self.resolution == "5km":
-                fp = self.path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
+                fp = path / f"{self.name}_suitability_{scen}_{self.resolution}_v{self.version}.nc"
                 if not rerun and fp.exists():
                     continue
-                out = _run(scen, **kwargs)
+                out = _run(scen, model, **kwargs)
                 write_netcdf(out, fp, progressbar=True, verbose=True)
             else:
                 for m in climateDS[f"nzlusdb_{self.resolution}"].model:
-                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    fp = path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
                     if not rerun and fp.exists():
                         continue
                     out = _run(scen, model=m, **kwargs)
                     soil_vars = [v for v in out.data_vars if "time" not in out[v].dims]
                     if m == climateDS[f"nzlusdb_{self.resolution}"].model[0] and scen == "historical":
-                        fp_hist = (
-                            self.path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
-                        )
+                        fp_hist = path / f"{self.name}_soilTerrain-suitability_{self.resolution}_v{self.version}.nc"
                         write_netcdf(out[soil_vars], fp_hist, progressbar=True, verbose=True)
-                    fp = self.path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
+                    fp = path / f"{self.name}_suitability_{scen}_{m}_{self.resolution}_v{self.version}.nc"
                     write_netcdf(
                         out[[v for v in out.data_vars if v not in soil_vars]], fp, progressbar=True, verbose=True
                     )
 
-    def open_suitability(self, scenario: str | None = None) -> xr.Dataset:
+    def open_data(self, variable: str, scenario: str | None = None, nir_freq: str | None = None) -> xr.Dataset:
         """
-        Open suitability dataset for given resolution.
+        Open suitability or NIR dataset for given resolution.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable to open ('suitability' or 'nir').
+        scenario : str, optional
+            Projected scenario to open ('ssp126', 'ssp245', 'ssp370', 'ssp585').
+            Required if variable is 'suitability' and resolution is '1km'.
+        nir_freq : str, optional
+            Frequency of NIR data to open ('monthly', 'seasonal', 'annual'). Required if variable is 'nir'.
 
         Returns
         -------
         xr.Dataset
-            Suitability dataset.
+            Suitability or NIR dataset.
         """
-        files = list(self.path.glob("*.nc"))
+        files = list((self.path / variable).glob("*.nc"))
+        if variable == "nir":
+            variable = "net_irrigation_requirement"
+            if nir_freq is None or nir_freq not in ["monthly", "seasonal", "annual"]:
+                raise ValueError("nir_freq must be one of 'monthly', 'seasonal', or 'annual' when variable is 'nir'.")
+            else:
+                files = [f for f in files if nir_freq in f.name]
 
         hist_scenario = climateDS[f"nzlusdb_{self.resolution}"].hist_scenario
         if self.resolution == "5km":
             proj_scenarios = climateDS[f"nzlusdb_{self.resolution}"].proj_scenario
-            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])["suitability"]
+            hist = xr.open_dataset([f for f in files if hist_scenario in f.name][0])[variable]
             proj = []
             for scen in proj_scenarios:
                 file = [f for f in files if scen in f.name][0]
-                ds = xr.open_dataset(file)["suitability"].assign_coords(scenario=scen).expand_dims("scenario")
+                ds = xr.open_dataset(file)[variable].assign_coords(scenario=scen).expand_dims("scenario")
                 proj.append(ds)
             return xr.concat([hist, xr.concat(proj, dim="scenario")], dim="time")
 
@@ -224,19 +324,96 @@ class LandUse:
             def _preprocess(ds: xr.Dataset) -> xr.Dataset:
                 return ds.expand_dims("realization")
 
-            fp = [f for f in files if any(f"suitability_{s}" in f.name for s in [hist_scenario, scenario])]
+            fp = [f for f in files if any(f"{variable}_{s}" in f.name for s in [hist_scenario, scenario])]
             out = xr.open_mfdataset(fp, chunks={"lat": 350, "lon": 675}, combine="by_coords", preprocess=_preprocess)[
                 "suitability"
             ]
             out = out.assign_coords(scenario=scenario).expand_dims("scenario")
             return out.chunk(time=-1, realization=-1)
 
-    def open_mmm_data(self, variable: str = "suitability") -> xr.Dataset:
+    def compute_nir(self, scenario: str | list[str] = "historical", model=None, recompute=False) -> None:
+        """
+        Compute net irrigation requirement (NIR) for given scenario(s) and model.
+
+        Parameters
+        ----------
+        scenario : str or list of str, optional
+            Scenario(s) to compute NIR for (e.g., 'historical', 'ssp126', 'ssp585'). Default is 'historical'.
+        model : str, optional
+            Climate model to use for the computation. If None, uses all available models. Default is None.
+        recompute : bool, optional
+            Whether to recompute NIR even if output files already exist. Default is False.
+        """
+
+        def _get_freq_offset() -> int:
+            freq = self.Kc_params.get("freq")
+            if freq:
+                month_idx = _MONTH_ABBREVIATIONS.index(freq.split("-")[1]) + 1
+                return month_idx - 7  # base YS-JUL
+            else:  # default YS-JUL
+                return 0
+
+        def _resample_season_year(da: xr.DataArray, historical: bool, offset: int) -> tuple[xr.DataArray, xr.DataArray]:
+            # Ensure full seasons for historical and projected scenarios
+            ssn_offset = -1  # base QS-JUN vs YS-JUL
+            if historical:
+                sel_ssn = {"time": slice(3 + ssn_offset, ssn_offset)}
+                sel_yr = {"time": slice(12 + offset, offset) if offset < 0 else slice(None, None)}
+            else:
+                sel_ssn = {
+                    "time": slice(ssn_offset - offset, ssn_offset) if offset < ssn_offset else slice(None, ssn_offset)
+                }
+                sel_yr = {"time": slice(-ssn_offset, None) if offset > ssn_offset else slice(None, offset)}
+            da_ssn = da.isel(**sel_ssn).resample(time="QS-JUN").sum(min_count=1)
+            freq = self.Kc_params.get("freq") or "YS-JUL"
+            da_yr = da.isel(**sel_yr).resample(time=freq).sum(min_count=1)
+            if offset < 0:  # put back to YS-JUL
+                da_yr = da_yr.assign_coords(time=(pd.to_datetime(da_yr.time) + pd.DateOffset(months=-offset)))
+            return (da_ssn, da_yr)
+
+        if isinstance(scenario, str):
+            scenario = [scenario]
+
+        path = self.path / "nir"
+
+        for scen in scenario:
+            path.mkdir(parents=True, exist_ok=True)
+            fp = f"{self.name}_net-irrigation-requirement_monthly_{scen}_{self.resolution}_v{self.version}.nc"
+            if recompute or not (path / fp).exists():
+                nir = self._compute_monthly_nir(scen, model)
+                write_netcdf(nir, path / fp, progressbar=True, verbose=True)
+            nir = xr.open_dataarray(path / fp)
+
+            fp = {
+                freq: path / fp.replace("monthly", {"ssn": "seasonal", "yr": "annual"}[freq]) for freq in ["ssn", "yr"]
+            }
+
+            # Add missing month to get full season for projected scenarios
+            offset = _get_freq_offset()
+            if scen != "historical":
+                hist_fp = (
+                    path
+                    / f"{self.name}_net-irrigation-requirement_monthly_historical_{self.resolution}_v{self.version}.nc"
+                )
+                if not hist_fp.exists():
+                    nir_hist = self._compute_monthly_nir("historical", model)
+                    write_netcdf(nir_hist, hist_fp, progressbar=True, verbose=True)
+                nir_hist = xr.open_dataarray(hist_fp)
+                nir = xr.concat([nir_hist.isel(time=offset), nir], dim="time")
+
+            nir_ssn, nir_yr = _resample_season_year(nir, historical=scen == "historical", offset=offset)
+            for freq, da in zip(["ssn", "yr"], [nir_ssn, nir_yr], strict=True):
+                if recompute or not fp[freq].exists():
+                    write_netcdf(da, fp[freq], progressbar=True, verbose=True)
+
+    def open_mmm_data(self, path: Path, variable: str = "suitability") -> xr.Dataset:
         """
         Open multi-model mean change and robustness dataset for given variable and resolution.
 
         Parameters
         ----------
+        path : Path
+            Directory path where the multi-model mean change and robustness dataset is stored.
         variable : str
             Name of the variable data corresponds to (default is 'suitability').
 
@@ -246,9 +423,9 @@ class LandUse:
             Multi-model mean change and robustness dataset.
         """
         file = f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
-        return xr.open_dataset(self.path / file)
+        return xr.open_dataset(path / file)
 
-    def write_output(self, data: xr.Dataset, variable: str) -> None:
+    def write_output(self, data: xr.Dataset, variable: str, path: Path, **kwargs) -> None:
         """
         Write data to NetCDF and GeoTIFF files.
 
@@ -261,19 +438,26 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
+        path : Path
+            Directory path to save the output files.
+        **kwargs : dict
+            Additional keyword arguments to pass to `_write_output_as_raster`.
 
         Returns
         -------
         None
             Writes NetCDF and GeoTIFF files to the appropriate directories.
         """
-        fp = self.path / f"{self.name}_{variable}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
+        varname = variable.replace("_", "-")
+        if kwargs.get("var_suffix"):
+            varname += f"-{kwargs['var_suffix']}"
+        fp = path / f"{self.name}_{varname}-MMM-change-robustness_{self.resolution}_v{self.version}.nc"
         data.to_netcdf(fp)
 
-        data = data.set_index(time=["scenario", "period"])
-        self._write_output_as_raster(data, variable)
+        data = data.set_index(time=list(data.time.coords))
+        self._write_output_as_raster(data, variable, path, **kwargs)
 
-    def summary_figs(self) -> None:
+    def summary_figs(self, variable: str, path: Path) -> None:
         """
         Generate and save summary figures.
 
@@ -281,92 +465,129 @@ class LandUse:
         historical suitability and projected changes with robustness. In each figure, the historical
         period is 1980-2009 and the projected periods are 2010-2039, 2040-2069 and 2070-2099 for the
         SSP245 and SSP585 scenarios. The figures are saved in the `docs/_static/summary_figs` directory.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable data corresponds to.
+        path : Path
+            Directory path where data is stored.
         """
-        data = self.open_mmm_data()
+        data = self.open_mmm_data(path, variable=variable)
         data = data.set_index(time=["scenario", "period"])
 
         fp = nzlusdb.db.pathdoc / "_static/summary_figs"
         fp.mkdir(parents=True, exist_ok=True)
 
-        summary_figure(
-            data,
-            f"Historical and Projected Suitability for {self.long_name}",
-            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
-            proj_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
-            scenario_labels=("SSP2-4.5", "SSP5-8.5"),
-            timeline_label="Suitability",
-        )
-        fname = f"{self.name}_suitability_SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        common_kwargs = {"scenario_labels": ("SSP2-4.5", "SSP5-8.5")}
+        if variable == "suitability":
+            base_kwargs = {
+                **common_kwargs,
+                "suptitle": f"Historical and Projected Suitability for {self.long_name}",
+                "hist_kw": {"norm": bndnorm_suitability, "cmap": "cividis"},
+                "proj_kw": {"norm": bndnorm_suitability, "cmap": "cividis"},
+                "timeline_label": "Suitability",
+            }
+            change_kwargs = {
+                **base_kwargs,
+                "suptitle": f"Historical Suitability and Projected Changes for {self.long_name}",
+                "proj_var": "change",
+                "proj_kw": {"norm": bndnorm_suitability_change, "cmap": "PiYG"},
+                "legend_labels": {"suitability": "Suitability", "change": "Change in Suitability"},
+                "robustness": True,
+                "timeline_label": "Changes",
+            }
+        elif variable == "net-irrigation-requirement-annual":
+            base_kwargs = {
+                **common_kwargs,
+                "suptitle": f"Historical and Projected Annual Net Irrigation Requirement for {self.long_name}",
+                "hist_var": "net_irrigation_requirement",
+                "proj_var": "net_irrigation_requirement",
+                "hist_kw": {"norm": bndnorm_nir, "cmap": "Blues"},
+                "proj_kw": {"norm": bndnorm_nir, "cmap": "Blues"},
+                "legend_labels": {"net_irrigation_requirement": "Net Irrigation Requirement (mm)"},
+                "timeline_label": "Net Irrigation Requirement",
+            }
+            change_kwargs = {
+                **base_kwargs,
+                "suptitle": f"Historical Annual Net Irrigation Requirement and Projected Changes for {self.long_name}",
+                "proj_var": "change",
+                "proj_kw": {"norm": bndnorm_nir_change, "cmap": "BrBG"},
+                "legend_labels": {
+                    "net_irrigation_requirement": "Net Irrigation Requirement (mm)",
+                    "change": "Change in Net Irrigation Requirement (mm)",
+                },
+                "robustness": True,
+                "timeline_label": "Changes",
+            }
+        else:
+            raise ValueError(f"Variable '{variable}' is not supported for summary figures.")
+
+        summary_figure(data, **base_kwargs)
+        fname = f"{self.name}_{variable}_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
-        summary_figure(
-            data,
-            f"Historical Suitability and Projected Changes for {self.long_name}",
-            proj_var="change",
-            hist_kw={"norm": suitability_boundnorm, "cmap": "cividis"},
-            proj_kw={"norm": change_boundnorm, "cmap": "PiYG"},
-            scenario_labels=("SSP2-4.5", "SSP5-8.5"),
-            legend_labels={"suitability": "Suitability", "change": "Change in Suitability"},
-            robustness=True,
-            timeline_label="Changes",
-        )
-        fname = f"{self.name}_suitability_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
+        summary_figure(data, **change_kwargs)
+        fname = f"{self.name}_{variable}_change_SSP245-SSP585_{self.resolution}_v{self.version}.png"
         plt.savefig(fp / fname, dpi=300)
         plt.close()
 
-    def stats_summary(self) -> None:
-        """Generate and save national and regional suitability statistics summary."""
+    def stats_summary(self, variable: str, path: Path) -> None:
+        """
+        Generate and save national and regional suitability statistics summary.
+
+        Parameters
+        ----------
+        variable : str
+            Name of the variable data corresponds to.
+        path : Path
+            Directory path where data is stored.
+        """
 
         def _add_coords(df, mapping):
-            df.insert(1, "period", df["time"].map(mapping["period"]))
-            df.insert(2, "scenario", df["time"].map(mapping["scenario"]))
+            for i, c in enumerate(mapping):
+                df.insert(i + 1, c, df["time"].map(mapping[c]))
             return df.drop(columns=["time"])
 
         agmask = self._agriculture_mask()
         regions = gpd.read_file(r"R:\DATA\GIS-NZ\statsnz-regional-council-2022-clipped-generalised").to_crs(epsg=4326)
 
-        data = self.open_mmm_data()
+        data = self.open_mmm_data(path, variable=variable)
         data = data.where(agmask == 1)
 
-        mapping = {
-            "scenario": {
-                time: scenario for time, scenario in zip(data["time"].values, data["scenario"].values, strict=True)
-            },
-            "period": {time: period for time, period in zip(data["time"].values, data["period"].values, strict=True)},
+        mapping = {c: dict(zip(data["time"].values, data[c].values, strict=True)) for c in data.time.coords}
+
+        if variable == "suitability":
+            cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
+            kwargs = {
+                "on_vars": ["suitability"],
+                "on_dims": ["time"],
+                "dropna": True,
+                "bins": np.linspace(0, 1, 11),
+                "cell_area": cell_area,
+                "all_bins": True,
+            }
+        elif "net-irrigation-requirement" in variable:
+            kwargs = {"on_vars": ["net_irrigation_requirement"], "on_dims": ["time"], "dropna": True}
+        reg_kwargs = {
+            "areas": regions,
+            "name": "region",
+            "mask_kwargs": {"names": "REGC2022_1"},
         }
 
-        cell_area = (int(self.resolution.replace("km", "")) ** 2, "km2")
-
-        args = {
-            "on_vars": ["suitability"],
-            "on_dims": ["time"],
-            "dropna": True,
-            "bins": np.linspace(0, 1, 11),
-            "cell_area": cell_area,
-            "all_bins": True,
-        }
-
-        nz_stats = stats_summary(
-            data,
-            **args,
-        )
+        nz_stats = stats_summary(data, **kwargs)
         nz_stats = _add_coords(nz_stats, mapping)
 
-        reg_stats = spatial_stats_summary(
-            data,
-            areas=regions,
-            name="region",
-            mask_kwargs={"names": "REGC2022_1"},
-            **args,
-        )
+        reg_stats = spatial_stats_summary(data, **kwargs, **reg_kwargs)
         reg_stats = _add_coords(reg_stats, mapping)
+
         nz_stats.to_csv(
-            self.path / f"{self.name}_national_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_national_{variable}_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
         reg_stats.to_csv(
-            self.path / f"{self.name}_regional_suitability_stats_summary_{self.resolution}_v{self.version}.csv",
+            path / f"{self.name}_regional_{variable}_stats_summary_{self.resolution}_v{self.version}.csv",
             index=False,
         )
 
@@ -496,6 +717,8 @@ class LandUse:
                 out[c.name] = c.compute()
             return out
 
+        self._get_criteria_info()
+
         lsa = LandSuitabilityAnalysis(
             land_use=self.name,
             short_name=f"{self.name}_suitability",
@@ -512,7 +735,7 @@ class LandUse:
             weights=[c.weight for c in lsa.criteria.values() if c.category == "soilTerrain"],
         )
 
-        # # climate criteria
+        # climate criteria
         sc_clim = _compute_criteria({k: v for k, v in lsa.criteria.items() if v.category == "climate"})
         clim = aggregate(
             sc_clim, method="wgmean", weights=[c.weight for c in lsa.criteria.values() if c.category == "climate"]
@@ -536,7 +759,43 @@ class LandUse:
         lsa.data.attrs = {"land_use": lsa.land_use, "criteria": lsa._criteria_list, **lsa.attrs}
         return lsa.data
 
-    def _write_output_as_raster(self, data: xr.Dataset, variable: str) -> None:
+    def _compute_monthly_nir(self, scenario: str = "historical", model=None) -> xr.DataArray:
+        """Internal method to compute monthly NIR for a single scenario and model."""
+        self._get_kc_parameters()
+        etp, peff, rhmin, windspd = self._load_nir_inputs(scenario=scenario)
+        if model is not None:
+            etp = etp.sel(realization=model)
+            peff = peff.sel(realization=model)
+            rhmin = rhmin.sel(realization=model)
+            windspd = windspd.sel(realization=model)
+
+        kc = KcCurve(**self.Kc_params, time=peff.time)
+        # return kc.stage_values["end"]
+        kc.adjust(windspd=windspd, rhmin=rhmin)
+        kc = kc.curve(like=peff)
+
+        cwr = etp * kc
+        nir = (cwr - peff).clip(min=0).rename("net_irrigation_requirement")
+
+        nir = nir.resample(time="MS").sum(min_count=1)
+        nir.attrs = {
+            "long_name": f"{self.long_name} Net Irrigation Requirement",
+            "short_name": f"{self.name}_net_irrigation_requirement",
+            "units": "mm",
+            "description": "Net irrigation requirement computed as the difference between effective precipitation "
+            "(Peff) and crop water requirement (CWR).",
+            **self._db_attrs,
+            "source": f"{climateDS[f'nzlusdb_{self.resolution}'].name}",
+        }
+        return nir
+
+    def _write_output_as_raster(
+        self,
+        data: xr.Dataset,
+        variable: str,
+        path: Path,
+        var_suffix: str | None = None,
+    ) -> None:
         """
         Write output data as GeoTIFF files.
 
@@ -549,24 +808,29 @@ class LandUse:
             Dataset output from `period_mmm_change_robustness`.
         variable : str
             Name of the variable data corresponds to.
+        path : Path
+            Directory path to save the GeoTIFF files.
+        var_suffix : str, optional
+            Suffix to append to the variable name in the output file names. Default is None.
 
         Returns
         -------
         None
             Writes GeoTIFF files to the appropriate directory.
         """
+        var_name = variable.replace("_", "-") + (f"_{var_suffix}" if var_suffix else "")
         vars_dict = {
-            variable: variable,
-            "change": f"{variable}-change",
-            "robustness_categories": f"{variable}-robustness-categories",
-            "robustness_coefficient": f"{variable}-robustness-coefficient",
+            variable: f"{var_name}",
+            "change": f"{var_name}-change",
+            "robustness_categories": f"{var_name}-robustness-categories",
+            "robustness_coefficient": f"{var_name}-robustness-coefficient",
         }
-        path = self.path / "tiff"
+        path /= "tiff"
         path.mkdir(parents=True, exist_ok=True)
 
         for time in data.time.values:
             for var in [variable, "change", "robustness_categories", "robustness_coefficient"]:
-                if time == ("historical", "1980-2009") and var in [
+                if all([i in time for i in ["historical", "1980-2009"]]) and var in [
                     "change",
                     "robustness_categories",
                     "robustness_coefficient",
@@ -574,7 +838,7 @@ class LandUse:
                     continue
                 da = data[var].sel(time=time)
                 da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat").rio.write_crs("EPSG:4326")
-                fp = path / f"{self.name}_{vars_dict[var]}_{time[0]}_{time[1]}_{self.resolution}_v{self.version}.tif"
+                fp = path / f"{self.name}_{vars_dict[var]}_{'_'.join(time)}_{self.resolution}_v{self.version}.tif"
                 da.rio.to_raster(fp)
 
     def _get_criteria_info(self) -> None:
@@ -630,6 +894,25 @@ class LandUse:
                 else:
                     raise ValueError(f"Preprocess criteria '{key}' not found in criteria.")
         return sc
+
+    def _get_kc_parameters(self) -> None:
+        """Get Kc parameters from nir module."""
+        crop_params = f"{self.name}_kc_params"
+        if hasattr(nirmod, crop_params):
+            self.Kc_params = copy.deepcopy(getattr(nirmod, crop_params))
+        else:
+            raise ValueError(f"Kc parameters '{crop_params}' not found in nir module.")
+
+    def _load_nir_inputs(
+        self, scenario: str = "historical"
+    ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray]:
+        """Load NIR input variables based on scenario and resolution."""
+        clim_res = {"5km": "25km", "1km": "5km"}.get(self.resolution, None)
+        etp = load_nir_inputs("etp", scenario=scenario, resolution=clim_res)
+        peff = load_nir_inputs("peff", scenario=scenario, resolution=clim_res)
+        rhmin = load_nir_inputs("hursmin", scenario=scenario, resolution=clim_res)
+        windspd = load_nir_inputs("windspd", scenario=scenario, resolution=clim_res)
+        return etp, peff, rhmin, windspd
 
     def _agriculture_mask(self) -> xr.DataArray:
         """Create a mask for agricultural land use areas."""
