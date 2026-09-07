@@ -56,6 +56,12 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   - The `validation/prevalidation.py` file used to preprocess suitability data from Data Supermarket and the NZLUSDB has been added to support the validation of the NZLUSDB.
   - The `validation/data` folder used to store the preprocessed suitability.
   - The `validation/validation.ipynb` notebook used to compare Data Supermarket and NZLUSDB suitability data has been added for NZLUSDB validation.
+- The repository has been updated to support the computation of Net Irrigation Requirement ([GH#1](https://github.com/baptistehamon/nzlusdb/issues/1), [PR#62](https://github.com/baptistehamon/nzlusdb/pull/62)):
+  - The `daily_effective_precipitation` and `minimum_relative_humidity` indices and indicators have been added to support the computation of Net Irrigation Requirement.
+  - The `nir/variables.py` file has been added to compute input variables for Net Irrigation Requirement computation.
+  -  `core/nir.py` file has been added, defining the `KcCurve` class, to compute the crop coefficient curve.
+  -  The `LandUse` class has been updated to include NIR computation in the workflow.
+  -  The files supporting crops NIR computation have been added to the repository.
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
