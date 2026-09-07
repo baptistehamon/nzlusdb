@@ -52,6 +52,10 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   - The `--rerun-lsa` and `--lsa-method` have been, respectively, added and removed from the CLI considering the updated workflow.
 - The grapevines climate criteria weights have been updated ([PR#54](https://github.com/baptistehamon/nzlusdb/pull/54)).
 - The documentation for the 1km resolution suitability has been added ([PR#59](https://github.com/baptistehamon/nzlusdb/pull/59)).
+- The files used for validating the NZLUSDB have been added to the repository ([PR#61](https://github.com/baptistehamon/nzlusdb/pull/61)).
+  - The `validation/prevalidation.py` file used to preprocess suitability data from Data Supermarket and the NZLUSDB has been added to support the validation of the NZLUSDB.
+  - The `validation/data` folder used to store the preprocessed suitability.
+  - The `validation/validation.ipynb` notebook used to compare Data Supermarket and NZLUSDB suitability data has been added for NZLUSDB validation.
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
