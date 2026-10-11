@@ -565,6 +565,7 @@ class LandUse:
                 "on_dims": ["time"],
                 "dropna": True,
                 "bins": np.linspace(0, 1, 11),
+                "include_lowest": True,
                 "cell_area": cell_area,
                 "all_bins": True,
             }
