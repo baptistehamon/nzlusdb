@@ -15,6 +15,7 @@ keywords = ["NZLUSDB", "Land Use Suitability", "New Zeland", "Land Suitability A
 license = {file = "LICENSE"}
 dynamic = ["description", "version"]
 dependencies = [
+  "click >=8.1.0",
   "h5netcdf >=1.6.0",
   "lsapy >=0.2.0",
   "matplotlib >=3.9.0",
