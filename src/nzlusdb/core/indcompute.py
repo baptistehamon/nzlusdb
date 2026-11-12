@@ -6,8 +6,8 @@ from collections.abc import Callable
 
 import numpy as np
 import xarray as xr
-import xclim.indices as xci
-from xclim.compute.generic import domain_count, threshold_count, to_agg_units
+import xclim.compute as xcc
+from xclim.compute.generic import count_domain_occurrences, count_occurrences, to_agg_units
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import Quantified, convert_units_to, declare_units
 
@@ -218,7 +218,7 @@ def chilling_hours(
     """
     low = convert_units_to(low, tas)
     high = convert_units_to(high, tas)
-    out = domain_count(tas, low, high, freq)
+    out = count_domain_occurrences(tas, low, high, freq)
     return to_agg_units(out, tas, "count")
 
 
@@ -298,7 +298,7 @@ def hot_days_frequency(
     xr.DataArray
         Frequency of hot days over the specified period, in percentage.
     """
-    hd = xci.hot_days(tasmax, thresh=thresh, freq=freq)
+    hd = xcc.hot_days(tasmax, thresh=thresh, freq=freq)
     period_length = doy_to_days_since(bounds[1]).fillna(365) - doy_to_days_since(bounds[0]).fillna(0) + 1
     return (hd / period_length * 100).clip(min=0, max=100).assign_attrs(units="%")
 
@@ -329,7 +329,7 @@ def cold_days(
         Cold days index.
     """
     frz = convert_units_to(thresh, tas)
-    out = threshold_count(tas, "<", frz, freq)
+    out = count_occurrences(tas, "<", frz, freq)
     return to_agg_units(out, tas, "count", deffreq="D")
 
 
@@ -431,7 +431,7 @@ def minimum_relative_humidity(
     Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop Evapotranspiration: Guidelines for
     computing crop water requirements (No. 56; FAO Irrigation and Drainage Paper).
     """
-    es_min = xci.saturation_vapor_pressure(tasmin)
-    es_max = xci.saturation_vapor_pressure(tasmax)
+    es_min = xcc.saturation_vapor_pressure(tasmin)
+    es_max = xcc.saturation_vapor_pressure(tasmax)
     rh_min = 100 * es_min / es_max
     return rh_min.clip(min=0, max=100).assign_attrs(units="%")
