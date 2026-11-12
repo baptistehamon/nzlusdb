@@ -1,4 +1,4 @@
-"""Climate indices module."""
+"""Climate indicators computation module."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from collections.abc import Callable
 import numpy as np
 import xarray as xr
 import xclim.indices as xci
+from xclim.compute.generic import domain_count, threshold_count, to_agg_units
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import Quantified, convert_units_to, declare_units
-from xclim.indices.generic import domain_count, threshold_count, to_agg_units
 
 
 @declare_units(tasmax="[temperature]")
