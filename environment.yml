@@ -3,12 +3,13 @@ channels:
   - conda-forge
 dependencies:
   - python >=3.10
+  - click >=8.1.0
   - h5netcdf >=1.6.0
   - lsapy >=0.2.0
   - matplotlib >=3.9.0
   - netCDF4 >=1.7.0
   - rioxarray >=0.17.0
-  - xclim >=0.55.1
+  - xclim >=0.55.1,<1.0.0
   # extra
   # dev
   - bump-my-version >=1.2.0

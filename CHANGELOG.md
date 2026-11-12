@@ -62,6 +62,7 @@ Contributor to this version: Baptiste Hamon (@baptistehamon).
   -  `core/nir.py` file has been added, defining the `KcCurve` class, to compute the crop coefficient curve.
   -  The `LandUse` class has been updated to include NIR computation in the workflow.
   -  The files supporting crops NIR computation have been added to the repository.
+- `click` is now used as the command line interface (CLI) library instead of `argparse` ([PR#64](https://github.com/baptistehamon/nzlusdb/pull/64)).
 
 ### Bug Fixes
 - Fix label error for projected suitability changes summary figures ([GH#11](https://github.com/baptistehamon/nzlusdb/issues/11), [PR#19](https://github.com/baptistehamon/nzlusdb/pull/19)).
