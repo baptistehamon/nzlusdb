@@ -38,6 +38,9 @@ docs = [
 ]
 all = ["nzlsudb[dev]", "nzlusdb[docs]"]
 
+[project.scripts]
+nzlusdb = "nzlusdb.landuses:cli"
+
 [project.urls]
 # Homepage = ""
 Source = "https://github.com/baptistehamon/nzlusdb"
