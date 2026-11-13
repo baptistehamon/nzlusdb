@@ -5,10 +5,10 @@ import argparse
 import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
-import xclim.indices as xci
+import xclim.compute as xcc
+from xclim.compute.helpers import make_hourly_temperature
 from xclim.core.calendar import days_since_to_doy, doy_to_days_since, select_time
 from xclim.indicators import atmos
-from xclim.indices.helpers import make_hourly_temperature
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
@@ -69,7 +69,7 @@ def growing_degree_days_dfb(data, dfb, res):
     elif res == "5km":
         # use index to avoid memory issues with indicator health checks
         data_yr = select_time(data, doy_bounds=(dfb, end))
-        out = xci.growing_degree_days(data_yr, thresh="10 degC", freq="YS-JUL")
+        out = xcc.growing_degree_days(data_yr, thresh="10 degC", freq="YS-JUL")
         out = out.where(data.isel(time=0).notnull(), np.nan)
         das, params, dsattrs = atmos.growing_degree_days._parse_variables_from_call(
             args=[data], kwds={"thresh": "10 degC", "freq": "YS-JUL"}

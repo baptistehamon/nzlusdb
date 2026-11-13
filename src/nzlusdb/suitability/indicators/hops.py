@@ -4,9 +4,9 @@ import argparse
 
 import numpy as np
 import xarray as xr
+from xclim.compute.generic import compare, count_occurrences
+from xclim.compute.helpers import make_hourly_temperature
 from xclim.indicators import atmos
-from xclim.indices.generic import compare, count_occurrences
-from xclim.indices.helpers import make_hourly_temperature
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
@@ -77,8 +77,8 @@ def year_with_hot_week(data, res):
     def _year_with_hot_week(data):
         hd = atmos.hot_days(data, thresh="35 degC", freq="7D", date_bounds=("03-01", "04-20"))
         out = compare(hd, ">=", 3).assign_attrs(units="")
-        out = count_occurrences(out, threshold="0", op=">", freq="YS-JUL")
-        out = count_occurrences(out, threshold="1 week", op=">=", freq="YS-JUL")
+        out = count_occurrences(out, condition=">", thresh="0", freq="YS-JUL")
+        out = count_occurrences(out, condition=">", thresh="1 week", freq="YS-JUL")
         out = out.rename("year_with_hot_week")
         return out.where(data.isel(time=0).notnull())
 

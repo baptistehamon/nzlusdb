@@ -3,9 +3,9 @@
 import argparse
 
 import xarray as xr
+from xclim.compute.helpers import wind_speed_height_conversion as _wind_speed_height_conversion
 from xclim.core.units import convert_units_to
 from xclim.indicators.convert import potential_evapotranspiration as _potential_evapotranspiration
-from xclim.indices.helpers import wind_speed_height_conversion as _wind_speed_height_conversion
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
