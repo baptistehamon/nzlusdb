@@ -5,12 +5,15 @@ import argparse
 import numpy as np
 import pynar as pn
 import xarray as xr
+import xclim
 from xclim.core.calendar import days_since_to_doy, doy_to_days_since
 from xclim.indicators import atmos
 
 from nzlusdb.core.climdataset import TIMEPERIOD, climateDS, climdata, open_climdata_timeserie, select_hist_proj
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.utils import write_netcdf
+
+xclim.set_options(as_dataset=False)
 
 # Define phenology parameters for wheat
 PHENO_PARAMS = {

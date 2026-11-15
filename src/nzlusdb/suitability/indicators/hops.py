@@ -4,6 +4,7 @@ import argparse
 
 import numpy as np
 import xarray as xr
+import xclim
 from xclim.compute.generic import compare, count_occurrences
 from xclim.compute.helpers import make_hourly_temperature
 from xclim.indicators import atmos
@@ -12,6 +13,8 @@ from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.utils import write_netcdf
+
+xclim.set_options(as_dataset=False)
 
 
 # Define indicators

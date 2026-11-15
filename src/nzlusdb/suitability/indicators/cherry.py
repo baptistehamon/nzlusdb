@@ -5,6 +5,7 @@ import argparse
 import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
+import xclim
 from xclim.compute.generic import day_threshold_reached
 from xclim.compute.helpers import make_hourly_temperature
 from xclim.core.calendar import doy_to_days_since
@@ -14,6 +15,8 @@ from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.utils import write_netcdf
+
+xclim.set_options(as_dataset=False)
 
 
 # Define indicators

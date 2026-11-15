@@ -2,11 +2,14 @@
 
 import argparse
 
+import xclim
 from xclim.indicators import atmos
 
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
 from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.utils import write_netcdf
+
+xclim.set_options(as_dataset=False)
 
 
 # Define indicators
