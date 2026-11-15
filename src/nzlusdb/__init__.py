@@ -14,12 +14,12 @@ __all__ = ["db", "release"]
 db = DataBase(
     name="nzlusdb",
     attrs={
-        "title": "New Zealand Land Use Suitability Database (NZLUSDB)",
+        "title": "New Zealand Land Use Suitability Dataset (NZLUSDB)",
         "institution": (
             "Department of Civil and Environmental Engineering, University of Canterbury, Christchurch 8140, NZ"
         ),
-        "contact": "Baptiste Hamon: baptiste.hamon@pg.canterbury.ac.nz",
-        "reference": "https://baptistehamon.github.io/nzlusdb/",
+        "contact": "Baptiste Hamon (baptiste.hamon@pg.canterbury.ac.nz)",
+        "reference": "https://doi.org/10.6084/m9.figshare.34195311",
         "version": f"v{release}",
     },
     path=Path(r"R:\DATA"),
