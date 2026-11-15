@@ -6,7 +6,7 @@ from xclim.indicators.atmos._precip import DailyPrecipNoResample
 from xclim.indicators.atmos._temperature import Temp, TempHourlyWithIndexing, TempWithIndexing
 from xclim.indicators.convert._conversion import Converter
 
-from nzlusdb.core import indices
+from nzlusdb.core import indcompute as idc
 
 day_full_bloom = Temp(
     title="Day of full bloom for apple",
@@ -17,7 +17,7 @@ day_full_bloom = Temp(
     description="Last day of full bloom for apple as computed from maximum temperature in August and September.",
     abstract="The day of full bloom is computed as a function of the mean maximum temperature in August and September "
     "following the formula from Hall et al. (2018).",
-    compute=indices.day_full_bloom,
+    compute=idc.day_full_bloom,
 )
 
 day_budbreak = Temp(
@@ -29,7 +29,7 @@ day_budbreak = Temp(
     description="Day of budbreak for kiwifruit as computed from mean temperature from May to July.",
     abstract="The day of budbreak is computed as a function of the mean temperature from May to July following the "
     "formula from Vetharaniam et al. (2022).",
-    compute=indices.day_budbreak,
+    compute=idc.day_budbreak,
 )
 
 frost_survival = TempWithIndexing(
@@ -39,7 +39,7 @@ frost_survival = TempWithIndexing(
     long_name="Frost survival",
     description="Frost survival computed as a function of minimum temperature.",
     abstract="Frost survival is computed as a function of minimum temperature following Vetharaniam et al. (2022).",
-    compute=indices.frost_survival,
+    compute=idc.frost_survival,
     cell_methods="time: prod",
 )
 
@@ -50,7 +50,7 @@ sunburn_survival = TempWithIndexing(
     long_name="Sunburn survival",
     description="Sunburn survival computed as a function of maximum temperature.",
     abstract="Sunburn survival is computed as a function of maximum temperature following Vetharaniam et al. (2022).",
-    compute=indices.tasmax_survival,
+    compute=idc.tasmax_survival,
     cell_methods="time: prod",
 )
 
@@ -62,7 +62,7 @@ chilling_hours = TempHourlyWithIndexing(
     description="{freq} number of hours where the hourly temperature higher than {low} and lower or equal to {high}.",
     abstract="Number of hours with hourly temperature between lower and upper limits.",
     cell_methods="time: sum over hours",
-    compute=indices.chilling_hours,
+    compute=idc.chilling_hours,
 )
 
 cracking_survival = TempWithIndexing(
@@ -72,7 +72,7 @@ cracking_survival = TempWithIndexing(
     long_name="Cracking survival",
     description="Cracking survival computed as a function of daily relative humidity.",
     abstract="Cracking survival computed as a function of daily relative humidity following Vetharaniam et al. (2021).",
-    compute=indices.cracking_survival,
+    compute=idc.cracking_survival,
     cell_methods="time: prod",
 )
 
@@ -83,7 +83,7 @@ heat_survival = TempWithIndexing(
     long_name="Heat survival",
     description="Heat survival computed as a function of maximum temperature.",
     abstract="Heat survival is computed as a function of maximum temperature following Vetharaniam et al. (2021).",
-    compute=indices.tasmax_survival,
+    compute=idc.tasmax_survival,
     cell_methods="time: prod",
 )
 
@@ -94,7 +94,7 @@ hot_days_frequency = TempWithIndexing(
     long_name="Frequency of hot days where daily maximum temperature exceeds threshold {thresh}",
     description="{freq} frequency of days where the daily maximum temperature exceeds {thresh}.",
     abstract="Frequency of days where the daily maximum temperature exceeds a given threshold.",
-    compute=indices.hot_days_frequency,
+    compute=idc.hot_days_frequency,
 )
 
 cold_days = TempWithIndexing(
@@ -106,7 +106,7 @@ cold_days = TempWithIndexing(
     description="{freq} number of days where the daily mean temperature is below {thresh}.",
     abstract="Number of days where the daily mean temperature is below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.cold_days,
+    compute=idc.cold_days,
 )
 
 cold_days_frequency = TempWithIndexing(
@@ -116,7 +116,7 @@ cold_days_frequency = TempWithIndexing(
     long_name="Frequency of frost days where daily mean temperature is below threshold {thresh}",
     description="{freq} frequency of days where the daily mean temperature is below {thresh}.",
     abstract="Frequency of days where the daily mean temperature is below a given threshold.",
-    compute=indices.cold_days_frequency,
+    compute=idc.cold_days_frequency,
 )
 
 daily_effective_precipitation = DailyPrecipNoResample(
@@ -126,7 +126,7 @@ daily_effective_precipitation = DailyPrecipNoResample(
     long_name="Daily effective precipitation",
     description="Daily effective precipitation (Oumarou et al, 2019 method).",
     abstract="Daily effective precipitation following the method cited in Oumarou et al. (2019).",
-    compute=indices.daily_effective_precipitation,
+    compute=idc.daily_effective_precipitation,
 )
 
 minimum_relative_humidity = Converter(
@@ -137,5 +137,5 @@ minimum_relative_humidity = Converter(
     description="Approximated minimum relative humidity computed from minimum and maximum temperature.",
     abstract="Calculation of minimum relative humidity from minimum and maximum temperature using the "
     "saturation vapor pressure.",
-    compute=indices.minimum_relative_humidity,
+    compute=idc.minimum_relative_humidity,
 )

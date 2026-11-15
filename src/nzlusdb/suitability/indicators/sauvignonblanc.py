@@ -5,8 +5,8 @@ import argparse
 import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
+from xclim.compute.helpers import make_hourly_temperature
 from xclim.indicators import atmos
-from xclim.indices.helpers import make_hourly_temperature
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie

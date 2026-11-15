@@ -5,10 +5,10 @@ import argparse
 import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
+from xclim.compute.generic import day_threshold_reached
+from xclim.compute.helpers import make_hourly_temperature
 from xclim.core.calendar import doy_to_days_since
 from xclim.indicators import atmos
-from xclim.indices.generic import first_occurrence
-from xclim.indices.helpers import make_hourly_temperature
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
@@ -244,7 +244,9 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                dbb = first_occurrence(dbb_prob, threshold="0.5", op=">=", freq="YS-JUL").rename("day_budbreak")
+                dbb = day_threshold_reached(dbb_prob, condition=">=", thresh="0.5", freq="YS-JUL").rename(
+                    "day_budbreak"
+                )
                 dbb = dbb.assign_attrs(units="", is_dayofyear=np.int32(1))
                 write_netcdf(dbb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dbb = xr.open_dataarray(INDICATORPATH / fname)
