@@ -158,9 +158,9 @@ class ClimDataset:
             data = create_ensemble(data, **(ens_kwargs or {}))
 
         if inplace:
-            self.data = data
+            self.data = data.astype("float32")
             return None
-        return data
+        return data.astype("float32")
 
     def open_hist_proj(
         self,
