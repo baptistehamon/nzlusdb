@@ -66,7 +66,7 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(climDS, scen, ["tas", "tasmin"], ens_kwargs={"calendar": "noleap"})
+            period = open_climdata_timeserie(climDS, scen, ["tas", "tasmin"], ens_kwargs={"calendar": "noleap"})
 
             # Frost Survival during Flowering
             fname = f"avocado_frost-survival_annual_{scen}_{climDS.res}.nc"
@@ -76,7 +76,7 @@ def compute(resolution="5km"):
                 fsg = frost_survival(
                     climDS,
                     "tasmin",
-                    period=tperiod,
+                    period=period,
                     units="",
                     res=climDS.res,
                 )
@@ -87,7 +87,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tgm = tg_mean(climDS, "tas", period=tperiod, units="degC")
+                tgm = tg_mean(climDS, "tas", period=period, units="degC")
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 

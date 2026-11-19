@@ -38,18 +38,18 @@ def _rename_latlon(data):
     return data
 
 
-def _select_pheno_climdata(climds, tperiod):
+def _select_pheno_climdata(climds, period):
     """
     Select climate data for phenology indicators.
 
     'climdata' decorator cannot be used here because of how pynar masks data.
     """
     data = climds.data["tas"]
-    if tperiod == "historical":
+    if period == "historical":
         proj_startdate = "2015-01-01"
     else:
         proj_startdate = "2014-01-01"
-    data = select_hist_proj(data, tperiod, TIMEPERIOD[0], TIMEPERIOD[1], proj_startdate, freq="YS")
+    data = select_hist_proj(data, period, TIMEPERIOD[0], TIMEPERIOD[1], proj_startdate, freq="YS")
     return _rename_latlon(data.chunk(climds.chunks))
 
 
@@ -88,7 +88,7 @@ def _5km_pheno(data, compute_func, *args, **kwargs):
     return out
 
 
-def emergence(climds, tperiod, res):
+def emergence(climds, period, res):
     """Day of crop emergence."""
 
     def _compute_emergence(data):
@@ -102,7 +102,7 @@ def emergence(climds, tperiod, res):
             freq="YS-APR",
         )
 
-    data = _select_pheno_climdata(climds, tperiod)
+    data = _select_pheno_climdata(climds, period)
 
     if res == "25km":
         return _compute_emergence(data)
@@ -111,7 +111,7 @@ def emergence(climds, tperiod, res):
         return _5km_pheno(data, _compute_emergence)
 
 
-def ear_1cm(climds, tperiod, s1, res):
+def ear_1cm(climds, period, s1, res):
     """Day of ear 1cm."""
 
     def _compute_ear_1cm(data, s1):
@@ -126,7 +126,7 @@ def ear_1cm(climds, tperiod, s1, res):
             freq="YS-APR",
         )
 
-    data = _select_pheno_climdata(climds, tperiod)
+    data = _select_pheno_climdata(climds, period)
 
     if res == "25km":
         return _compute_ear_1cm(data, s1)
@@ -135,7 +135,7 @@ def ear_1cm(climds, tperiod, s1, res):
         return _5km_pheno(data, _compute_ear_1cm, s1)
 
 
-def flag_leaf(climds, tperiod, s2, res):
+def flag_leaf(climds, period, s2, res):
     """Day of flag leaf."""
 
     def _compute_flag_leaf(data, s2):
@@ -150,7 +150,7 @@ def flag_leaf(climds, tperiod, s2, res):
             freq="YS-APR",
         )
 
-    data = _select_pheno_climdata(climds, tperiod)
+    data = _select_pheno_climdata(climds, period)
 
     if res == "25km":
         return _compute_flag_leaf(data, s2)
@@ -159,7 +159,7 @@ def flag_leaf(climds, tperiod, s2, res):
         return _5km_pheno(data, _compute_flag_leaf, s2)
 
 
-def anthesis(climds, tperiod, s3, res):
+def anthesis(climds, period, s3, res):
     """Day of anthesis."""
 
     def _compute_anthesis(data, s3):
@@ -174,7 +174,7 @@ def anthesis(climds, tperiod, s3, res):
             freq="YS-APR",
         )
 
-    data = _select_pheno_climdata(climds, tperiod)
+    data = _select_pheno_climdata(climds, period)
 
     if res == "25km":
         return _compute_anthesis(data, s3)
@@ -183,7 +183,7 @@ def anthesis(climds, tperiod, s3, res):
         return _5km_pheno(data, _compute_anthesis, s3)
 
 
-def maturity(climds, tperiod, s4, res):
+def maturity(climds, period, s4, res):
     """Day of maturity."""
 
     def _compute_maturity(data):
@@ -198,7 +198,7 @@ def maturity(climds, tperiod, s4, res):
             freq="YS-APR",
         )
 
-    data = _select_pheno_climdata(climds, tperiod)
+    data = _select_pheno_climdata(climds, period)
 
     if res == "25km":
         return _compute_maturity(data)
@@ -303,7 +303,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["tas", "tasmax", "tasmin", "pr"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -313,7 +313,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                s1 = emergence(climDS, tperiod=tperiod, res=climDS.res)
+                s1 = emergence(climDS, period=period, res=climDS.res)
                 write_netcdf(s1, INDICATORPATH / fname, progressbar=True, verbose=True)
             s1 = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -322,7 +322,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                s2 = ear_1cm(climDS, s1=s1, tperiod=tperiod, res=climDS.res)
+                s2 = ear_1cm(climDS, s1=s1, period=period, res=climDS.res)
                 write_netcdf(s2, INDICATORPATH / fname, progressbar=True, verbose=True)
             s2 = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -331,7 +331,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                s3 = flag_leaf(climDS, s2=s2, tperiod=tperiod, res=climDS.res)
+                s3 = flag_leaf(climDS, s2=s2, period=period, res=climDS.res)
                 write_netcdf(s3, INDICATORPATH / fname, progressbar=True, verbose=True)
             s3 = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -340,7 +340,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                s4 = anthesis(climDS, s3=s3, tperiod=tperiod, res=climDS.res)
+                s4 = anthesis(climDS, s3=s3, period=period, res=climDS.res)
                 write_netcdf(s4, INDICATORPATH / fname, progressbar=True, verbose=True)
             s4 = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -349,7 +349,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                s5 = maturity(climDS, s4=s4, tperiod=tperiod, res=climDS.res)
+                s5 = maturity(climDS, s4=s4, period=period, res=climDS.res)
                 write_netcdf(s5, INDICATORPATH / fname, progressbar=True, verbose=True)
                 s5 = xr.open_dataarray(INDICATORPATH / fname)
                 # Fill missing values with 90 (end of March) where climate data exists
@@ -363,7 +363,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prtot = prcptot(climDS, "pr", period=tperiod, units="mm")
+                prtot = prcptot(climDS, "pr", period=period, units="mm")
                 write_netcdf(prtot, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Winter Frost Days
@@ -372,7 +372,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 fdm8 = winter_frost_days(
-                    climDS, "tasmin", s1=s1, s2=s2, period=tperiod, freq="YS-APR", offset={"months": 3}, res=climDS.res
+                    climDS, "tasmin", s1=s1, s2=s2, period=period, freq="YS-APR", offset={"months": 3}, res=climDS.res
                 )
                 write_netcdf(fdm8, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -382,7 +382,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 fdm2 = growth_frost_days(
-                    climDS, "tasmin", s2=s2, s3=s3, period=tperiod, freq="YS-APR", offset={"months": 3}, res=climDS.res
+                    climDS, "tasmin", s2=s2, s3=s3, period=period, freq="YS-APR", offset={"months": 3}, res=climDS.res
                 )
                 write_netcdf(fdm2, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -392,7 +392,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 tx30 = flowering_heat_days(
-                    climDS, "tasmax", s4=s4, period=tperiod, freq="YS-APR", offset={"months": 3}, res=climDS.res
+                    climDS, "tasmax", s4=s4, period=period, freq="YS-APR", offset={"months": 3}, res=climDS.res
                 )
                 write_netcdf(tx30, INDICATORPATH / fname, progressbar=True, verbose=True)
 

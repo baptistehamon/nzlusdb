@@ -100,7 +100,7 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -110,7 +110,7 @@ def compute(resolution="5km"):
                 print(f"{fname} exists, skipping...")
             else:
                 ch = chilling_hours(
-                    climDS, ["tasmin", "tasmax"], period=tperiod, freq="YS-MAY", offset={"months": 2}, res=climDS.res
+                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-MAY", offset={"months": 2}, res=climDS.res
                 )
                 write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -122,7 +122,7 @@ def compute(resolution="5km"):
                 fsg = frost_survival(
                     climDS,
                     "tasmin",
-                    period=tperiod,
+                    period=period,
                     units="",
                     res=climDS.res,
                 )
@@ -133,7 +133,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd = growing_degree_days(climDS, "tas", period=tperiod, units="degC d")
+                gdd = growing_degree_days(climDS, "tas", period=period, units="degC d")
                 write_netcdf(gdd, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 

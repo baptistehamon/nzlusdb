@@ -79,7 +79,7 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["pr", "tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -88,7 +88,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prcptot_ds = prcptot(climDS, "pr", period=tperiod, units="mm")
+                prcptot_ds = prcptot(climDS, "pr", period=period, units="mm")
                 write_netcdf(prcptot_ds, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Mean Min Temperature
@@ -96,7 +96,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tnm = tn_mean(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUL")
+                tnm = tn_mean(climDS, "tasmin", period=period, units="degC", freq="YS-JUL")
                 write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Mean Annual Temperature
@@ -104,7 +104,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tgm = tg_mean(climDS, "tas", period=tperiod, units="degC")
+                tgm = tg_mean(climDS, "tas", period=period, units="degC")
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Mean Max Temperature
@@ -112,7 +112,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                txm = tx_mean(climDS, "tasmax", period=tperiod, units="degC")
+                txm = tx_mean(climDS, "tasmax", period=period, units="degC")
                 write_netcdf(txm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Years with Hot Week
@@ -120,7 +120,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                yhw = year_with_hot_week(climDS, "tasmax", period=tperiod, freq="YS-JUL", res=climDS.res)
+                yhw = year_with_hot_week(climDS, "tasmax", period=period, freq="YS-JUL", res=climDS.res)
                 # work around to handle historical and projection transition for rolling sum
                 if scen == "historical":
                     yhw.to_netcdf(INDICATORPATH / "tmp_hot-week.nc")

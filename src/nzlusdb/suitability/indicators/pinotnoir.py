@@ -182,7 +182,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["tas", "tasmax", "tasmin", "pr"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -192,7 +192,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                dbb = day_budbreak(climDS, "tas", period=tperiod)
+                dbb = day_budbreak(climDS, "tas", period=period)
                 write_netcdf(dbb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dbb = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -201,7 +201,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                flow = flowering(climDS, "tas", period=tperiod)
+                flow = flowering(climDS, "tas", period=period)
                 write_netcdf(flow, INDICATORPATH / fname, progressbar=True, verbose=True)
             flow = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -210,7 +210,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                ver = veraison(climDS, "tas", period=tperiod)
+                ver = veraison(climDS, "tas", period=period)
                 write_netcdf(ver, INDICATORPATH / fname, progressbar=True, verbose=True)
             ver = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -219,7 +219,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                rip = ripeness(climDS, "tas", period=tperiod)
+                rip = ripeness(climDS, "tas", period=period)
                 write_netcdf(rip, INDICATORPATH / fname, progressbar=True, verbose=True)
             rip = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -230,7 +230,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 ch = chilling_hours(
-                    climDS, ["tasmin", "tasmax"], period=tperiod, freq="YS-JUN", offset={"months": 1}, res=climDS.res
+                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-JUN", offset={"months": 1}, res=climDS.res
                 )
                 write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -239,7 +239,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fs = frost_survival(climDS, "tasmin", dbb=dbb, veraison=ver, period=tperiod, units="", res=climDS.res)
+                fs = frost_survival(climDS, "tasmin", dbb=dbb, veraison=ver, period=period, units="", res=climDS.res)
                 write_netcdf(fs, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Heat Survival from Veraison to Ripeness
@@ -248,7 +248,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 hs = heat_survival(
-                    climDS, "tasmax", veraison=ver, ripeness=rip, period=tperiod, units="", res=climDS.res
+                    climDS, "tasmax", veraison=ver, ripeness=rip, period=period, units="", res=climDS.res
                 )
                 write_netcdf(hs, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -257,7 +257,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                prtot = prcptot(climDS, "pr", period=tperiod, units="mm")
+                prtot = prcptot(climDS, "pr", period=period, units="mm")
                 write_netcdf(prtot, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 

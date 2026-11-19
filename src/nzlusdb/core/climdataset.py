@@ -362,18 +362,18 @@ def open_climdata_timeserie(
     -------
     tuple or str
         If `inplace` is False, returns a tuple containing the opened data (xr.Dataset or xr.DataArray) and
-        the time period (str). If `inplace` is True, returns the time period (str) only. The time period
-        correspond to either 'historical' or 'projection' depending on the given scenario.
+        the period (str). If `inplace` is True, returns the period (str) only. The period corresponds to
+        either 'historical' or 'projection' depending on the given scenario.
     """
     if ens_kwargs is None:
         ens_kwargs = {}
     if scenario == climDS.hist_scenario:
         data = climDS.open(scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
-        timeperiod = "historical"
+        period = "historical"
     else:
         data = climDS.open_hist_proj(proj_scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
-        timeperiod = "projection"
+        period = "projection"
 
     if not inplace:
-        return (data, timeperiod)
-    return timeperiod
+        return (data, period)
+    return period

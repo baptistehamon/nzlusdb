@@ -200,7 +200,7 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -209,7 +209,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                dfb = day_full_bloom(climDS, "tasmax", period=tperiod, units="")
+                dfb = day_full_bloom(climDS, "tasmax", period=period, units="")
                 write_netcdf(dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dfb = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -219,7 +219,7 @@ def compute(resolution="5km"):
                 print(f"{fname} exists, skipping...")
             else:
                 cu = chill_units(
-                    climDS, ["tasmin", "tasmax"], period=tperiod, freq="YS-MAY", offset={"months": 2}, res=climDS.res
+                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-MAY", offset={"months": 2}, res=climDS.res
                 )
                 write_netcdf(cu, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -228,7 +228,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd = growing_degree_days(climDS, "tas", period=tperiod, units="degC d")
+                gdd = growing_degree_days(climDS, "tas", period=period, units="degC d")
                 write_netcdf(gdd, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Growing Degree Days from Day of Full Bloom
@@ -236,9 +236,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd_dfb = growing_degree_days_dfb(
-                    climDS, "tas", dfb=dfb, period=tperiod, units="degC d", res=climDS.res
-                )
+                gdd_dfb = growing_degree_days_dfb(climDS, "tas", dfb=dfb, period=period, units="degC d", res=climDS.res)
                 write_netcdf(gdd_dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Frost Survival during Growth
@@ -246,7 +244,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fsg = frost_survival(climDS, "tasmin", dfb=dfb, period=tperiod, units="", res=climDS.res)
+                fsg = frost_survival(climDS, "tasmin", dfb=dfb, period=period, units="", res=climDS.res)
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Sunburn Survival
@@ -254,7 +252,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                sbs = sunburn_survival(climDS, "tasmax", period=tperiod, units="", res=climDS.res)
+                sbs = sunburn_survival(climDS, "tasmax", period=period, units="", res=climDS.res)
                 write_netcdf(sbs, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 

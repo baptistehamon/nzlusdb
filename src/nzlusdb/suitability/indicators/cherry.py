@@ -204,7 +204,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(
+            period = open_climdata_timeserie(
                 climDS, scen, ["tas", "tasmax", "tasmin", "hurs"], ens_kwargs={"calendar": "noleap"}
             )
 
@@ -216,7 +216,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 fp = None
             else:
                 diffcumsum, fp = difference_cumulative_sum(
-                    climDS, "tas", period=tperiod, units="degC d", convert_calendar=False, res=climDS.res
+                    climDS, "tas", period=period, units="degC d", convert_calendar=False, res=climDS.res
                 )
                 write_netcdf(diffcumsum, INDICATORPATH / fname, progressbar=True, verbose=True)
             diffcumsum = xr.open_dataarray(INDICATORPATH / fname, chunks={"time": 365, "realization": 2})
@@ -277,7 +277,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                     climDS,
                     weight=dbb_prob,
                     variable="tas",
-                    period=tperiod,
+                    period=period,
                     units="degC d",
                     convert_calendar=False,
                     res=climDS.res,
@@ -321,7 +321,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 ch = chilling_hours(
-                    climDS, ["tasmin", "tasmax"], period=tperiod, freq="YS-JUN", offset={"months": 1}, res=climDS.res
+                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-JUN", offset={"months": 1}, res=climDS.res
                 )
                 write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -330,9 +330,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd_dbb = growing_degree_days_dbb(
-                    climDS, "tas", dbb=dbb, period=tperiod, units="degC d", res=climDS.res
-                )
+                gdd_dbb = growing_degree_days_dbb(climDS, "tas", dbb=dbb, period=period, units="degC d", res=climDS.res)
                 write_netcdf(gdd_dbb, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Frost Survival during Growth
@@ -341,7 +339,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 fsg = frost_survival(
-                    climDS, "tasmin", weight=oc_to_ripening_prob, period=tperiod, units="", res=climDS.res
+                    climDS, "tasmin", weight=oc_to_ripening_prob, period=period, units="", res=climDS.res
                 )
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
 
@@ -368,7 +366,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
             else:
                 cs = cracking_survival(
-                    climDS, "hurs", weight=(1 - ripening_prob), period=tperiod, units="", res=climDS.res
+                    climDS, "hurs", weight=(1 - ripening_prob), period=period, units="", res=climDS.res
                 )
                 write_netcdf(cs, INDICATORPATH / fname, progressbar=True, verbose=True)
 

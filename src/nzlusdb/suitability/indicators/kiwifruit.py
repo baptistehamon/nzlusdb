@@ -111,14 +111,14 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(climDS, scen, ["tas", "tasmin"], ens_kwargs={"calendar": "noleap"})
+            period = open_climdata_timeserie(climDS, scen, ["tas", "tasmin"], ens_kwargs={"calendar": "noleap"})
 
             # Day of budbreak
             fname = f"kiwifruit_day_budbreak_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                dbb = day_budbreak(climDS, "tas", period=tperiod, units="", freq="YS-MAY", offset={"months": 2})
+                dbb = day_budbreak(climDS, "tas", period=period, units="", freq="YS-MAY", offset={"months": 2})
                 write_netcdf(dbb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dbb = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -127,7 +127,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tgm = tg_mean(climDS, "tas", period=tperiod, units="degC", freq="YS-MAY", offset={"months": 2})
+                tgm = tg_mean(climDS, "tas", period=period, units="degC", freq="YS-MAY", offset={"months": 2})
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Growing Degree Days
@@ -135,7 +135,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd = growing_degree_days(climDS, "tas", period=tperiod, units="degC d")
+                gdd = growing_degree_days(climDS, "tas", period=period, units="degC d")
                 write_netcdf(gdd, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Frost Survival during Growth
@@ -143,7 +143,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fsg = frost_survival(climDS, "tasmin", dbb=dbb, period=tperiod, units="", res=climDS.res)
+                fsg = frost_survival(climDS, "tasmin", dbb=dbb, period=period, units="", res=climDS.res)
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Minimum Temperature
@@ -151,7 +151,7 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tnm = tn_min(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUL")
+                tnm = tn_min(climDS, "tasmin", period=period, units="degC", freq="YS-JUL")
                 write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 

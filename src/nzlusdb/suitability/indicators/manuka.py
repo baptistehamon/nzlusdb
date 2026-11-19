@@ -34,7 +34,7 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            tperiod = open_climdata_timeserie(climDS, scen, ["tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"})
+            period = open_climdata_timeserie(climDS, scen, ["tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"})
 
             # Mean Max Temperature
             fname = f"txm_1015-0131_annual_{scen}_{climDS.res}.nc"
@@ -42,7 +42,7 @@ def compute(resolution="5km"):
                 print(f"{fname} exists, skipping...")
                 continue
             else:
-                txm = tx_mean(climDS, "tasmax", period=tperiod, units="degC")
+                txm = tx_mean(climDS, "tasmax", period=period, units="degC")
                 write_netcdf(txm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Mean Min Temperature
@@ -51,7 +51,7 @@ def compute(resolution="5km"):
                 print(f"{fname} exists, skipping...")
                 continue
             else:
-                tnm = tn_mean(climDS, "tasmin", period=tperiod, units="degC", freq="YS-JUN", offset={"months": 1})
+                tnm = tn_mean(climDS, "tasmin", period=period, units="degC", freq="YS-JUN", offset={"months": 1})
                 write_netcdf(tnm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 
