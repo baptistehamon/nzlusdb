@@ -228,7 +228,9 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                gdd = growing_degree_days(climDS, "tas", period=period, units="degC d")
+                gdd = growing_degree_days(
+                    climDS, scen, "tas", units="degC d", chunks={"time": xr.groupers.TimeResampler("YS-JUL")}
+                )
                 write_netcdf(gdd, INDICATORPATH / fname, progressbar=True, verbose=True)
 
             # Growing Degree Days from Day of Full Bloom
