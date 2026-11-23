@@ -1,11 +1,11 @@
 """Utility functions for NZLUSDB indicator computation."""
 
 from collections.abc import Callable
+from pathlib import Path
 
 import pandas as pd
 import xarray as xr
 
-from nzlusdb.suitability.indicators import INDICATORPATH
 from nzlusdb.utils import write_netcdf
 
 
@@ -33,11 +33,13 @@ class LoopOverYears:
         func: Callable,
         freq: str,
         filename: str = "tmp_<YEAR>.nc",
+        tmp_path: str = None,
         skip_existing: bool = False,
     ):
         self.data = data
         self.func = func
         self.freq = freq
+        self.tmp_path = Path(tmp_path) if tmp_path is not None else Path.cwd()
         self.filename = filename
         self.skip_existing = skip_existing
         self.files = []
@@ -60,7 +62,7 @@ class LoopOverYears:
                 break
             year = base_time.year if hasattr(base_time, "year") else pd.Timestamp(base_time).year
             data_yr = self.data.isel(time=indexes)
-            fname = INDICATORPATH / self.filename.replace("<YEAR>", str(year))
+            fname = self.tmp_path / self.filename.replace("<YEAR>", str(year))
 
             if self.skip_existing and fname.exists():
                 self.skipped.append(fname)
