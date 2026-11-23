@@ -13,7 +13,7 @@ from xclim.indicators import atmos
 
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
-from nzlusdb.suitability.indicators import INDICATORPATH
+from nzlusdb.suitability.indicators import INDICATORPATH, LoopOverYearsWithPath
 from nzlusdb.utils import downweight, downweight_season, write_netcdf
 
 xclim.set_options(as_dataset=False)
@@ -27,34 +27,21 @@ def day_full_bloom(data):
 
 
 @climdata
-def chill_units(data, res):
+def chill_units(data, tmp_files=True, year_break=None):
     """Chill units between May 1 and Aug 31."""
-    if "latitude" in data.coords:  # rename dims for 1km climate data
-        data = data.rename({"latitude": "lat", "longitude": "lon"})
-        data = data.chunk({"time": 365})
 
-    # loop over years to avoid memory issues
-    years = np.unique(data.time.dt.year.values)
-    out = []
-    for y in years[:-1]:
-        _data = data.sel(time=slice(f"{y}-05-01", f"{y}-08-31")).convert_calendar("noleap")
-        tas = make_hourly_temperature(_data["tasmin"], _data["tasmax"])
-        cu = atmos.chill_units(tas, date_bounds=("05-01", "08-31"), freq="YS-MAY")
-        if res == "5km":
-            fname = INDICATORPATH / f"tmp_chill_units_{y}_5km.nc"
-            write_netcdf(cu, INDICATORPATH / f"tmp_chill_units_{y}_5km.nc", progressbar=True, verbose=False)
-            out.append(fname)
-        else:
-            out.append(cu)
+    def _yearly_chill_units(data):
+        # keep only relevant time period to compute hourly temperature
+        data = select_time(data, date_bounds=("05-01", "08-31"), drop=True)
+        tas = make_hourly_temperature(data["tasmin"], data["tasmax"]).astype("float32")
+        return atmos.chill_units(tas, date_bounds=("05-01", "08-31"), freq="YS-MAY").astype("float32")
 
-    if res == "25km":
-        out = xr.concat(out, dim="time")
-    if res == "5km":
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["cu"]
-        for f in fp:
-            f.unlink()
-    return out
+    # rename lat/lon if needed for 5km data
+    data = data.rename({"latitude": "lat", "longitude": "lon"}) if "latitude" in data.coords else data
+
+    loop = LoopOverYearsWithPath(data, _yearly_chill_units, freq="YS-MAY", filename="tmp_chill_units_<YEAR>.nc")
+    cu = loop(tmp_files=tmp_files, year_break=year_break)
+    return cu, loop
 
 
 @climdata
@@ -209,7 +196,10 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                dfb = day_full_bloom(climDS, "tasmax", period=period, units="")
+                chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
+                dfb = day_full_bloom(
+                    climDS, scen, "tasmax", units="", open_kwargs={"ens_kwargs": {"calendar": "noleap"}}, chunks=chunks
+                )
                 write_netcdf(dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dfb = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -218,10 +208,20 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                cu = chill_units(
-                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-MAY", offset={"months": 2}, res=climDS.res
+                cu, loop = chill_units(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    ["tasmin", "tasmax"],
+                    freq="YS-MAY",
+                    offset={"months": 2},
+                    open_kwargs={"ens_kwargs": {"calendar": "noleap"}},
+                    chunks={"time": xr.groupers.TimeResampler("YS-MAY")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
                 )
                 write_netcdf(cu, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(cu)
 
             # Growing Degree Days
             fname = f"gdd10_1001-0430_annual_{scen}_{climDS.res}.nc"
