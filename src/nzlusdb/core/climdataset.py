@@ -301,40 +301,48 @@ climateDS = {
 
 
 def climdata(func):
-    """Decorator to select a specific time period from the climate data before passing it to the function."""
+    """Decorator to open and select a specific time period from a ClimDataset instance before applying the function."""
 
     def wrapper(
         climDS,
+        scenario,
         variable,
-        period,
         start_date=TIMEPERIOD[0],
         end_date=TIMEPERIOD[1],
         freq="YS-JUL",
         units=None,
         offset=None,
         convert_calendar=True,
+        open_kwargs=None,
+        chunks=None,
         **kwargs,
     ):
-        data = select_hist_proj(
-            climDS.data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq
+        data, period = open_climdata_timeserie(
+            climDS, scenario=scenario, variable=variable, inplace=False, **(open_kwargs or {})
         )
-        data = data.chunk(climDS.chunks)
-        res = func(data, **kwargs)
-        if not isinstance(res, xr.DataArray):
-            return res
+        data = select_hist_proj(data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq)
+        data = data.chunk(chunks or climDS.chunks)
+        out = func(data, **kwargs)
+        if not isinstance(out, xr.DataArray):
+            return out
         if convert_calendar:
-            res = res.convert_calendar("standard")
+            out = out.convert_calendar("standard")
         if offset:
-            res = res.assign_coords(time=(pd.to_datetime(res.time) + pd.DateOffset(**offset)))
+            out = out.assign_coords(time=(pd.to_datetime(out.time) + pd.DateOffset(**offset)))
         if units:
-            res = convert_units_to(res, units)
-        return res
+            out = convert_units_to(out, units)
+        return out
 
     return wrapper
 
 
 def open_climdata_timeserie(
-    climDS: ClimDataset, scenario: str, variable: str | list[str], inplace: bool = True, ens_kwargs: dict = None
+    climDS: ClimDataset,
+    scenario: str,
+    variable: str | list[str],
+    inplace: bool = True,
+    ens_kwargs: dict = None,
+    xr_kwargs: dict = None,
 ) -> str:
     """
     Open a climate data timeserie (historical + projection) from a ClimDataset instance.
@@ -368,10 +376,14 @@ def open_climdata_timeserie(
     if ens_kwargs is None:
         ens_kwargs = {}
     if scenario == climDS.hist_scenario:
-        data = climDS.open(scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
+        data = climDS.open(
+            scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs, xr_kwargs=xr_kwargs
+        )
         period = "historical"
     else:
-        data = climDS.open_hist_proj(proj_scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs)
+        data = climDS.open_hist_proj(
+            proj_scenario=scenario, variable=variable, inplace=inplace, ens_kwargs=ens_kwargs, xr_kwargs=xr_kwargs
+        )
         period = "projection"
 
     if not inplace:
