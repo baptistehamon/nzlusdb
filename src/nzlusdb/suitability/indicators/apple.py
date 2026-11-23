@@ -6,7 +6,6 @@ import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
 import xclim
-import xclim.compute as xcc
 from xclim.compute.helpers import make_hourly_temperature
 from xclim.core.calendar import days_since_to_doy, doy_to_days_since, select_time
 from xclim.indicators import atmos
@@ -51,29 +50,16 @@ def growing_degree_days(data):
 
 
 @climdata
-def growing_degree_days_dfb(data, dfb, res):
+def growing_degree_days_dfb(data, dfb, tmp_files=True, year_break=None):
     """Growing degree days between day of full bloom and 50 days after."""
-    end = days_since_to_doy(doy_to_days_since(dfb) + 50)
-    return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
-    if res == "25km":
+
+    def _yearly_gdd_dfb(data, dfb, end):
         return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
-    elif res == "5km":
-        # use index to avoid memory issues with indicator health checks
-        data_yr = select_time(data, doy_bounds=(dfb, end))
-        out = xcc.growing_degree_days(data_yr, thresh="10 degC", freq="YS-JUL")
-        out = out.where(data.isel(time=0).notnull(), np.nan)
-        das, params, dsattrs = atmos.growing_degree_days._parse_variables_from_call(
-            args=[data], kwds={"thresh": "10 degC", "freq": "YS-JUL"}
-        )
-        attrs = atmos.growing_degree_days._update_attrs(
-            args=params,
-            das=das,
-            attrs=atmos.growing_degree_days.cf_attrs[0],
-            names=atmos.growing_degree_days._cf_names,
-            var_id=None,
-        )
-        out.attrs.update(attrs)
-        return out
+
+    end = days_since_to_doy(doy_to_days_since(dfb) + 50)
+    loop = LoopOverYearsWithPath(data, _yearly_gdd_dfb, freq="YS-JUL", filename="tmp_gdd_dfb_<YEAR>.nc")
+    gdd_dfb = loop(dfb=dfb, end=end, tmp_files=True, year_break=year_break)
+    return gdd_dfb, loop
 
 
 @climdata
@@ -239,8 +225,20 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
+                gdd_dfb, loop = growing_degree_days_dfb(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    "tas",
+                    dfb=dfb,
+                    units="degC d",
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                )
                 gdd_dfb = growing_degree_days_dfb(climDS, "tas", dfb=dfb, period=period, units="degC d", res=climDS.res)
                 write_netcdf(gdd_dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(gdd_dfb)
 
             # Frost Survival during Growth
             fname = f"apple_frost-survival_dfb-0430_annual_{scen}_{climDS.res}.nc"
