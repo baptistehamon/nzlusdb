@@ -54,6 +54,7 @@ def growing_degree_days(data):
 def growing_degree_days_dfb(data, dfb, res):
     """Growing degree days between day of full bloom and 50 days after."""
     end = days_since_to_doy(doy_to_days_since(dfb) + 50)
+    return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
     if res == "25km":
         return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
     elif res == "5km":
@@ -196,13 +197,9 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
+                chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
                 dfb = day_full_bloom(
-                    climDS,
-                    scen,
-                    "tasmax",
-                    units="",
-                    open_kwargs={"ens_kwargs": {"calendar": "noleap"}},
-                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    climDS, scen, "tasmax", units="", open_kwargs={"ens_kwargs": {"calendar": "noleap"}}, chunks=chunks
                 )
                 write_netcdf(dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dfb = xr.open_dataarray(INDICATORPATH / fname)
