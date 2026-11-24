@@ -11,7 +11,7 @@ from xclim.core.calendar import days_since_to_doy, doy_to_days_since, select_tim
 from xclim.indicators import atmos
 
 from nzlusdb.core import indicators
-from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
+from nzlusdb.core.climdataset import climateDS, climdata
 from nzlusdb.suitability.indicators import INDICATORPATH, LoopOverYearsWithPath
 from nzlusdb.utils import downweight, downweight_season, write_netcdf
 
@@ -127,10 +127,6 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            period = open_climdata_timeserie(
-                climDS, scen, ["tas", "tasmax", "tasmin"], ens_kwargs={"calendar": "noleap"}
-            )
-
             # Day of Full Bloom
             fname = f"apple_day_full_bloom_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
@@ -189,7 +185,6 @@ def compute(resolution="5km"):
                     # LoopOverYears params
                     tmp_files=True if climDS.res == "5km" else False,
                 )
-                gdd_dfb = growing_degree_days_dfb(climDS, "tas", dfb=dfb, period=period, units="degC d", res=climDS.res)
                 write_netcdf(gdd_dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
                 loop.cleanup(gdd_dfb)
 
