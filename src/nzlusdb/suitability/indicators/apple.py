@@ -57,7 +57,7 @@ def growing_degree_days_dfb(data, dfb, tmp_files=True, year_break=None):
 
     end = days_since_to_doy(doy_to_days_since(dfb) + 50)
     loop = LoopOverYearsWithPath(data, _yearly_gdd_dfb, freq="YS-JUL", filename="tmp_gdd_dfb_<YEAR>.nc")
-    gdd_dfb = loop(dfb=dfb, end=end, tmp_files=True, year_break=year_break)
+    gdd_dfb = loop(dfb=dfb, end=end, tmp_files=tmp_files, year_break=year_break)
     return gdd_dfb, loop
 
 
