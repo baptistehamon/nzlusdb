@@ -93,17 +93,16 @@ def frost_survival(data, dfb, tmp_files=True, year_break=None):
 
 
 @climdata
-def sunburn_survival(data, res):
+def sunburn_survival(data, tmp_files=True, year_break=None):
     """Sunburn survival from Oct 1 to Apr 30."""
 
     def _downweight(data):
-        weights = select_time(xr.where(data.notnull(), 1, np.nan), date_bounds=("10-01", "04-30"))
+        weights = select_time(xr.where(data.notnull(), 1, np.nan), date_bounds=("10-01", "04-30")).astype("float32")
         weights = weights.rename("weight")
         weights = downweight(weights, "date_bounds", ("04-01", "04-30"), downweight_to=0)
         return weights
 
-    if res == "25km":
-        data = data.chunk({"realization": 3})
+    def _yearly_sbs(data):
         weights = _downweight(data)
         return indicators.sunburn_survival(
             data,
@@ -114,30 +113,9 @@ def sunburn_survival(data, res):
             date_bounds=("10-01", "04-30"),
         )
 
-    if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-10-01", f"{y + 1}-04-30"))
-            weights = _downweight(data_yr)
-            ss = indicators.sunburn_survival(
-                data_yr,
-                weights,
-                func=lstd.logistic,
-                fparams={"a": -0.52, "b": 37.5},
-                freq="YS-JUL",
-                date_bounds=("10-01", "04-30"),
-            )
-            fname = INDICATORPATH / f"tmp_sunburn_survival_{y}_5km.nc"
-            write_netcdf(ss, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["sunburn_survival"]
-        for f in fp:
-            f.unlink()
-        return out
+    loop = LoopOverYearsWithPath(data, _yearly_sbs, freq="YS-JUL", filename="tmp_sunburn_survival_<YEAR>.nc")
+    sbs = loop(tmp_files=tmp_files, year_break=year_break)
+    return sbs, loop
 
 
 def compute(resolution="5km"):
@@ -239,8 +217,19 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                sbs = sunburn_survival(climDS, "tasmax", period=period, units="", res=climDS.res)
+                sbs, loop = sunburn_survival(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    "tasmax",
+                    units="",
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                    year_break=2,
+                )
                 write_netcdf(sbs, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(sbs)
 
 
 if __name__ == "__main__":
