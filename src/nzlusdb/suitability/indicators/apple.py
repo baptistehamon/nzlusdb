@@ -63,19 +63,18 @@ def growing_degree_days_dfb(data, dfb, tmp_files=True, year_break=None):
 
 
 @climdata
-def frost_survival(data, dfb, res):
+def frost_survival(data, dfb, tmp_files=True, year_break=None):
     """Frost survival during growing period (from 3 weeks before full bloom to end of April)."""
 
     def _downweight(data, start, end):
-        weights = select_time(xr.where(data.notnull(), 1, np.nan), doy_bounds=(start, 120))
+        weights = select_time(xr.where(data.notnull(), 1, np.nan), doy_bounds=(start, 120)).astype("float32")
         weights = weights.rename("weight")
         weights = downweight_season(
             weights, "doy_bounds", {"start": (start, end), "end": (91, 120)}, values=0, interp_method="linear"
         )
         return weights
 
-    if res == "25km":
-        data = data.chunk({"realization": 3})
+    def _yearly_fsg(data, dfb):
         start = days_since_to_doy(doy_to_days_since(dfb) - 21)
         end = days_since_to_doy(doy_to_days_since(start) + 8)
         weights = _downweight(data, start, end)
@@ -88,33 +87,9 @@ def frost_survival(data, dfb, res):
             doy_bounds=(start, 120),
         )
 
-    if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-04-30"))
-            dfb_yr = dfb.sel(time=f"{y}-07-01")
-            start = days_since_to_doy(doy_to_days_since(dfb_yr) - 21)
-            end = days_since_to_doy(doy_to_days_since(start) + 8)
-            weights = _downweight(data_yr, start, end)
-            fs = indicators.frost_survival(
-                data_yr,
-                weights,
-                func=lstd.vetharaniam2022_eq3,
-                fparams={"a": 1, "b": -3},
-                freq="YS-JUL",
-                doy_bounds=(start, 120),
-            )
-            fname = INDICATORPATH / f"tmp_frost_survival_{y}_5km.nc"
-            write_netcdf(fs, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["frost_survival"]
-        for f in fp:
-            f.unlink()
-        return out
+    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_frost_survival_<YEAR>.nc")
+    fsg = loop(dfb=dfb, tmp_files=tmp_files, year_break=year_break)
+    return fsg, loop
 
 
 @climdata
@@ -245,8 +220,19 @@ def compute(resolution="5km"):
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fsg = frost_survival(climDS, "tasmin", dfb=dfb, period=period, units="", res=climDS.res)
+                fsg, loop = frost_survival(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    "tasmin",
+                    dfb=dfb,
+                    units="",
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                )
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(fsg)
 
             # Sunburn Survival
             fname = f"apple_sunburn-survival_1001-0430_annual_{scen}_{climDS.res}.nc"
