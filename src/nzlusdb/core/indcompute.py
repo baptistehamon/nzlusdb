@@ -135,6 +135,7 @@ def frost_survival(
         tasmin,
         kwargs=fparams,
         dask="parallelized",
+        output_dtypes="float32",
     )
 
     out = (out**weights).resample(time=freq).prod("time")
@@ -179,12 +180,7 @@ def tasmax_survival(
     """
     tasmax = convert_units_to(tasmax, "degC")
 
-    out = xr.apply_ufunc(
-        func,
-        tasmax,
-        kwargs=fparams,
-        dask="parallelized",
-    )
+    out = xr.apply_ufunc(func, tasmax, kwargs=fparams, dask="parallelized", output_dtypes="float32")
 
     out = (out**weights).resample(time=freq).prod("time")
     out = out.assign_attrs(units="")
@@ -265,6 +261,7 @@ def cracking_survival(
         tasmax,
         kwargs=fparams,
         dask="parallelized",
+        output_dtypes="float32",
     )
 
     out = (out**weights).resample(time=freq).prod("time")
