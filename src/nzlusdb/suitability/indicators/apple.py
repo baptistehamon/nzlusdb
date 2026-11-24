@@ -1,7 +1,6 @@
 """Apple suitability climate indicators."""
 
-import argparse
-
+import click
 import lsapy.standardize as lstd
 import numpy as np
 import xarray as xr
@@ -118,7 +117,16 @@ def sunburn_survival(data, tmp_files=True, year_break=None):
     return sbs, loop
 
 
-def compute(resolution="5km"):
+@click.command()
+@click.option(
+    "-res",
+    "--resolution",
+    multiple=True,
+    default=("5km", "1km"),
+    type=click.Choice(["5km", "1km"]),
+    show_default=True,
+)
+def compute(resolution):
     """Compute and save all apple climate indicators."""
     if isinstance(resolution, str):
         resolution = [resolution]
@@ -228,7 +236,4 @@ def compute(resolution="5km"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute and save all apple climate indicators.")
-    parser.add_argument("--res", nargs="+", default=["5km", "1km"], help="Resolution(s) to process (e.g. 5km, 1km)")
-    args = parser.parse_args()
-    compute(args.res)
+    compute()
