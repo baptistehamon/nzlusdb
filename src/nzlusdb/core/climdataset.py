@@ -314,11 +314,17 @@ def climdata(func):
         offset=None,
         convert_calendar=True,
         open_kwargs=None,
+        open_as_noleap=True,
         chunks=None,
         **kwargs,
     ):
+        open_kwargs = open_kwargs or {}
+        ens_kwargs = open_kwargs.pop("ens_kwargs", {})
+        if open_as_noleap:
+            ens_kwargs["calendar"] = "noleap"
+        open_kwargs["ens_kwargs"] = ens_kwargs
         data, period = open_climdata_timeserie(
-            climDS, scenario=scenario, variable=variable, inplace=False, **(open_kwargs or {})
+            climDS, scenario=scenario, variable=variable, inplace=False, **(open_kwargs)
         )
         data = select_hist_proj(data[variable], period=period, start_date=start_date, end_date=end_date, freq=freq)
         data = data.chunk(chunks or climDS.chunks)
