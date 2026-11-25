@@ -3,24 +3,24 @@
 import argparse
 
 import lsapy.standardize as lstd
-import numpy as np
 import xarray as xr
 import xclim
 from xclim.indicators import atmos
 
 from nzlusdb.core import indicators
-from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
-from nzlusdb.suitability.indicators import INDICATORPATH
+from nzlusdb.core.climdataset import climateDS, climdata
+from nzlusdb.suitability.indicators import INDICATORPATH, LoopOverYearsWithPath
 from nzlusdb.utils import write_netcdf
 
 xclim.set_options(as_dataset=False)
 
 
+# Define indictors
 @climdata
-def frost_survival(data, res):
+def frost_survival(data, tmp_files=True, year_break=None):
     """Annual frost survival."""
-    if res == "25km":
-        data = data.chunk({"realization": 3})
+
+    def _yearly_fsg(data):
         return indicators.frost_survival(
             data,
             func=lstd.vetharaniam2022_eq3,
@@ -28,27 +28,9 @@ def frost_survival(data, res):
             freq="YS-JUL",
         )
 
-    if res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
-            fs = indicators.frost_survival(
-                data_yr,
-                func=lstd.vetharaniam2022_eq3,
-                fparams={"a": 1.3, "b": -3},
-                freq="YS-JUL",
-            )
-            fname = INDICATORPATH / f"tmp_frost_survival_{y}_5km.nc"
-            write_netcdf(fs, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["frost_survival"]
-        for f in fp:
-            f.unlink()
-        return out
+    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_frost_survival_<YEAR>.nc")
+    fsg = loop(tmp_files=tmp_files, year_break=year_break)
+    return fsg, loop
 
 
 @climdata
@@ -66,28 +48,32 @@ def compute(resolution="5km"):
         climDS = climateDS[f"nzlusdb_{res}"]
 
         for scen in climDS.scenario:
-            period = open_climdata_timeserie(climDS, scen, ["tas", "tasmin"], ens_kwargs={"calendar": "noleap"})
-
             # Frost Survival during Flowering
             fname = f"avocado_frost-survival_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                fsg = frost_survival(
+                fsg, loop = frost_survival(
+                    # climdata decorator params
                     climDS,
+                    scen,
                     "tasmin",
-                    period=period,
                     units="",
-                    res=climDS.res,
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                    year_break=2,
                 )
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(fsg)
 
             # Mean Annual Temperature
             fname = f"tgm_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                tgm = tg_mean(climDS, "tas", period=period, units="degC")
+                chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
+                tgm = tg_mean(climDS, scen, "tas", units="degC", chunks=chunks)
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 
