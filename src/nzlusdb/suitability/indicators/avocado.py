@@ -70,7 +70,6 @@ def compute(resolution):
                     chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
                     # LoopOverYears params
                     tmp_files=True if climDS.res == "5km" else False,
-                    year_break=2,
                 )
                 write_netcdf(fsg, INDICATORPATH / fname, progressbar=True, verbose=True)
                 loop.cleanup(fsg)
