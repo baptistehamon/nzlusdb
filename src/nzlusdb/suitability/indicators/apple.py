@@ -138,7 +138,7 @@ def compute(resolution):
             # Day of Full Bloom
             fname = f"apple_day_full_bloom_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
                 dfb = day_full_bloom(
@@ -150,7 +150,7 @@ def compute(resolution):
             # Chill Units
             fname = f"cu_0501-0831_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 cu, loop = chill_units(
                     # climdata decorator params
@@ -170,7 +170,7 @@ def compute(resolution):
             # Growing Degree Days
             fname = f"gdd10_1001-0430_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 gdd = growing_degree_days(
                     climDS, scen, "tas", units="degC d", chunks={"time": xr.groupers.TimeResampler("YS-JUL")}
@@ -180,7 +180,7 @@ def compute(resolution):
             # Growing Degree Days from Day of Full Bloom
             fname = f"apple_gdd10_dfb-dfb50d_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 gdd_dfb, loop = growing_degree_days_dfb(
                     # climdata decorator params
@@ -199,7 +199,7 @@ def compute(resolution):
             # Frost Survival during Growth
             fname = f"apple_frost-survival_dfb-0430_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 fsg, loop = frost_survival(
                     # climdata decorator params
@@ -218,7 +218,7 @@ def compute(resolution):
             # Sunburn Survival
             fname = f"apple_sunburn-survival_1001-0430_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 sbs, loop = sunburn_survival(
                     # climdata decorator params
