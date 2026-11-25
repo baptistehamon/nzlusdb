@@ -1,7 +1,6 @@
 """Avocado suitability climate indicators."""
 
-import argparse
-
+import click
 import lsapy.standardize as lstd
 import xarray as xr
 import xclim
@@ -39,7 +38,16 @@ def tg_mean(data):
     return atmos.tg_mean(data, freq="YS-JUL")
 
 
-def compute(resolution="5km"):
+@click.command()
+@click.option(
+    "-res",
+    "--resolution",
+    multiple=True,
+    default=("5km", "1km"),
+    type=click.Choice(["5km", "1km"]),
+    show_default=True,
+)
+def compute(resolution):
     """Compute and save all avocado indicators."""
     if isinstance(resolution, str):
         resolution = [resolution]
@@ -51,7 +59,7 @@ def compute(resolution="5km"):
             # Frost Survival during Flowering
             fname = f"avocado_frost-survival_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 fsg, loop = frost_survival(
                     # climdata decorator params
@@ -70,7 +78,7 @@ def compute(resolution="5km"):
             # Mean Annual Temperature
             fname = f"tgm_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
                 tgm = tg_mean(climDS, scen, "tas", units="degC", chunks=chunks)
@@ -78,7 +86,4 @@ def compute(resolution="5km"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute and save all avocado climate indicators.")
-    parser.add_argument("--res", nargs="+", default=["5km", "1km"], help="Resolution(s) to process (e.g. 5km, 1km)")
-    args = parser.parse_args()
-    compute(args.res)
+    compute()
