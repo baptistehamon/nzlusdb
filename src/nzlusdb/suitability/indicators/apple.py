@@ -141,9 +141,7 @@ def compute(resolution):
                 click.echo(f"{fname} exists, skipping...")
             else:
                 chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
-                dfb = day_full_bloom(
-                    climDS, scen, "tasmax", units="", open_kwargs={"ens_kwargs": {"calendar": "noleap"}}, chunks=chunks
-                )
+                dfb = day_full_bloom(climDS, scen, "tasmax", units="", chunks=chunks)
                 write_netcdf(dfb, INDICATORPATH / fname, progressbar=True, verbose=True)
             dfb = xr.open_dataarray(INDICATORPATH / fname)
 
@@ -159,7 +157,6 @@ def compute(resolution):
                     ["tasmin", "tasmax"],
                     freq="YS-MAY",
                     offset={"months": 2},
-                    open_kwargs={"ens_kwargs": {"calendar": "noleap"}},
                     chunks={"time": xr.groupers.TimeResampler("YS-MAY")},
                     # LoopOverYears params
                     tmp_files=True if climDS.res == "5km" else False,
