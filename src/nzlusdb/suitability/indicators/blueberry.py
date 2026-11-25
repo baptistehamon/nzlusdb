@@ -1,7 +1,6 @@
 """Blueberry suitability climate indicators."""
 
-import argparse
-
+import click
 import lsapy.standardize as lstd
 import xarray as xr
 import xclim
@@ -61,7 +60,16 @@ def growing_degree_days(data):
     return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", date_bounds=("10-01", "04-30"))
 
 
-def compute(resolution="5km"):
+@click.command()
+@click.option(
+    "-res",
+    "--resolution",
+    multiple=True,
+    default=("5km", "1km"),
+    type=click.Choice(["5km", "1km"]),
+    show_default=True,
+)
+def compute(resolution):
     """Compute and save all blueberry indicators."""
     if isinstance(resolution, str):
         resolution = [resolution]
@@ -73,7 +81,7 @@ def compute(resolution="5km"):
             # Chilling Hours
             fname = f"ch7_0501-0831_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 ch, loop = chilling_hours(
                     # climdata decorator params
@@ -93,7 +101,7 @@ def compute(resolution="5km"):
             # Frost Survival during Flowering
             fname = f"blueberry_frost-survival_0901-1031_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 fsg, loop = frost_survival(
                     # climdata decorator params
@@ -111,7 +119,7 @@ def compute(resolution="5km"):
             # Growing Degree Days
             fname = f"gdd10_1001-0430_annual_{scen}_{climDS.res}.nc"
             if (INDICATORPATH / fname).exists():
-                print(f"{fname} exists, skipping...")
+                click.echo(f"{fname} exists, skipping...")
             else:
                 gdd = growing_degree_days(
                     climDS, scen, "tas", units="degC d", chunks={"time": xr.groupers.TimeResampler("YS-JUL")}
@@ -120,7 +128,4 @@ def compute(resolution="5km"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute and save all blueberry climate indicators.")
-    parser.add_argument("--res", nargs="+", default=["5km", "1km"], help="Resolution(s) to process (e.g. 5km, 1km)")
-    args = parser.parse_args()
-    compute(args.res)
+    compute()
