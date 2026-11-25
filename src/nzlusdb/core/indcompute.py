@@ -212,8 +212,6 @@ def chilling_hours(
     xarray.DataArray, [time]
         Chilling hours.
     """
-    low = convert_units_to(low, tas)
-    high = convert_units_to(high, tas)
     out = count_domain_occurrences(tas, low, high, freq)
     return to_agg_units(out, tas, "count")
 
