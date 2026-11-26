@@ -79,8 +79,7 @@ def compute(resolution):
             if (INDICATORPATH / fname).exists():
                 click.echo(f"{fname} exists, skipping...")
             else:
-                chunks = {"latitude": 52, "time": -1} if climDS.res == "5km" else {}
-                tgm = tg_mean(climDS, scen, "tas", units="degC", chunks=chunks)
+                tgm = tg_mean(climDS, scen, "tas", units="degC", chunks={"time": xr.groupers.TimeResampler("YS-JUL")})
                 write_netcdf(tgm, INDICATORPATH / fname, progressbar=True, verbose=True)
 
 
