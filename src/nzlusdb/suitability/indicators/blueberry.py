@@ -31,7 +31,9 @@ def chilling_hours(data, tmp_files=True, year_break=None):
     # rename lat/lon if needed for 5km data
     data = data.rename({"latitude": "lat", "longitude": "lon"}) if "latitude" in data.coords else data
 
-    loop = LoopOverYearsWithPath(data, _yearly_chilling_hours, freq="YS-MAY", filename="tmp_chill_units_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(
+        data, _yearly_chilling_hours, freq="YS-MAY", filename="tmp_blueberry_chill_units_<YEAR>.nc"
+    )
     ch = loop(tmp_files=tmp_files, year_break=year_break)
     return ch, loop
 
@@ -49,7 +51,7 @@ def frost_survival(data, tmp_files=True, year_break=None):
             date_bounds=("09-01", "10-31"),
         )
 
-    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_frost_survival_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_blueberry_frost_survival_<YEAR>.nc")
     fsg = loop(tmp_files=tmp_files, year_break=year_break)
     return fsg, loop
 

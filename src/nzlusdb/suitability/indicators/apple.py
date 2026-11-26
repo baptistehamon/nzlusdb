@@ -37,7 +37,7 @@ def chill_units(data, tmp_files=True, year_break=None):
     # rename lat/lon if needed for 5km data
     data = data.rename({"latitude": "lat", "longitude": "lon"}) if "latitude" in data.coords else data
 
-    loop = LoopOverYearsWithPath(data, _yearly_chill_units, freq="YS-MAY", filename="tmp_chill_units_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_chill_units, freq="YS-MAY", filename="tmp_apple_chill_units_<YEAR>.nc")
     cu = loop(tmp_files=tmp_files, year_break=year_break)
     return cu, loop
 
@@ -56,7 +56,7 @@ def growing_degree_days_dfb(data, dfb, tmp_files=True, year_break=None):
         return atmos.growing_degree_days(data, thresh="10 degC", freq="YS-JUL", doy_bounds=(dfb, end))
 
     end = days_since_to_doy(doy_to_days_since(dfb) + 50)
-    loop = LoopOverYearsWithPath(data, _yearly_gdd_dfb, freq="YS-JUL", filename="tmp_gdd_dfb_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_gdd_dfb, freq="YS-JUL", filename="tmp_apple_gdd_dfb_<YEAR>.nc")
     gdd_dfb = loop(dfb=dfb, end=end, tmp_files=tmp_files, year_break=year_break)
     return gdd_dfb, loop
 
@@ -86,7 +86,7 @@ def frost_survival(data, dfb, tmp_files=True, year_break=None):
             doy_bounds=(start, 120),
         )
 
-    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_frost_survival_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_apple_frost_survival_<YEAR>.nc")
     fsg = loop(dfb=dfb, tmp_files=tmp_files, year_break=year_break)
     return fsg, loop
 
@@ -112,7 +112,7 @@ def sunburn_survival(data, tmp_files=True, year_break=None):
             date_bounds=("10-01", "04-30"),
         )
 
-    loop = LoopOverYearsWithPath(data, _yearly_sbs, freq="YS-JUL", filename="tmp_sunburn_survival_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_sbs, freq="YS-JUL", filename="tmp_apple_sunburn_survival_<YEAR>.nc")
     sbs = loop(tmp_files=tmp_files, year_break=year_break)
     return sbs, loop
 

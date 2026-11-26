@@ -27,7 +27,7 @@ def frost_survival(data, tmp_files=True, year_break=None):
             freq="YS-JUL",
         )
 
-    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_frost_survival_<YEAR>.nc")
+    loop = LoopOverYearsWithPath(data, _yearly_fsg, freq="YS-JUL", filename="tmp_avocado_frost_survival_<YEAR>.nc")
     fsg = loop(tmp_files=tmp_files, year_break=year_break)
     return fsg, loop
 
