@@ -11,9 +11,10 @@ from xclim.compute.helpers import make_hourly_temperature
 from xclim.core.calendar import doy_to_days_since
 from xclim.indicators import atmos
 
+import nzlusdb.core.indcompute as idc
 from nzlusdb.core import indicators
 from nzlusdb.core.climdataset import climateDS, climdata, open_climdata_timeserie
-from nzlusdb.suitability.indicators import INDICATORPATH
+from nzlusdb.suitability.indicators import INDICATORPATH, LoopOverYearsWithPath
 from nzlusdb.utils import write_netcdf
 
 xclim.set_options(as_dataset=False)
@@ -21,34 +22,17 @@ xclim.set_options(as_dataset=False)
 
 # Define indicators
 @climdata
-def difference_cumulative_sum(data, res, weight=None):
-    """Annual cumulative sum of daily difference above 4.5 degC."""
-    if weight is not None:
-        data = (data * weight).assign_attrs(data.attrs)
+def daily_cumulative_difference(data, weights=None, tmp_files=True, year_break=None):
+    """Annual cumulative sum of daily temperature difference above 4.5 degC."""
 
-    if res == "25km":
-        out = atmos.growing_degree_days(data, thresh="4.5 degC", freq=None, date_bounds=("07-15", "04-30"))
-        out = out.resample(time="YS-JUL").cumsum(dim="time")
-        out = out.where(data.notnull(), np.nan)
-        fp = None
+    def _yearly_cumdiff(data):
+        out = idc.cumulative_difference(data, thresh="4.5 degC", condition=">", freq="YS-JUL")
+        return out.where(data.notnull())
 
-    elif res == "5km":
-        # loop over years to avoid memory issues
-        years = np.unique(data.time.dt.year.values)
-        out = []
-        for y in years[:-1]:
-            data_yr = data.sel(time=slice(f"{y}-07-01", f"{y + 1}-06-30"))
-            gdd = atmos.growing_degree_days(data_yr, thresh="4.5 degC", freq=None, date_bounds=("07-15", "04-30"))
-            gdd = gdd.resample(time="YS-JUL").cumsum(dim="time")
-            gdd = gdd.where(data_yr.notnull(), np.nan)
-            fname = INDICATORPATH / f"tmp_diffcumsum4.5_{y}_5km.nc"
-            write_netcdf(gdd, fname, progressbar=True, verbose=False)
-            out.append(fname)
-
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords")["growing_degree_days"]
-
-    return (out, fp)
+    data *= weights or 1
+    loop = LoopOverYearsWithPath(data, _yearly_cumdiff, freq="YS-JUL", filename="tmp_cherry_cumdiff4.5_<YEAR>.nc")
+    cumdiff = loop(tmp_files=tmp_files, year_break=year_break)
+    return cumdiff, loop
 
 
 @climdata
@@ -215,14 +199,20 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 print(f"{fname} exists, skipping...")
                 fp = None
             else:
-                diffcumsum, fp = difference_cumulative_sum(
-                    climDS, "tas", period=period, units="degC d", convert_calendar=False, res=climDS.res
+                cumdiff, loop = daily_cumulative_difference(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    "tas",
+                    units="degC d",
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                    year_break=2,
                 )
-                write_netcdf(diffcumsum, INDICATORPATH / fname, progressbar=True, verbose=True)
-            diffcumsum = xr.open_dataarray(INDICATORPATH / fname, chunks={"time": 365, "realization": 2})
-            if fp is not None:
-                for f in fp:
-                    f.unlink()
+                write_netcdf(cumdiff, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(cumdiff)
+            cumdiff = xr.open_dataarray(INDICATORPATH / fname)
 
             # Budbreak Probability
             fname = f"cherry_budbreak-probability_daily_{scen}_{climDS.res}.nc"
@@ -232,7 +222,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
                 dbb_prob = (
                     xr.apply_ufunc(
                         lstd.logistic,
-                        diffcumsum,
+                        cumdiff,
                         kwargs={"a": 0.1446, "b": 174},
                         dask="parallelized",
                     )
@@ -261,7 +251,7 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             else:
                 oc_prob = xr.apply_ufunc(
                     lstd.logistic,
-                    diffcumsum,
+                    cumdiff,
                     kwargs={"a": 0.1156, "b": 211},
                     dask="parallelized",
                 ).rename("open_cluster_probability")
@@ -273,32 +263,31 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                weighted_diffcumsum, fp = difference_cumulative_sum(
+                wght_cumdiff, loop = daily_cumulative_difference(
+                    # climdata decorator params
                     climDS,
-                    weight=dbb_prob,
-                    variable="tas",
-                    period=period,
+                    scen,
+                    "tas",
+                    weights=dbb_prob,
                     units="degC d",
-                    convert_calendar=False,
-                    res=climDS.res,
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUL")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
+                    year_break=2,
                 )
                 write_netcdf(
-                    weighted_diffcumsum,
-                    INDICATORPATH / "tmp_weighted-diffcumsum4.5.nc",
-                    progressbar=True,
-                    verbose=False,
+                    wght_cumdiff, INDICATORPATH / "tmp_weighted-diffcumsum4.5.nc", progressbar=True, verbose=False
                 )
-                weighted_diffcumsum = xr.open_dataarray(
-                    INDICATORPATH / "tmp_weighted-diffcumsum4.5.nc", chunks={"time": 365, "realization": 2}
-                )
+                loop.cleanup(wght_cumdiff)
+                xr.open_dataarray(INDICATORPATH / "tmp_weighted-diffcumsum4.5.nc")
                 ripening_prob = xr.apply_ufunc(
                     lstd.vetharaniam2022_eq5,
-                    weighted_diffcumsum,
+                    wght_cumdiff,
                     kwargs={"a": -0.8482, "b": 839.1},
                     dask="parallelized",
                 ).rename("ripening_probability")
                 write_netcdf(ripening_prob, INDICATORPATH / fname, progressbar=True, verbose=True)
-                weighted_diffcumsum.close()
+                wght_cumdiff.close()
                 (INDICATORPATH / "tmp_weighted-diffcumsum4.5.nc").unlink()
                 if fp is not None:
                     for f in fp:
