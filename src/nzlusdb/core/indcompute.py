@@ -7,9 +7,17 @@ from collections.abc import Callable
 import numpy as np
 import xarray as xr
 import xclim.compute as xcc
-from xclim.compute.generic import count_domain_occurrences, count_occurrences, to_agg_units
+from xclim.compute.generic import count_domain_occurrences, count_occurrences, statistics, to_agg_units
+from xclim.core import Condition, Freq
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
-from xclim.core.units import Quantified, convert_units_to, declare_units
+from xclim.core.units import (
+    Quantified,
+    convert_units_to,
+    declare_relative_units,
+    declare_units,
+    pint2cfattrs,
+    units2pint,
+)
 
 
 @declare_units(tasmax="[temperature]")
@@ -430,3 +438,45 @@ def minimum_relative_humidity(
     es_max = xcc.saturation_vapor_pressure(tasmax)
     rh_min = 100 * es_min / es_max
     return rh_min.clip(min=0, max=100).assign_attrs(units="%")
+
+
+@declare_relative_units(thresh="<data>")
+def cumulative_difference(data: xr.DataArray, condition: Condition, thresh: Quantified, freq: Freq | None, **indexer):
+    """
+    Modified version of `xclim.compute.generic.integrated_difference` to compute daily cumulative difference.
+
+    If ``condition`` is ">", then the difference is taken as ``data - thresh``. The inverse
+    is done for "<". Values below zero are removed from the integral. "Integral" means summed
+    difference are multiplied by the timestep length.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Data.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    thresh : Quantified
+        The value threshold.
+    freq : Freq, optional
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+        If None, the time dimension is completely reduced.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
+
+    Returns
+    -------
+    xr.DataArray, [data][time]
+        Integral of the differences when {data} {condition} {thresh}.
+    """
+    thresh = convert_units_to(thresh, data, context="infer")
+
+    if condition in ["<", "<=", "lt", "le"]:
+        diff = (thresh - data).clip(0)
+    elif condition in [">", ">=", "gt", "ge"]:
+        diff = (data - thresh).clip(0)
+    else:
+        raise NotImplementedError(f"Condition not supported: '{condition}'.")
+
+    diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
+    out_units = units2pint(data.attrs["units"]) * units2pint("days")
+    return statistics(diff, statistic="cumsum", freq=freq, out_units=out_units, **indexer)
