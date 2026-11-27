@@ -8,7 +8,7 @@ import xarray as xr
 import xclim
 from xclim.compute.generic import day_threshold_reached
 from xclim.compute.helpers import make_hourly_temperature
-from xclim.core.calendar import doy_to_days_since
+from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indicators import atmos
 
 import nzlusdb.core.indcompute as idc
@@ -36,34 +36,25 @@ def daily_cumulative_difference(data, weights=None, tmp_files=True, year_break=N
 
 
 @climdata
-def chilling_hours(data, res):
+def chilling_hours(data, tmp_files=True, year_break=None):
     """Chilling hours between Jun 1 and Aug 31."""
-    if "latitude" in data.coords:  # rename dims for 1km climate data
-        data = data.rename({"latitude": "lat", "longitude": "lon"})
-        data = data.chunk({"time": 365})
 
-    # loop over years to avoid memory issues
-    years = np.unique(data.time.dt.year.values)
-    out = []
-    for y in years[:-1]:
-        _data = data.sel(time=slice(f"{y}-06-01", f"{y}-08-31")).convert_calendar("noleap")
-        tas = make_hourly_temperature(_data["tasmin"], _data["tasmax"])
-        ch = indicators.chilling_hours(tas, high="7 degC", date_bounds=("06-01", "08-31"), freq="YS-JUN")
-        if res == "5km":
-            fname = INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc"
-            write_netcdf(ch, INDICATORPATH / f"tmp_chilling-hours_{y}_5km.nc", progressbar=True, verbose=False)
-            out.append(fname)
-        else:
-            out.append(ch)
+    def _yearly_chilling_hours(data):
+        # keep only relevant time period to compute hourly temperature
+        data = select_time(data, date_bounds=("06-01", "08-31"), drop=True)
+        tas = make_hourly_temperature(data["tasmin"], data["tasmax"]).astype("float32")
+        return indicators.chilling_hours(tas, high="7 degC", date_bounds=("06-01", "08-31"), freq="YS-JUN").astype(
+            "float32"
+        )
 
-    if res == "25km":
-        out = xr.concat(out, dim="time")
-    if res == "5km":
-        fp = out
-        out = xr.open_mfdataset(out, combine="by_coords").load()["chilling_hours"]
-        for f in fp:
-            f.unlink()
-    return out
+    # rename lat/lon if needed for 5km data
+    data = data.rename({"latitude": "lat", "longitude": "lon"}) if "latitude" in data.coords else data
+
+    loop = LoopOverYearsWithPath(
+        data, _yearly_chilling_hours, freq="YS-MAY", filename="tmp_cherry_chill_units_<YEAR>.nc"
+    )
+    ch = loop(tmp_files=tmp_files, year_break=year_break)
+    return ch, loop
 
 
 @climdata
@@ -309,10 +300,19 @@ def compute(resolution="5km"):  # noqa: PLR0912, PLR0914, PLR0915
             if (INDICATORPATH / fname).exists():
                 print(f"{fname} exists, skipping...")
             else:
-                ch = chilling_hours(
-                    climDS, ["tasmin", "tasmax"], period=period, freq="YS-JUN", offset={"months": 1}, res=climDS.res
+                ch, loop = chilling_hours(
+                    # climdata decorator params
+                    climDS,
+                    scen,
+                    ["tasmin", "tasmax"],
+                    freq="YS-JUN",
+                    offset={"months": 1},
+                    chunks={"time": xr.groupers.TimeResampler("YS-JUN")},
+                    # LoopOverYears params
+                    tmp_files=True if climDS.res == "5km" else False,
                 )
                 write_netcdf(ch, INDICATORPATH / fname, progressbar=True, verbose=True)
+                loop.cleanup(ch)
 
             # Growing Degree Days from Day of Budbreak
             fname = f"cherry_gdd4.5_dbb-0430_annual_{scen}_{climDS.res}.nc"
