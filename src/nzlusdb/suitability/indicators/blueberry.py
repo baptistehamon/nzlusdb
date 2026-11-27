@@ -92,7 +92,6 @@ def compute(resolution):
                     ["tasmin", "tasmax"],
                     freq="YS-MAY",
                     offset={"months": 2},
-                    open_kwargs={"ens_kwargs": {"calendar": "noleap"}},
                     chunks={"time": xr.groupers.TimeResampler("YS-MAY")},
                     # LoopOverYears params
                     tmp_files=True if climDS.res == "5km" else False,
